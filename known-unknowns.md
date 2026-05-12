@@ -76,14 +76,39 @@ For each unresolved area, this file describes:
 
 **Question:** How complete is the charger driver in the public BSP, and what's needed for production use?
 
+**Mostly resolved as of 2026-05-12** following TKT wiki Battery-charger page incorporation:
+
+- `sp1-midi/drivers/charger/charger_bq24232.c` exists with GPIO-based control:
+  - nPGOOD = P0.24 (open-drain, low when USB power good)
+  - nCHG = P0.22 (open-drain, low while charging)
+  - CE = P0.21 (active-low charge enable)
+  - **ISET = P1.00** (corrected from earlier erroneous "P0.19" — see `corrections.md`)
+  - BATT_LEVEL = P0.28 / AIN4
+  [code: `ericlewis/sp1-midi/boards/teenageengineering/stem_player/stem_player.dts`; `timknapen/SP-1-dev/src/stemplayer_pins.h`]
+- **Maximum USB current draw: 500 mA** [TKT wiki: Battery-charger, accessed 2026-05-12]
+- ISET voltage reflects actual charging current; can be monitored via a voltage divider on AIN [TKT wiki: Battery-charger, accessed 2026-05-12]
+
+**Still open:** The specific ISET resistor values that determine the fast/slow charge currents are on the schematic but not in code or wiki. For most firmware work the existing driver is "complete enough."
+
+**Next move:** For deep customization (e.g., implementing fast/slow charge mode switching), measure ISET voltage on real hardware while toggling the override pin, or consult TimK's KiCad reversal for resistor values.
+
+---
+
+## Second 3.5mm jack (MIDI / PO sync) pin assignment
+
+**Question:** Which nRF GPIO pins drive the MIDI / Pocket Operator sync jack?
+
 **Known:**
-- `sp1-midi/drivers/charger/charger_bq24232.c` exists with GPIO-based control: nPGOOD (P0.24), nCHG (P0.22), CE (P0.21), ISET (P0.19) [code: `ericlewis/sp1-midi`]
-- The PowerManager subsystem consumes it for battery monitoring
-- It's labeled "GPIO-based" — i.e., minimal interface, no I2C / no register-level control (the BQ24232 doesn't have an I2C interface; it's a discrete-controlled charger, so this is correct)
+- The SP-1 has two 3.5 mm jacks: a TRRS headphone jack on CS42L42 and a second jack supporting MIDI or Pocket Operator synchronization [TKT wiki: Hardware-overview, accessed 2026-05-12]
+- `stemplayer_pins.h` does not have a `PIN_MIDI_*` or `PIN_PO_SYNC_*` define
+- `stem_player.dts` does not have a labeled MIDI output node
+- The MIDI output would need a UART TX (at 31250 baud for standard MIDI) or GPIO bit-bang; Pocket Operator sync uses audio-rate clock pulses on a TRS sleeve channel
 
-**Why partially unresolved:** The driver works for charge enable / status, but the full charge cycle behavior (current limits, termination, etc.) is set by hardware resistors on the BQ24232 — not software. There's no published spec of which resistor values TE chose.
+**Why unresolved:** No public code targets the second jack. Either TKT hasn't documented the pin mapping yet, or the stock TE firmware uses it via a path that hasn't been called out in the disassembly summaries the community has shared.
 
-**Next move:** For most firmware work this is "complete enough." For deep customization, schematic from TimK's KiCad reversal would have the resistor values.
+**Next move:** Inspect the PCB photo / KiCad reversal to identify which traces leave the FPC and head to the second jack. Or boot stock firmware, probe the second jack with a scope while playing a track, and see which nRF GPIOs change state in sync with audio playback. Or ask TimK in Discord.
+
+---
 
 ---
 

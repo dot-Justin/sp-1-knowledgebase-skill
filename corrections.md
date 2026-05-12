@@ -91,6 +91,17 @@ The full header layout is:
 
 ---
 
+### Believed: "BQ24232 ISET pin is at P0.19"
+**Actual:** **P1.00.** [TKT wiki: Battery-charger, accessed 2026-05-12; code: `SP-1-dev/src/stemplayer_pins.h`; code: `sp1-midi/boards/teenageengineering/stem_player/stem_player.dts` — `iset-override-gpios = <&gpio1 0 ...>`]
+
+**Why the wrong claim circulated:** an earlier version of `sp1-midi/README.md` listed P0.19 for ISET. Both TimK's authoritative pin header AND the DTS in the same `sp1-midi` repo say P1.00. The README appears to be the error.
+
+**Citations:**
+- Earlier (wrong): `references/05-power-and-battery.md` and `known-unknowns.md` versions before 2026-05-12 cited `sp1-midi/README.md`'s P0.19
+- Truth: [TKT wiki: Battery-charger; pin header; DTS — all agree on P1.00]
+
+---
+
 ## eMMC access and protection
 
 ### Believed: "The eMMC content is encrypted"
