@@ -53,12 +53,14 @@ These are URLs anyone can visit. The skill cites these inline; Claude can also f
 6. **Data Structure** — `/wiki/Data-Structure` — sector = 0x2000 (8192) bytes = 16 native 512-byte eMMC blocks; first sector is album metadata, audio starts at `0x2000`.
 7. **Album metadata format** — `/wiki/Album-metadata-format` — full album header layout (`ALBUM_PRESENT` magic at offset 0 and at end, song entries at offset 82, 136 bytes each). **The authoritative source for album header structure** — supersedes the in-memory C struct in `storagethingies/DiskManager.hpp`.
 8. **Audio format** — `/wiki/Audio-format` — 4 blocks × 2048 bytes = 8192-byte sector, blocks ordered {0,2,1,3}, **per-block trailer of 2 sync + 2 tempo + 4 LED bytes**, sample extraction formula. **The authoritative source for the sector trailer layout.**
-9. **I2S** — `/wiki/I2S`
-10. **I2C** — `/wiki/I2C`
-11. **PWM** — `/wiki/PWM`
-12. **SAADC** — `/wiki/SAADC`
-13. **Battery charger** — `/wiki/Battery-charger`
-14. **Bluetooth Module** — `/wiki/Bluetooth-Module`
+9. **I2S** — `/wiki/I2S` — confirms nRF I²S is in **slave** mode (BCLK from 3.072 MHz external osc, LRCLK from CS42L42 PLL). Buffer size 256 samples / 128 frames. 24-bit left-aligned.
+10. **I2C** — `/wiki/I2C` — addresses (CS42L42=0x48, TAS2505=0x18), 4.7 kΩ pull-ups, 400 kHz max, 2.5 ms post-reset wait, PLL register addresses, mute register behavior, headphone detect bit. (`SAADC`, `PWM` pages currently lack technical detail.)
+11. **PWM** — `/wiki/PWM` — stub: confirms PWM drives track + play LEDs; no detail yet.
+12. **SAADC** — `/wiki/SAADC` — stub: heading only.
+13. **Battery charger** — `/wiki/Battery-charger` — BQ24232 pin map (ISET=P1.00 authoritative, supersedes earlier P0.19 claim), 500 mA USB cap, ISET voltage reflects charge current.
+14. **Bluetooth Module** — `/wiki/Bluetooth-Module` — UART pin map + `PIN_CY_SPI_CSN` (P1.05) noted as a secondary control path. TKT explicitly hasn't worked on BT.
+
+**Wiki content stability:** as of 2026-05-12, several pages are stubs ("It'll be done when it's done"). Re-check pages periodically; if a stub page has new content it may close known-unknowns.
 
 Raw page markdown can be fetched at `https://raw.githubusercontent.com/wiki/timknapen/SP-1-dev/<Page-Name>.md`.
 

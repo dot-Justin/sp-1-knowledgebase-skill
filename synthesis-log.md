@@ -6,7 +6,29 @@ This skill is a frozen snapshot of community knowledge as of a specific date. Th
 
 **2026-05-12.** Last source incorporated through this date.
 
-### Updates on 2026-05-12 (TKT wiki incorporation)
+### Updates on 2026-05-12 phase 2 (TKT wiki round-2 + `stemplayer_pins.h` + ericlewis DTS cross-check)
+
+After the initial TKT wiki incorporation, the remaining 10 wiki pages were fetched, the `SP-1-dev` repo's README and `src/stemplayer_pins.h` were read, and ericlewis's `stem_player.dts` was cross-referenced. Findings committed individually so each shows in commit history.
+
+Per-commit summary:
+
+- **`Fix I2S master/slave...`** — corrects working-confirmed and 06-audio-codecs to say nRF I²S is slave (BCLK from 3.072 MHz osc, LRCLK from CS42L42). Adds buffer size (256 samples / 128 frames).
+- **`Add I2C bring-up details...`** — 4.7 kΩ pull-ups, 2.5 ms post-reset wait, HP_CTL mute behavior (`0x0D` mute, `0x01` unmute headphones), headphone-detect bit 7 of `0x1B77` flagged as potentially distinct from `0x130F`.
+- **`Document BQ24232 USB current cap...`** — 500 mA from USB confirmed; replaces "actual charge current is not publicly documented."
+- **`Document second 3.5mm jack and unused nRF radio`** — SP-1 has two jacks (TRRS for headphones + MIDI/PO sync), nRF radio explicitly unused (no antenna on PCB).
+- **`Resolve BQ24232 known-unknown...`** — BQ24232 driver completeness mostly closed (ISET=P1.00, not P0.19; the README in sp1-midi was the source of the wrong claim). New corrections entry. New known-unknown for second-jack pin mapping.
+- **`(this commit) Update synthesis log...`** — bump date, log round-2 incorporation; enumerate wiki pages with their topical content.
+
+**Still open after round 2:**
+- 0x39 packet framing for bootloader upload (not in any wiki page)
+- Specific BQ24232 ISET resistor values (on schematic, not in code or wiki)
+- Second-jack MIDI/PO sync pin mapping (no public code labels these)
+- Tempo field encoding (raw BPM? Q8.8?)
+- Album header endianness (presumed LE, not confirmed)
+- Sample bit-alignment discrepancy (wiki shows left-aligned formula vs. audiothingies right-aligned)
+- PWM and SAADC wiki pages are stubs
+
+### Updates on 2026-05-12 phase 1 (TKT wiki initial incorporation)
 
 Fetched and incorporated content from `github.com/timknapen/SP-1-dev/wiki` pages: `Bootloader`, `Data-Structure`, `Album-metadata-format`, `Audio-format`. Specific changes:
 
