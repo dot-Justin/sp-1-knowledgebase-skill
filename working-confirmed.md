@@ -45,7 +45,9 @@ This is a **MIDI controller**, not a stem player. It does not play audio. But it
 | USB composite device: MIDI 2.0 (UMP) + CDC ACM serial | [code: `prj.conf` + `app.overlay`] |
 | CS42L42 codec driver (I2C address 0x48) | [code: `drivers/audio/cs42l42_codec.c`] |
 | TAS2505 amp driver (I2C address 0x18) | [code: `drivers/audio/tas2505_codec.c`] |
-| I2S audio bus (48 kHz, 24-bit, master mode, BCLK P0.12, LRCK P0.11, SDOUT P1.09) | [code: `boards/.../stem_player.dts`] |
+| I2S audio bus pins (48 kHz, 24-bit, BCLK P0.12, LRCK P0.11, SDOUT P1.09) | [code: `boards/.../stem_player.dts`] |
+| nRF I2S runs as **SLAVE**: BCLK from external 3.072 MHz osc (P0.13), LRCLK from CS42L42 | [TKT wiki: I2S, accessed 2026-05-12] |
+| I2S buffer size: 256 samples = 128 frames | [TKT wiki: I2S, accessed 2026-05-12] |
 | BQ24232 charger control (GPIO-based) | [code: `drivers/charger/charger_bq24232.c`] |
 | eMMC reads at 32 MHz via bit-banged CMD + SPIM3 DAT0 | [code: `subsys/storage/emmc/EmmcDriver.cpp`] (single-data-line mode, eMMC 5.0) |
 | PWM LED control (PWM2 for track LEDs P0.29/P0.26/P1.15/P1.14, PWM3 for play LEDs P0.01/P1.12/P0.00/P1.13) | [code: `app/Leds.cpp` + DTS] |
