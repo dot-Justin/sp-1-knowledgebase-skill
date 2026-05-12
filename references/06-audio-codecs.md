@@ -4,7 +4,7 @@
 
 The SP-1 has two audio chips: **Cirrus Logic CS42L42** drives the TRRS headphone jack (DAC + ADC for headset microphone), and **TI TAS2505** drives the internal mono speaker (amplifier with built-in DSP).
 
-Both chips sit on **I²C0** (SDA P1.07, SCL P1.11) at **400 kHz**. Both share the same I²S0 audio bus from the nRF (BCLK P0.12, LRCK P0.11, SDOUT P1.09).
+Both chips sit on **I²C0** (SDA P1.07, SCL P1.11) at **up to 400 kHz** with **4.7 kΩ pull-ups on both SDA and SCL** [TKT wiki: I2C, accessed 2026-05-12]. Both share the same I²S0 audio bus from the nRF (BCLK P0.12, LRCK P0.11, SDOUT P1.09).
 
 For the on-disk audio format see `09-audio-format-spec.md`. For the I²S bit-level timing see `02-hardware-overview.md`.
 
@@ -164,13 +164,38 @@ Only two public functions are surfaced. The rest of the bring-up (PLL config, AS
 
 ### Bring-up notes
 
-1. Release reset (P0.15 high)
-2. Configure clocking and PLL via `PLL_*` and `MCLK_*` registers
-3. Wait for PLL lock (read `PLL_LOCK_STATUS = 0x130E`)
-4. Configure ASP to match the I²S parameters (24-bit, 48 kHz, master driving BCLK/LRCK)
-5. Configure SP_RX_CH_SEL to pick which I²S channels feed the DAC
-6. Power up DAC and headphone amp (`PWR_CTL1`, `HP_CTL`, `DAC_CTL`)
-7. Enable detection (`TSRS_PLUG_STATUS`, `MIC_DET_CTL1`)
+[TKT wiki: I2C, accessed 2026-05-12] adds an important timing detail: after releasing reset (P0.15 high), wait at least **2.5 ms before sending I²C commands** to allow the codec's internal clock to start. The wiki also specifies that MCLK / BCLK must be enabled before reset is released.
+
+Sequence:
+
+1. Assert reset low (P0.15 low), enable MCLK and BCLK (3.072 MHz oscillator running, BCLK driven by external chain), release reset (P0.15 high)
+2. **Wait ≥ 2.5 ms** [TKT wiki: I2C, accessed 2026-05-12]
+3. Configure PLL via registers `0x1508` (`PLL_CTL3`), `0x1504` (`PLL_DIV_FRAC2`), `0x1505` (`PLL_DIV_INT`), `0x150A` (`PLL_CAL_RATIO`) [TKT wiki: I2C, accessed 2026-05-12]
+4. Enable MCLK and ASRC clock sources
+5. Wait for PLL lock (read `PLL_LOCK_STATUS = 0x130E`)
+6. Configure ASP to match the I²S parameters (24-bit, 48 kHz; remember nRF is **slave** here — see I²S parameters section)
+7. Configure `SP_RX_CH_SEL` to pick which I²S channels feed the DAC
+8. Set channel resolution to 24-bit samples
+9. Power up DAC and headphone amp (`PWR_CTL1`, `HP_CTL`, `DAC_CTL`)
+10. Enable detection (`TSRS_PLUG_STATUS`, `MIC_DET_CTL1`)
+
+### Mute behavior (HP_CTL = 0x2001)
+
+Per [TKT wiki: I2C, accessed 2026-05-12], the headphone control register's mute behavior:
+
+- Write **`0x0D`** to `0x2001` → **mute all outputs**
+- Write **`0x01`** to `0x2001` → **unmute headphones**
+
+This is the simplest way to gate audio output without bringing down the rest of the codec state.
+
+### Headphone connection detection — discrepancy
+
+There are two register addresses for "is a headphone plugged in":
+
+- `TSRS_PLUG_STATUS = 0x130F` [code: `sp1-midi/drivers/audio/cs42l42_codec.c`]
+- `0x1B77 bit 7` [TKT wiki: I2C, accessed 2026-05-12]
+
+These are most likely two different things — `0x130F` is the high-level plug-detect status the `sp1-midi` driver exposes via `cs42l42_codec_is_headphone_connected()`, while `0x1B77` may be a lower-level detection state register in the headset-detect block (registers `0x1B73`–`0x1C03` are the detection cluster). For reliable headphone-presence reads, follow the `sp1-midi` driver's use of `0x130F`. The `0x1B77` bit 7 is potentially useful for finer-grained jack state (tip-vs-ring detection) — verify against the Cirrus datasheet before relying on it.
 
 The CS42L42 datasheet has a thorough bring-up sequence; the `sp1-midi` driver implements it.
 
