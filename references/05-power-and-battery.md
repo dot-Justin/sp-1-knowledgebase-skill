@@ -117,7 +117,11 @@ Steps 1–6 are best-effort cleanup; the device will wake on USB-attach or — d
 
 ## Charging current — practical notes
 
-Without schematic-level access to the resistor values, the **actual charge current is not publicly documented**. Empirically the SP-1 charges over a USB-C port with a normal 1-A wall adapter without trouble; charging from a slow-USB port (e.g., a keyboard hub) is reportedly fine but slow. ISET override toggling allows the firmware to switch between two charge currents (the lower one being whatever the override resistor sets) — `sp1-midi` doesn't actively switch this in the basic BSP, but the hook is there if your application wants slow/fast charge modes.
+Per [TKT wiki: Battery-charger, accessed 2026-05-12], the BQ24232 is configured to **allow up to 500 mA draw from USB**. This matches USB 2.0's default port current limit and means the SP-1 should charge normally on any USB-A or USB-C port without negotiation. The 500 mA cap is set by the ISET resistor network on the PCB, not by software.
+
+The same wiki page describes the ISET pin behavior: the voltage at ISET reflects the **actual charging current** and can be monitored via a voltage divider for fuel-gauge-like inference. ISET-override (P1.00) flips between two charge-current setpoints — useful for switching between "fast charge when plugged into a wall adapter" and "slow charge when plugged into a low-power source" if the firmware wants to implement that distinction. `sp1-midi` doesn't actively switch this in the basic BSP, but the hook is there.
+
+Specific resistor values setting the charge currents are not publicly documented (they're on the schematic, not in code).
 
 ## Where to go next
 
