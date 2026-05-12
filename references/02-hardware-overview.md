@@ -1,8 +1,28 @@
 # Hardware Overview
 
-**Synthesized through:** Lines #846 (2026-05-06), Discord through 2026-05-11.
+**Synthesized through:** Lines #846 (2026-05-06), Discord through 2026-05-11, TKT wiki Hardware-overview page accessed 2026-05-12.
 
 Authoritative source for chip identities, memory map, and high-level architecture. For pin-level mapping see `references/03-pcb-and-schematic.md`. For peripheral details see the topic-specific references (`05-power-and-battery.md`, `06-audio-codecs.md`, `07-bluetooth-module.md`, `08-emmc-storage.md`).
+
+## nRF52840 radio is unused
+
+[TKT wiki: Hardware-overview, accessed 2026-05-12] states explicitly: *"there is no antenna connected to the MCU on the stem player PCB."* The nRF52840's integrated 2.4 GHz radio is **not used** by the SP-1. All Bluetooth functionality is delegated to the **CYBT-353027-02** module, which speaks HCI to the nRF over UART (see `07-bluetooth-module.md`).
+
+Practical implications:
+- Custom firmware should not enable `CONFIG_BT_LL_SOFTDEVICE` or any Zephyr Bluetooth Controller mode that uses the nRF radio — there's no antenna to radiate from.
+- The radio pins/peripherals can be left disabled or used for other timing purposes (e.g., RADIO peripheral as a high-precision timer).
+- Power consumption budgets should treat the radio as "off."
+
+## Two 3.5 mm jacks
+
+The SP-1 has **two 3.5 mm TRS/TRRS jacks** on the device, not one. Per [TKT wiki: Hardware-overview, accessed 2026-05-12]:
+
+1. **Headphone jack** — TRRS, wired to the **CS42L42** codec. Carries stereo audio out and the headset microphone signal in, plus mic-button detection.
+2. **MIDI / Pocket Operator sync jack** — a second 3.5 mm jack that *"supports MIDI or Pocket Operator synchronization."*
+
+The second jack is wired to nRF GPIOs and conveys MIDI clock and/or PO sync pulses (TE's Pocket Operator products use a TRS sync convention where one channel carries audio and the other carries clock pulses). The specific GPIOs used for the second-jack signaling are **not** in `stemplayer_pins.h` or `stem_player.dts` as labeled MIDI pins — likely the firmware uses one of the unallocated GPIOs and bit-bangs the MIDI / PO timing. See `known-unknowns.md`.
+
+This is significant for any project that wants the SP-1 to **drive external MIDI hardware or sync to a Pocket Operator** — the hardware path exists, the firmware doesn't expose it publicly yet.
 
 ## Block diagram (functional)
 
