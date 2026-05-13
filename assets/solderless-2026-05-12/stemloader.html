@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="SP-1 stem loader">
+  <link href="stemloader/fonts/fonts.css" type="text/css" rel="stylesheet" />
+  <link href="stemloader/css/stemloader.css" type="text/css" rel="stylesheet" />
+  <title>SP-1 stem loader</title>
+  <link rel="icon" href="stemloader/img/favicon.svg" type="image/svg+xml">
+</head>
+
+<body>
+
+  <div id="stemloader">
+    <div>
+      <div class="section panel" id="webserial-warning">
+        <div class="title">No webserial</div>
+        <p>This browser doesn't support <a href="https://developer.chrome.com/docs/capabilities/serial">webserial</a>.
+        </p>
+        <p>Please use Chrome or Edge</p>
+      </div>
+
+      <div class="section panel" id="connect-panel">
+        <input type="button" value="Connect" onclick="connectToDevice()"><br>
+        <p>Hold T1 + T4 and connect via USB</p>
+        <p>Wait until T1 lights up</p>
+        <p>Click connect and select stem player from the list</p>
+      </div>
+
+      <div class="section panel" id="wait-panel">
+        <div class="title">SP-1 disconnected</div>
+        <p><em>Waiting for device...</em></p>
+        <input type="button" value="Disconnect" onclick="disconnectDevice()">
+      </div>
+
+      <div class="section panel" id="boot-panel">
+        <div class="title">SP-1 connected</div>
+        <input type="button" value="Transfer mode" onclick="sendSP1Cmd('p', new Uint8Array([1]))"><br>
+        <input type="button" value="Disconnect" onclick="disconnectDevice()">
+      </div>
+
+      <div class="section panel" id="transfer-panel">
+        <div class="title">SP-1 ready</div>
+        <input type="button" class="dark-button" id="transfer-button" value="Transfer" onclick="createBinary()"><br>
+        <input type="button" value="Disconnect" onclick="disconnectDevice()"><br>
+        <!-- <input type="button" value="Clear Album" onclick="clearAlbum()"><br> -->
+      </div>
+      <div class="section">
+        <input type="button" class="minimal-button" value="Show Log" onclick="showLog()">
+      </div>
+
+      <div class="section panel" id="debug-panel">
+        <div class="title">Debug</div>
+
+        <input type="button" value="Hide debug" onclick="hideDebugPanel()"><br>
+        <input type="button" value="Verify data read" onclick="sendSP1Cmd('f')"><br>
+        <input type="button" value="Get album title" onclick="sendSP1Cmd('X')"><br>
+        <input type="button" value="Get device ID" onclick="sendSP1Cmd('T')"><br>
+        <input type="button" value="Get write counter " onclick="sendSP1Cmd('C')"><br>
+        <input type="button" value="Get battery status" onclick="sendSP1Cmd('z')"><br>
+        <input type="button" value="Get fader states " onclick="sendSP1Cmd('d')"><br>
+        <input type="button" value="Get button states" onclick="sendSP1Cmd('\\')"><br>
+        <input type="button" value="Get ladder values" onclick="sendSP1Cmd('t')"><br>
+        <p>LEDs<br>
+          <input type="button" value="T1" onclick="sendSP1Cmd('Z', new Uint8Array([128, 0, 0, 0, 0, 0, 0, 0]))">
+          <input type="button" value="T2" onclick="sendSP1Cmd('Z', new Uint8Array([0, 128, 0, 0, 0, 0, 0, 0]))">
+          <input type="button" value="T3" onclick="sendSP1Cmd('Z', new Uint8Array([0, 0, 128, 0, 0, 0, 0, 0]))">
+          <input type="button" value="T4" onclick="sendSP1Cmd('Z', new Uint8Array([0, 0, 0, 128, 0, 0, 0, 0]))">
+          <br>
+          <input type="button" value="S1" onclick="sendSP1Cmd('Z', new Uint8Array([0, 0, 0, 0, 128, 0, 0, 0]))">
+          <input type="button" value="S2" onclick="sendSP1Cmd('Z', new Uint8Array([0, 0, 0, 0, 0, 128, 0, 0]))">
+          <input type="button" value="S3" onclick="sendSP1Cmd('Z', new Uint8Array([0, 0, 0, 0, 0, 0, 128, 0]))">
+          <input type="button" value="S4" onclick="sendSP1Cmd('Z', new Uint8Array([0, 0, 0, 0, 0, 0, 0, 128]))">
+        </p>
+        <input type="button" class="dark-button" value="Transfer" onclick="createBinary()"><br>
+        <input type="button" value="Reset for transfer " onclick="sendSP1Cmd('7')"><br>
+        <input type="button" value="Bootloader mode" onclick="sendSP1Cmd('Q')"><br>
+        <input type="button" value="Disconnect" onclick="disconnectDevice()"><br>
+
+      </div>
+
+    </div>
+
+    <div>
+      <div class="section">
+
+        <div id="album-editor">
+          <div class="album-header">
+            <input type="text" id="album-title" placeholder="Album title">
+            <span id="album-length"></span>
+            <span id="album-duration">00:00</span>
+          </div>
+          <div class="song-header">
+            <div class="song-nr">#</div>
+            <div>title</div>
+            <div>artist</div>
+            <div>BPM</div>
+          </div>
+          <div id="album-songs"></div>
+        </div>
+
+        <div id="wav-drop-container">
+          <label id="wav-drop-zone">
+            Drop your WAV files or click to add new songs<br>
+            (24 bit 48 kHz 8 channel PCM please)
+            <input type="file" id="wav-input" multiple accept=".wav" />
+          </label>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <span class="beta-label">BETA</span>
+
+
+  <div id="wav-drop-overlay">
+    Drop your WAV files<br>
+    (24 bit 48 kHz 8 channel PCM please)
+  </div>
+
+  <div id="stem-log-container">
+    <input type="button" id="hide-log" class="dark-button" value="Hide log" onclick="hideLog()">
+    <input type="button" id="clear-log" class="dark-button" value="Clear log" onclick="clearLog()">
+    <div id="stem-log"></div>
+  </div>
+
+  <div id="progress-bar-container">
+    <div>
+      <div id="progress-title"></div>
+      <div id="progress-bar-bg">
+        <div id="progress-bar-front"></div>
+      </div>
+      <div id="progress-text"></div>
+    </div>
+  </div>
+
+  <div id="solderless">
+    <a href="https://solderless.engineering/">
+      <img src="stemloader/img/solderless_sparks.svg" width="60px" />
+    </a>
+  </div>
+
+</body>
+<script src="stemloader/js/sp-1_protocol.js" type="text/javascript"></script>
+<script src="stemloader/js/wav-parser.js" type="text/javascript"></script>
+<script src="stemloader/js/stemloader.js" type="text/javascript"></script>
+
+</html>
