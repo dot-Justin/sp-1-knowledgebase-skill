@@ -26,6 +26,7 @@ This skill provides curated reference material about the **Teenage Engineering S
 - `corrections.md` — documented reversals (what was once believed wrong)
 - `known-unknowns.md` — what's explicitly unresolved as of synthesis date
 - `working-confirmed.md` — what is confirmed working with citations
+- `gaps-index.md` — broader triage of documentation / synthesis gaps beyond research unknowns (Tier 1 / 2 / 3 plus structural gaps)
 
 **Then for specific topics:**
 
@@ -169,10 +170,12 @@ For "what's happening now" questions, ask the user to summarize the current stat
 sp-1/
 ├── SKILL.md                              ← this file
 ├── synthesis-log.md                      ← freshness metadata + identity map
+├── update-log.md                         ← per-batch change history
 ├── hallucination-watchlist.md            ← past AI errors to avoid
 ├── corrections.md                        ← documented reversals
 ├── known-unknowns.md                     ← what's still open
 ├── working-confirmed.md                  ← safe-claims list
+├── gaps-index.md                         ← broader gap triage (T1/T2/T3 + structural)
 ├── sources.md                            ← where to find primary sources
 ├── references/
 │   ├── 01-overview-and-history.md        (+ -faq.md)
@@ -205,7 +208,16 @@ sp-1/
 └── assets/
     ├── TE-Stem-User-Guide.docx           ← TE official, 16 KB
     ├── TE-Stem-User-Guide.pdf            ← TE official, 59 KB
-    └── TE-Stem-Player-manual.pdf         ← TE official, 509 KB
+    ├── TE-Stem-Player-manual.pdf         ← TE official, 509 KB
+    ├── solderless-2026-05-12/            ← host-protocol JS source archive
+    ├── solderless-2026-05-12.zip
+    ├── SP-1-dev-2026-05-13/              ← TimK's docs repo + wiki snapshot
+    ├── sp1-midi-2026-05-13/              ← ericlewis's Zephyr BSP snapshot
+    ├── audiothingies-2026-05-09/         ← ericlewis's audio engine reference
+    ├── audiothingies-2026-05-09.zip
+    ├── storagethingies-2026-05-09/       ← ericlewis's eMMC + DiskManager reference
+    ├── storagethingies-2026-05-09.zip
+    └── lines-thread-archive/             ← Lines forum mirror (agent subset)
 ```
 
-**6 top-level accuracy files + 27 deep references + 27 FAQ companions + 3 bundled manuals + this SKILL.md = 64 files.**
+**8 top-level accuracy files + 27 deep references + 27 FAQ companions + bundled assets + this SKILL.md.** Counts shift as bundles are added; see the `assets/` listing for current inventory.

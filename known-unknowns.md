@@ -78,6 +78,103 @@ See `update-log.md` 2026-05-13 and `working-confirmed.md` for the full resolutio
 
 ---
 
+## SWD pad layout on the rear PCB
+
+**Question:** Where exactly is the SWD header footprint on the SP-1's main PCB, and which physical pad is which signal?
+
+**Known:**
+- A standard 10-pin SWD/JTAG header footprint exists on the **back of the main PCB** [Lines #068; Lines #243; Lines #417 (TimK) — *"this one has a SWD connector soldered to the back"*; Lines #605/613 (TimK) — *"there is no way to change the firmware … without fully opening up the device for access to the SWD lines on the back of the main PCB"*]
+- 3 test points are exposed adjacent to the header [Lines #068]
+- The Adafruit 752-style 10-pin header fits the footprint [Lines #214]
+- Multiple community members have soldered headers; TimK said *"I'll add documentation of the test points to the wiki"* on 2026-05-07 17:43
+
+**Why unresolved:** the promised TimK wiki page hasn't shipped — bundled `assets/SP-1-dev-2026-05-13/wiki/` does not contain a dedicated SWD or test-point page as of synthesis date. No annotated PCB photograph circulates publicly with pad-by-pad labels.
+
+**Why it matters:** the skill repeatedly recommends "add an SWD header" as the path to serious firmware development. Without the pad map, this is followable only by people who can probe the PCB themselves (multimeter on SWDIO = +3.3 V rest state, SWCLK = 0 V rest state per Lines #068).
+
+**Next move:** ask TimK in Discord for a board-photo annotation, or wait for the wiki update. As a fallback, the bundled Lines archive (`assets/lines-thread-archive/`) contains photographs and discussions in the post-200 range that can guide manual identification.
+
+---
+
+## eMMC test point coordinates on the rear PCB
+
+**Question:** Where exactly are the DAT0–DAT3 / CLK / CMD test points on the main PCB?
+
+**Known:**
+- All four eMMC data lines (DAT0–DAT3) plus CLK and CMD are routed to test points [Discord #hardware, tkt1000, 2026-05-07 17:53 — *"DAT0-DAT3 are broken out to test points, so you could read much faster than the MCU!"*; Lines #316; Lines #433 — *"DAT0-DAT3 test points"*]
+- Faster than the on-chip 1-bit read because external readers can drive the full 4-bit bus
+- TimK promised wiki documentation on 2026-05-07 17:43
+
+**Why unresolved:** same as SWD pads — promised but not shipped. Bundled `assets/SP-1-dev-2026-05-13/wiki/` has no eMMC test-point page; the Peripherals wiki page lists eMMC interfacing itself as a TODO.
+
+**Why it matters:** `references/24-emmc-direct-extraction.md` Methods 1 (test-point read) and 3 (in-place ISP) cannot be executed without the pad coordinates. The non-destructive eMMC dump path is documented as available but is in practice non-functional.
+
+**Next move:** same as the SWD-pad entry. Alternatively, since CLK and CMD are P0.06 / P0.08 nRF pins, the test points can be located by continuity probing from those nRF pins on a working board.
+
+---
+
+## KiCad schematic source files
+
+**Question:** Will TimK's reverse-engineered KiCad schematic be published?
+
+**Known:**
+- TimK has reverse-engineered the nRF52840 pinout, BQ24232 wiring, and CYBT-353027-02 wiring [Lines, TimK]
+- TimK: *"I have reverse engineered most of the PCB. I have the full pinout and schematic of MCU and all relevant ICs."* [Lines]
+- But also: *"I didn't even draw a full schematic, only the bare minimum needed for working on the firmware. I didn't bother at all with documenting (passive) component values, understanding trace impedance, etc."* [Lines]
+- The KiCad files are private; bundled `assets/SP-1-dev-2026-05-13/` does not contain them
+
+**Why unresolved:** TimK has held them privately. There's no public statement of intent to release.
+
+**Why it matters:** this single artifact would resolve at least six other entries — BQ24232 ISET resistor values, 3.3 V / 1.8 V regulator part numbers, second-jack pin assignment, all "unused" GPIO routing, FPC pin-by-pin map, and the CYBT secondary-control-path (P1.05) question. Highest-leverage closed door in the skill.
+
+**Next move:** ask TimK whether he'll publish the partial KiCad. As a deeper alternative, coordinate a community-funded full PCB reversal — Lines posts in the #305–330 range and later include offers from community members for collaborative reversal work.
+
+---
+
+## nRF52840 silicon revision across SP-1 production batches
+
+**Question:** Do all SP-1 units use APPROTECT-vulnerable nRF52840 silicon, or did some batches ship with the post-fix revision?
+
+**Known:**
+- The Nordic APPROTECT timing-glitch vulnerability that murray exploited was patched in newer silicon (fix shipped around **2021-11-21**) [Lines, multiple references]
+- The vulnerability is documented in `limitedresults`' 2020 writeup for rev A and early rev B silicon
+- TE SP-1 development started ~2018 and units shipped to Ye in September 2020 [Lines #743] — well before the silicon fix
+- But some SP-1 units were circulating in 2022 [Lines, multiple]
+- murray's glitch succeeded on attempt #8504 on 2025-01-25, confirming **at least his unit** has vulnerable silicon
+- Lines community discussed reading the nRF chip date code (markings include date and revision letter) — interpretations vary: "revision F, 2022" or "revision D, 2019" appear in posts
+- Lines #375 noted significant build-quality differences between units with serial numbers `Y4KNGAKJ` and `Y4KNGAGX`, suggesting different production batches
+
+**Why unresolved:** no organized catalog cross-references unit serial numbers, production-batch markers, and nRF52840 date codes.
+
+**Why it matters:** a user following the APPROTECT-bypass path (or someone trying to set up murray's BeagleBone PRU rig) may waste weeks on a glitch campaign that can't possibly succeed because their unit's silicon is patched. The skill's `14-approtect-glitch-attack.md` currently doesn't warn users to check.
+
+**Next move:** crowd-source nRF52840 date code photographs from Discord owners; cross-reference with serial numbers; build a "your unit is/isn't glitchable" lookup. Until then, the safe advisory is "open the device, photograph the nRF chip date code, check against Nordic's vulnerability matrix before starting a glitch campaign."
+
+---
+
+## Stock-firmware UI / menu state machine
+
+**Question:** How does the stock TE firmware translate button events into engine state changes (effect selection, transport mode, power on/off, LED animations)?
+
+**Known:**
+- The stock firmware has a UI layer; `audiothingies/` (bundled at `assets/audiothingies-2026-05-09/`) is explicitly the engine only, no UI
+- emvee1968's unreleased custom firmware reimplements some of this (gate effect activation, vol+/vol- combo for BT pairing) but explicitly does not implement power-off [Discord #firmware, 2026-05-08]
+- ericlewis stated his "proper BSP" is in development and will presumably include a UI layer; not published
+- `references/19-sp1-midi-bsp.md` describes the public BSP's button-to-MIDI mapping but that is a MIDI controller, not a replication of stock UX
+
+**Why unresolved:** no public reverse-engineering of the stock app region (`0x20000`+) at the UI-state-machine level. ericlewis's audiothingies is the engine; the glue / UX layer is missing from public artifacts.
+
+**Why it matters:** custom firmware authors aiming for stock-feel UX must reimplement this from scratch with no reference. Specific sub-questions:
+- Which button combos select which effect type and variation
+- Solo vs mute behavior (Track button hold vs tap)
+- Tape-FX rate stepping behavior
+- LED animations during transport changes
+- Power on / power off subsystem teardown order
+
+**Next move:** Ghidra-dive the stock app region focused on the input event dispatch; or ask ericlewis for a UX-layer outline; or wait for the "proper BSP" release. Empirically, custom firmware authors can also characterize behavior by recording button presses + audio response on a stock unit.
+
+---
+
 ## Second 3.5mm jack (MIDI / PO sync) pin assignment
 
 **Question:** Which nRF GPIO pins drive the MIDI / Pocket Operator sync jack?
