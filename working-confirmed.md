@@ -83,7 +83,7 @@ This is a **MIDI controller**, not a stem player. It does not play audio. But it
 
 | Capability | Evidence |
 | --- | --- |
-| Boots on real SP-1 hardware | [code: `ericlewis/sp1-midi/app/main.cpp` + ericlewis Discord 2026-05-09 00:08] |
+| Boots on real SP-1 hardware | [code: `assets/sp1-midi-2026-05-13/app/main.cpp` + ericlewis Discord 2026-05-09 00:08] |
 | USB composite device: MIDI 2.0 (UMP) + CDC ACM serial | [code: `prj.conf` + `app.overlay`] |
 | CS42L42 codec driver (I2C address 0x48) | [code: `drivers/audio/cs42l42_codec.c`] |
 | TAS2505 amp driver (I2C address 0x18) | [code: `drivers/audio/tas2505_codec.c`] |

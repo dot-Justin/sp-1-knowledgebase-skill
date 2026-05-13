@@ -1,6 +1,6 @@
 # Zephyr Build Environment
 
-**Synthesized through:** Lines #846 (2026-05-06), Discord through 2026-05-11. Code-of-record: `ericlewis/sp1-midi/{README.md, CMakeLists.txt, prj.conf, app.overlay}` 2026-05-09.
+**Synthesized through:** Lines #846 (2026-05-06), Discord through 2026-05-11. Code-of-record: `assets/sp1-midi-2026-05-13/{README.md, CMakeLists.txt, prj.conf, app.overlay}` 2026-05-09.
 
 To build custom firmware for the SP-1 you need **Zephyr RTOS** with a specific configuration. The `sp1-midi` BSP gives you a working starting point. This file documents what's required, what's enabled, and how to extend it.
 
@@ -14,7 +14,7 @@ To build custom firmware for the SP-1 you need **Zephyr RTOS** with a specific c
 | Ninja | Any recent version | System package manager |
 | Python virtualenv | A `zephyr-venv` for west and helper scripts | Standard Python venv |
 
-The `sp1-midi` README's quickstart [code: `sp1-midi/README.md`]:
+The `sp1-midi` README's quickstart [code: `assets/sp1-midi-2026-05-13/README.md`]:
 
 ```sh
 PATH="/path/to/zephyr-venv/bin:$PATH" \
@@ -44,7 +44,7 @@ The `flash` target uses Nordic's nrfjprog (or West's flash backend) to push the 
 -DBOARD=stem_player
 ```
 
-This selects `ericlewis/sp1-midi/boards/teenageengineering/stem_player/` as the board definition. It includes:
+This selects `assets/sp1-midi-2026-05-13/boards/teenageengineering/stem_player/` as the board definition. It includes:
 
 - `stem_player.dts` — full device tree (see `02-hardware-overview.md`)
 - `stem_player-pinctrl.dtsi` — pin assignments
@@ -191,11 +191,11 @@ sp1-midi/
     └── Leds.{hpp,cpp}            ← PWM LED helpers
 ```
 
-[code: `ericlewis/sp1-midi/` GitHub repository structure]
+[code: `assets/sp1-midi-2026-05-13/` GitHub repository structure]
 
 ## Adding your code
 
-Per `sp1-midi/README.md`:
+Per `assets/sp1-midi-2026-05-13/README.md`:
 
 > 1. Add source files to `APP_SOURCES` in `CMakeLists.txt`
 > 2. Extend `AppMachine` in `AppStateMachine.hpp` with your subsystem pointers

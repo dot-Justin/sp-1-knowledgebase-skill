@@ -34,7 +34,7 @@ The KiCad files are not (as of the synthesis date) in `github.com/timknapen/SP-1
 
 ## Complete pin map (nRF52840 GPIOs in use)
 
-Pulled and cross-referenced from `sp1-midi/boards/.../stem_player.dts`, `sp1-midi/boards/.../stem_player-pinctrl.dtsi`, and `SP-1-dev/src/stemplayer_pins.h`. When the two sources disagree, the discrepancy is noted (see "Discrepancies" at bottom).
+Pulled and cross-referenced from `assets/sp1-midi-2026-05-13/boards/.../stem_player.dts`, `assets/sp1-midi-2026-05-13/boards/.../stem_player-pinctrl.dtsi`, and `assets/SP-1-dev-2026-05-13/src/stemplayer_pins.h`. When the two sources disagree, the discrepancy is noted (see "Discrepancies" at bottom).
 
 ### Port 0
 
@@ -145,7 +145,7 @@ Pure-USB operation (battery removed) is generally NOT reliable; the system expec
 
 ### BQ24232 ISET pin
 
-`sp1-midi/README.md` lists ISET on **P0.19**. The DTS (`stem_player.dts`, line 259) defines `iset-override-gpios = <&gpio1 0 GPIO_ACTIVE_LOW>` which is **P1.00**. TimK's `stemplayer_pins.h` line 80 defines `PIN_BQ_ISET NRF_GPIO_PIN_MAP(1, 00)` which is also **P1.00**. The README is the outlier; trust the DTS and TimK's header.
+`assets/sp1-midi-2026-05-13/README.md` lists ISET on **P0.19**. The DTS (`stem_player.dts`, line 259) defines `iset-override-gpios = <&gpio1 0 GPIO_ACTIVE_LOW>` which is **P1.00**. TimK's `stemplayer_pins.h` line 80 defines `PIN_BQ_ISET NRF_GPIO_PIN_MAP(1, 00)` which is also **P1.00**. The README is the outlier; trust the DTS and TimK's header.
 
 ### Play LED ordering
 

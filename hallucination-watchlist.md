@@ -29,10 +29,10 @@ These are word-for-word from Discord #general, 2026-05-10 22:51–22:57 UTC, in 
 
 **TimK's correction:** *"the python and rust tools being in my repo … that doesn't make sense"* [Discord #general, tkt1000, 2026-05-10]
 
-**Why this is wrong:** `github.com/timknapen/SP-1-dev` is a documentation repository. As of synthesis date its contents are: `README.md`, `src/stemplayer_pins.h`, `img/`, `icon.png`, `LICENSE`, plus a GitHub Wiki. **There are no Python or Rust tools in this repo.**
+**Why this is wrong:** `github.com/timknapen/SP-1-dev` is a documentation repository. As of synthesis date its contents are: `README.md`, `src/stemplayer_pins.h`, `img/`, `icon.png`, `LICENSE`, plus a GitHub Wiki. **There are no Python or Rust tools in this repo.** (The repo is now bundled in this skill at `assets/SP-1-dev-2026-05-13/` — pin header + wiki pages — so this can be verified directly.)
 
 **If you need a tool for SP-1 work:**
-- The actual Zephyr BSP for MIDI-controller mode lives at `github.com/ericlewis/sp1-midi` (different person from TimK).
+- The actual Zephyr BSP for MIDI-controller mode lives at `github.com/ericlewis/sp1-midi` (different person from TimK; also bundled at `assets/sp1-midi-2026-05-13/`).
 - The audio engine and storage code lives in `assets/audiothingies-2026-05-09/` and `assets/storagethingies-2026-05-09/` (bundled in this skill). Originally shared as Discord file attachments by ericlewis 2026-05-09; not in any of ericlewis's public GitHub repos.
 - The `solderless.engineering` web updater is a separate project.
 - The slow Python USB uploader exists in moecal1947's private code as of 2026-05-09; not yet public.
@@ -85,7 +85,7 @@ The `app/` directory of `ericlewis/sp1-midi` is a **MIDI controller**, not a ste
 - Implement Bluetooth
 - Implement original-firmware UX
 
-If asked "how does the SP-1 play audio?", do not look in `sp1-midi/app/` — look in `assets/audiothingies-2026-05-09/AudioEngine.cpp` and the original firmware analysis.
+If asked "how does the SP-1 play audio?", do not look in `assets/sp1-midi-2026-05-13/app/` — look in `assets/audiothingies-2026-05-09/AudioEngine.cpp` and the original firmware analysis.
 
 ### Don't claim a feature is "in the firmware" without citing which firmware
 

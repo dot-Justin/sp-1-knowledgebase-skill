@@ -1,0 +1,8 @@
+menu "Stem Player Charger Drivers"
+
+config STEM_PLAYER_CHARGER_BQ24232
+	bool "BQ24232 charger driver"
+	default y
+	depends on CHARGER
+
+endmenu

@@ -1,0 +1,445 @@
+/dts-v1/;
+#include <nordic/nrf52840_qiaa.dtsi>
+#include <zephyr/dt-bindings/input/input-event-codes.h>
+#include "stem_player-pinctrl.dtsi"
+
+/ {
+	model = "Stem Player SP-1";
+	compatible = "teenageengineering,stem-player";
+	nfct-pins-as-gpios;
+
+	chosen {
+		zephyr,sram = &sram0;
+		zephyr,flash = &flash0;
+		zephyr,code-partition = &slot0_partition;
+	};
+
+	zephyr,user {
+		io-channels = <&adc 4>, <&adc 3>, <&adc 6>, <&adc 2>, <&adc 7>, <&adc 0>, <&adc 1>;
+		io-channel-names = "battery", "fader1", "fader2", "fader3", "fader4", "tracks", "volume";
+	};
+
+	aliases {
+		i2s = &i2s0;
+		codec-i2c = &i2c0;
+		bt-uart = &uart0;
+		fnc-btn = &button_fnc;
+		btn-com = &btn_com_reg;
+		sw0 = &button_fnc;
+		led0 = &led_play_1;
+		led1 = &led_play_2;
+		led2 = &led_play_3;
+		led3 = &led_play_4;
+	};
+
+	leds {
+		compatible = "pwm-leds";
+
+		led_play_1: led_play_1 {
+			pwms = <&pwm3 0 PWM_USEC(1024) 0>;
+		};
+
+		led_play_2: led_play_2 {
+			pwms = <&pwm3 1 PWM_USEC(1024) 0>;
+		};
+
+		led_play_3: led_play_3 {
+			pwms = <&pwm3 2 PWM_USEC(1024) 0>;
+		};
+
+		led_play_4: led_play_4 {
+			pwms = <&pwm3 3 PWM_USEC(1024) 0>;
+		};
+
+		led_track_1: led_track_1 {
+			pwms = <&pwm2 0 PWM_USEC(1024) 0>;
+		};
+
+		led_track_2: led_track_2 {
+			pwms = <&pwm2 1 PWM_USEC(1024) 0>;
+		};
+
+		led_track_3: led_track_3 {
+			pwms = <&pwm2 2 PWM_USEC(1024) 0>;
+		};
+
+		led_track_4: led_track_4 {
+			pwms = <&pwm2 3 PWM_USEC(1024) 0>;
+		};
+	};
+
+	analog_inputs {
+		fader_1: fader_1 {
+			io-channels = <&adc 3>;
+		};
+
+		fader_2: fader_2 {
+			io-channels = <&adc 6>;
+		};
+
+		fader_3: fader_3 {
+			io-channels = <&adc 2>;
+		};
+
+		fader_4: fader_4 {
+			io-channels = <&adc 7>;
+		};
+
+		ladder_tracks: ladder_tracks {
+			io-channels = <&adc 0>;
+		};
+
+		ladder_vol: ladder_vol {
+			io-channels = <&adc 1>;
+		};
+
+		batt_meas: batt_meas {
+			io-channels = <&adc 4>;
+		};
+	};
+
+		fader_axes: fader_axes {
+			compatible = "analog-axis";
+			status = "disabled";
+			poll-period-ms = <20>;
+
+		/* Children MUST be ordered by ascending ADC channel number.
+		 * The analog-axis driver batches all channels into one
+		 * adc_read(); the SAADC fills the buffer in HW channel
+		 * order, but the driver indexes buf[i] as child cfg[i].
+		 */
+
+		fader_axis_3: fader_axis_3 {
+			io-channels = <&adc 2>;
+			in-min = <0>;
+			in-max = <4080>;
+			out-min = <0>;
+			out-max = <4080>;
+			zephyr,axis = <INPUT_ABS_Z>;
+		};
+
+		fader_axis_1: fader_axis_1 {
+			io-channels = <&adc 3>;
+			in-min = <0>;
+			in-max = <4080>;
+			out-min = <0>;
+			out-max = <4080>;
+			zephyr,axis = <INPUT_ABS_X>;
+		};
+
+		battery_axis: battery_axis {
+			io-channels = <&adc 4>;
+			in-min = <0>;
+			in-max = <4096>;
+			out-min = <0>;
+			out-max = <4096>;
+			zephyr,axis = <INPUT_ABS_RY>;
+		};
+
+		fader_axis_2: fader_axis_2 {
+			io-channels = <&adc 6>;
+			in-min = <0>;
+			in-max = <4080>;
+			out-min = <0>;
+			out-max = <4080>;
+			zephyr,axis = <INPUT_ABS_Y>;
+		};
+
+		fader_axis_4: fader_axis_4 {
+			io-channels = <&adc 7>;
+			in-min = <0>;
+			in-max = <4080>;
+			out-min = <0>;
+			out-max = <4080>;
+			zephyr,axis = <INPUT_ABS_RX>;
+		};
+	};
+
+		adc_keys_transport: adc_keys_transport {
+			compatible = "adc-keys";
+			status = "disabled";
+			io-channels = <&adc 1>;
+		sample-period-ms = <20>;
+		keyup-threshold-mv = <0>;
+
+		rocker_rwd {
+			press-thresholds-mv = <355 441>;
+			zephyr,code = <INPUT_KEY_BACK>;
+		};
+
+		volume_down {
+			press-thresholds-mv = <638 793>;
+			zephyr,code = <INPUT_KEY_VOLUMEDOWN>;
+		};
+
+		rocker_fwd {
+			press-thresholds-mv = <1064 1321>;
+			zephyr,code = <INPUT_KEY_FASTFORWARD>;
+		};
+
+		volume_up {
+			press-thresholds-mv = <1598 1984>;
+			zephyr,code = <INPUT_KEY_VOLUMEUP>;
+		};
+	};
+
+		adc_keys_track: adc_keys_track {
+			compatible = "adc-keys";
+			status = "disabled";
+			io-channels = <&adc 0>;
+		sample-period-ms = <20>;
+		keyup-threshold-mv = <0>;
+
+		track_1 {
+			press-thresholds-mv = <179 517 779 996 1178 1334 1467 1584>;
+			zephyr,code = <INPUT_KEY_1>;
+		};
+
+		track_2 {
+			press-thresholds-mv = <364 517 893 996 1259 1334 1528 1584>;
+			zephyr,code = <INPUT_KEY_2>;
+		};
+
+		track_3 {
+			press-thresholds-mv = <655 779 893 996 1403 1467 1528 1584>;
+			zephyr,code = <INPUT_KEY_3>;
+		};
+
+		track_4 {
+			press-thresholds-mv = <1091 1178 1259 1334 1403 1467 1528 1584>;
+			zephyr,code = <INPUT_KEY_4>;
+		};
+
+		play_key {
+			press-thresholds-mv = <1587 1589 1591 1592>;
+			zephyr,code = <INPUT_KEY_PLAY>;
+		};
+	};
+
+		buttons: buttons {
+			compatible = "gpio-keys";
+			status = "disabled";
+
+			button_fnc: button_fnc {
+				gpios = <&gpio0 27 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+				label = "Function Button";
+				zephyr,code = <INPUT_KEY_MENU>;
+			};
+		};
+
+		function_longpress {
+			compatible = "zephyr,input-longpress";
+			status = "disabled";
+			input = <&buttons>;
+			input-codes = <INPUT_KEY_MENU>;
+			long-codes = <INPUT_KEY_POWER>;
+			long-delay-ms = <3000>;
+		};
+
+	board_ctrl {
+		bt_transport_reset: bt_transport_reset {
+			gpios = <&gpio0 10 GPIO_ACTIVE_LOW>;
+		};
+	};
+
+	btn_com_reg: regulator-btn-com {
+		compatible = "regulator-fixed";
+		regulator-name = "btn-com";
+		enable-gpios = <&gpio1 10 GPIO_ACTIVE_HIGH>;
+		regulator-boot-on;
+		regulator-always-on;
+	};
+
+	bq24232: bq24232 {
+		compatible = "ti,bq24232";
+		status = "okay";
+		pgood-gpios = <&gpio0 24 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+		chg-gpios = <&gpio0 22 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+		ce-gpios = <&gpio0 21 GPIO_ACTIVE_LOW>;
+		iset-override-gpios = <&gpio1 0 GPIO_ACTIVE_LOW>;
+	};
+
+	emmc: emmc {
+		compatible = "teenageengineering,stem-emmc";
+		status = "okay";
+		supply-gpios = <&gpio0 14 GPIO_ACTIVE_HIGH>;
+		reset-gpios = <&gpio1 8 GPIO_ACTIVE_LOW>;
+	};
+};
+
+&i2c0 {
+	status = "okay";
+	pinctrl-0 = <&i2c0_default>;
+	pinctrl-1 = <&i2c0_sleep>;
+	pinctrl-names = "default", "sleep";
+	clock-frequency = <I2C_BITRATE_FAST>;
+
+	cs42l42: cs42l42@48 {
+		compatible = "cirrus,cs42l42";
+		reg = <0x48>;
+		reset-gpios = <&gpio0 15 GPIO_ACTIVE_LOW>;
+	};
+
+	tas2505: tas2505@18 {
+		compatible = "ti,tas2505";
+		reg = <0x18>;
+		reset-gpios = <&gpio0 9 GPIO_ACTIVE_LOW>;
+	};
+};
+
+zephyr_udc0: &usbd {
+	compatible = "nordic,nrf-usbd";
+	status = "okay";
+};
+
+&uart0 {
+	status = "okay";
+	current-speed = <115200>;
+	pinctrl-0 = <&uart0_default>;
+	pinctrl-1 = <&uart0_sleep>;
+	pinctrl-names = "default", "sleep";
+	hw-flow-control;
+};
+
+&uart1 {
+	status = "disabled";
+};
+
+&i2s0 {
+	status = "okay";
+	pinctrl-0 = <&i2s0_default>;
+	pinctrl-1 = <&i2s0_sleep>;
+	pinctrl-names = "default", "sleep";
+};
+
+&adc {
+	status = "okay";
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	channel@0 {
+		reg = <0>;
+		zephyr,gain = "ADC_GAIN_1_4";
+		zephyr,reference = "ADC_REF_VDD_1_4";
+		zephyr,vref-mv = <825>;
+		zephyr,acquisition-time = <ADC_ACQ_TIME(ADC_ACQ_TIME_MICROSECONDS, 3)>;
+		zephyr,input-positive = <NRF_SAADC_AIN0>;
+		zephyr,resolution = <12>;
+	};
+
+	channel@1 {
+		reg = <1>;
+		zephyr,gain = "ADC_GAIN_1_4";
+		zephyr,reference = "ADC_REF_VDD_1_4";
+		zephyr,vref-mv = <825>;
+		zephyr,acquisition-time = <ADC_ACQ_TIME(ADC_ACQ_TIME_MICROSECONDS, 3)>;
+		zephyr,input-positive = <NRF_SAADC_AIN1>;
+		zephyr,resolution = <12>;
+	};
+
+	channel@2 {
+		reg = <2>;
+		zephyr,gain = "ADC_GAIN_1_4";
+		zephyr,reference = "ADC_REF_VDD_1_4";
+		zephyr,acquisition-time = <ADC_ACQ_TIME(ADC_ACQ_TIME_MICROSECONDS, 3)>;
+		zephyr,input-positive = <NRF_SAADC_AIN2>;
+		zephyr,resolution = <12>;
+
+	};
+
+	channel@3 {
+		reg = <3>;
+		zephyr,gain = "ADC_GAIN_1_4";
+		zephyr,reference = "ADC_REF_VDD_1_4";
+		zephyr,acquisition-time = <ADC_ACQ_TIME(ADC_ACQ_TIME_MICROSECONDS, 3)>;
+		zephyr,input-positive = <NRF_SAADC_AIN3>;
+		zephyr,resolution = <12>;
+
+	};
+
+	channel@4 {
+		reg = <4>;
+		zephyr,gain = "ADC_GAIN_1_4";
+		zephyr,reference = "ADC_REF_VDD_1_4";
+		zephyr,acquisition-time = <ADC_ACQ_TIME(ADC_ACQ_TIME_MICROSECONDS, 3)>;
+		zephyr,input-positive = <NRF_SAADC_AIN4>;
+		zephyr,resolution = <12>;
+
+	};
+
+	channel@6 {
+		reg = <6>;
+		zephyr,gain = "ADC_GAIN_1_4";
+		zephyr,reference = "ADC_REF_VDD_1_4";
+		zephyr,acquisition-time = <ADC_ACQ_TIME(ADC_ACQ_TIME_MICROSECONDS, 3)>;
+		zephyr,input-positive = <NRF_SAADC_AIN6>;
+		zephyr,resolution = <12>;
+
+	};
+
+	channel@7 {
+		reg = <7>;
+		zephyr,gain = "ADC_GAIN_1_4";
+		zephyr,reference = "ADC_REF_VDD_1_4";
+		zephyr,acquisition-time = <ADC_ACQ_TIME(ADC_ACQ_TIME_MICROSECONDS, 3)>;
+		zephyr,input-positive = <NRF_SAADC_AIN7>;
+		zephyr,resolution = <12>;
+
+	};
+};
+
+&gpio0 {
+	status = "okay";
+
+	osc_en_hog: osc-en-hog {
+		gpio-hog;
+		gpios = <13 GPIO_ACTIVE_HIGH>;
+		output-high;
+		line-name = "osc-en";
+	};
+};
+
+&gpio1 {
+	status = "okay";
+};
+
+&gpiote {
+	status = "okay";
+};
+
+&pwm2 {
+	status = "okay";
+	pinctrl-0 = <&pwm2_default>;
+	pinctrl-1 = <&pwm2_sleep>;
+	pinctrl-names = "default", "sleep";
+};
+
+&pwm3 {
+	status = "okay";
+	pinctrl-0 = <&pwm3_default>;
+	pinctrl-1 = <&pwm3_sleep>;
+	pinctrl-names = "default", "sleep";
+};
+
+&flash0 {
+	partitions {
+		compatible = "fixed-partitions";
+		#address-cells = <1>;
+		#size-cells = <1>;
+
+		boot_partition: partition@0 {
+			label = "bootloader";
+			reg = <0x00000000 0x00020000>;
+		};
+
+		slot0_partition: partition@20000 {
+			label = "image-0";
+			reg = <0x00020000 0x000df000>;
+		};
+
+		storage_partition: partition@ff000 {
+			label = "storage";
+			reg = <0x000ff000 0x00001000>;
+		};
+	};
+};

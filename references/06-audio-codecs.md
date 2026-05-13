@@ -65,7 +65,7 @@ Both codecs are held in reset by GPIO at boot, released by firmware after I²C i
 | CS42L42 | P0.15 | `reset-gpios = <&gpio0 15 GPIO_ACTIVE_LOW>` |
 | TAS2505 | P0.09 | `reset-gpios = <&gpio0 9 GPIO_ACTIVE_LOW>` (NFC1 reclaimed as GPIO) |
 
-[code: `sp1-midi/boards/.../stem_player.dts` lines 280, 286]
+[code: `assets/sp1-midi-2026-05-13/boards/.../stem_player.dts` lines 280, 286]
 
 ## CS42L42 — Headphone codec
 
@@ -77,11 +77,11 @@ Both codecs are held in reset by GPIO at boot, released by firmware after I²C i
 
 ### Register addressing
 
-The CS42L42 uses **16-bit register addresses** (unlike the more common 7-bit-address model). Writes are: I²C address byte → register MSB → register LSB → data byte. The driver in `sp1-midi/drivers/audio/cs42l42_codec.c` handles this transparently.
+The CS42L42 uses **16-bit register addresses** (unlike the more common 7-bit-address model). Writes are: I²C address byte → register MSB → register LSB → data byte. The driver in `assets/sp1-midi-2026-05-13/drivers/audio/cs42l42_codec.c` handles this transparently.
 
-### Key registers (from `sp1-midi/drivers/audio/cs42l42_codec.c`)
+### Key registers (from `assets/sp1-midi-2026-05-13/drivers/audio/cs42l42_codec.c`)
 
-[code: `sp1-midi/drivers/audio/cs42l42_codec.c`]
+[code: `assets/sp1-midi-2026-05-13/drivers/audio/cs42l42_codec.c`]
 
 #### Identification
 
@@ -192,7 +192,7 @@ This is the simplest way to gate audio output without bringing down the rest of 
 
 There are two register addresses for "is a headphone plugged in":
 
-- `TSRS_PLUG_STATUS = 0x130F` [code: `sp1-midi/drivers/audio/cs42l42_codec.c`]
+- `TSRS_PLUG_STATUS = 0x130F` [code: `assets/sp1-midi-2026-05-13/drivers/audio/cs42l42_codec.c`]
 - `0x1B77 bit 7` [TKT wiki: I2C, accessed 2026-05-12]
 
 These are most likely two different things — `0x130F` is the high-level plug-detect status the `sp1-midi` driver exposes via `cs42l42_codec_is_headphone_connected()`, while `0x1B77` may be a lower-level detection state register in the headset-detect block (registers `0x1B73`–`0x1C03` are the detection cluster). For reliable headphone-presence reads, follow the `sp1-midi` driver's use of `0x130F`. The `0x1B77` bit 7 is potentially useful for finer-grained jack state (tip-vs-ring detection) — verify against the Cirrus datasheet before relying on it.
@@ -216,7 +216,7 @@ The TAS2505 uses a **page + register** model. To write a register at page P, reg
 1. Write `0x00 = P` (page-select register on every page)
 2. Write `R = value`
 
-The driver caches the current page to avoid redundant page-select writes [code: `sp1-midi/drivers/audio/tas2505_codec.c` — `current_page`, `tas2505_reset_page_cache`, `tas2505_select_page`].
+The driver caches the current page to avoid redundant page-select writes [code: `assets/sp1-midi-2026-05-13/drivers/audio/tas2505_codec.c` — `current_page`, `tas2505_reset_page_cache`, `tas2505_select_page`].
 
 Each page is 128 registers (R = 0–127). Pages used by `sp1-midi`:
 
@@ -231,7 +231,7 @@ Each page is 128 registers (R = 0–127). Pages used by `sp1-midi`:
 tas2505_write_reg(dev, 1, 46, volume);  // 0x00 = max, 0x7F = mute
 ```
 
-[code: `sp1-midi/drivers/audio/tas2505_codec.c` line 140]
+[code: `assets/sp1-midi-2026-05-13/drivers/audio/tas2505_codec.c` line 140]
 
 The 7-bit value is a gain step; consult the TAS2505 datasheet for the dB mapping. `0x7F` mutes the amplifier.
 
@@ -249,7 +249,7 @@ The driver loads a default DSP coefficient table at init. The table appears to b
 // ... (continues; see source)
 ```
 
-[code: `sp1-midi/drivers/audio/tas2505_codec.c` lines 27–35]
+[code: `assets/sp1-midi-2026-05-13/drivers/audio/tas2505_codec.c` lines 27–35]
 
 Format: `{ register, byte0, byte1, byte2 }` per entry, where the three bytes form a 24-bit DSP coefficient. The TAS2505 datasheet describes the coefficient memory layout; ericlewis or TimK would be the authoritative source for what these specific coefficients implement (likely speaker EQ and possibly a low-frequency limiter to protect the small internal driver).
 
@@ -283,7 +283,7 @@ Both chips listen to the same I²S stream simultaneously. Stock TE firmware pres
 
 ## What the Zephyr `audio_codec` framework does for you
 
-`sp1-midi/prj.conf` enables `CONFIG_AUDIO=y` and `CONFIG_AUDIO_CODEC=y`. The framework provides:
+`assets/sp1-midi-2026-05-13/prj.conf` enables `CONFIG_AUDIO=y` and `CONFIG_AUDIO_CODEC=y`. The framework provides:
 
 - Unified `audio_codec_configure()` / `audio_codec_start_output()` / `audio_codec_stop_output()` / `audio_codec_set_property()` / `audio_codec_apply_properties()` APIs
 - The two drivers implement the device-specific bits

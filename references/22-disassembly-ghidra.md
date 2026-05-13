@@ -115,7 +115,7 @@ The firmware's power-down sequence, USB attach/detach handling, and battery mana
 
 ### Specific DSP coefficient values
 
-The TAS2505 DSP coefficient table loaded at init (the `{ reg, byte0, byte1, byte2 }` triples in `sp1-midi/drivers/audio/tas2505_codec.c`) — what does each coefficient implement? It's likely a speaker EQ + bass limiter to protect the small internal speaker. The exact filter shapes aren't documented. (This is one of the open questions for TimK in `cc-skill/questions-for-timk.md`.)
+The TAS2505 DSP coefficient table loaded at init (the `{ reg, byte0, byte1, byte2 }` triples in `assets/sp1-midi-2026-05-13/drivers/audio/tas2505_codec.c`) — what does each coefficient implement? It's likely a speaker EQ + bass limiter to protect the small internal speaker. The exact filter shapes aren't documented. (This is one of the open questions for TimK in `cc-skill/questions-for-timk.md`.)
 
 ## How to verify findings against the dump
 

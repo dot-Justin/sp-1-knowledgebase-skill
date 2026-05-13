@@ -1,0 +1,13 @@
+# SPDX-License-Identifier: Apache-2.0
+
+description: Cirrus Logic CS42L42 audio codec
+
+include: [i2c-device.yaml]
+
+compatible: "cirrus,cs42l42"
+
+properties:
+  reset-gpios:
+    type: phandle-array
+    required: true
+    description: Active-low reset pin for the codec.

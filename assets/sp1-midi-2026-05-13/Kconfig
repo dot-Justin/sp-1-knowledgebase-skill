@@ -1,0 +1,6 @@
+mainmenu "Stem Player"
+
+source "Kconfig.zephyr"
+
+rsource "drivers/audio/Kconfig"
+rsource "drivers/charger/Kconfig"

@@ -13,7 +13,7 @@ A: Fragile. Multiple users have thought they bricked devices, only to find the F
 A: ~30 on Port 0 and ~16 on Port 1, with several specific pins like P1.05 (CY SPI CSn) defined in the pin header but not consumed by any public firmware. See full pin map in `03-pcb-and-schematic.md`.
 
 **Q: Where's the BQ24232 ISET pin really?**
-A: **P1.00**, per the DTS and TimK's pin header. The `sp1-midi/README.md` claims P0.19 but it's wrong. See `03-pcb-and-schematic.md` Discrepancies.
+A: **P1.00**, per the DTS and TimK's pin header. The `assets/sp1-midi-2026-05-13/README.md` claims P0.19 but it's wrong. See `03-pcb-and-schematic.md` Discrepancies.
 
 **Q: What pins are reclaimed from NFC?**
 A: P0.09 (NFC1 → TAS2505 reset) and P0.10 (NFC2 → CYBT-353027-02 reset). The DTS enables `nfct-pins-as-gpios;` at the root. See `02-hardware-overview.md`.

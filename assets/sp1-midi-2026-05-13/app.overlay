@@ -1,0 +1,44 @@
+/*
+ * USB composite device overlay: MIDI 2.0 + CDC ACM serial console.
+ * Enables button input drivers for the MIDI controller.
+ */
+
+/ {
+	chosen {
+		zephyr,console = &cdc_acm_uart0;
+		zephyr,shell-uart = &cdc_acm_uart0;
+	};
+
+	usb_midi: usb_midi {
+		compatible = "zephyr,midi2-device";
+		status = "okay";
+		#address-cells = <1>;
+		#size-cells = <1>;
+		label = "Stem Player MIDI";
+
+		midi_group@0 {
+			reg = <0 1>;
+			protocol = "midi1-up-to-128b";
+			label = "Controls";
+		};
+	};
+};
+
+/* Enable button input drivers (disabled by default in board DTS) */
+&adc_keys_transport {
+	status = "okay";
+};
+
+&adc_keys_track {
+	status = "okay";
+};
+
+&buttons {
+	status = "okay";
+};
+
+&zephyr_udc0 {
+	cdc_acm_uart0: cdc_acm_uart0 {
+		compatible = "zephyr,cdc-acm-uart";
+	};
+};

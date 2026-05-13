@@ -15,7 +15,7 @@ This is the thinnest reference file in this skill. Most of what you want to know
 | **UART RTS** (nRF → BT) | P1.01 | `NRF_PSEL(UART_RTS, 1, 1)` |
 | **UART CTS** (BT → nRF) | P1.03 | `NRF_PSEL(UART_CTS, 1, 3)` |
 | **Module reset** | P0.10 (NFC2 reclaimed as GPIO) | `bt_transport_reset` GPIO, active low |
-| **Possible SPI CS** | P1.05 | Defined in `SP-1-dev/src/stemplayer_pins.h` as `PIN_CY_SPI_CSN` but unused in `sp1-midi` — likely a secondary control interface, not yet exercised by public code |
+| **Possible SPI CS** | P1.05 | Defined in `assets/SP-1-dev-2026-05-13/src/stemplayer_pins.h` as `PIN_CY_SPI_CSN` but unused in `sp1-midi` — likely a secondary control interface, not yet exercised by public code |
 
 UART configuration in `sp1-midi`:
 
@@ -24,7 +24,7 @@ current-speed = <115200>;
 hw-flow-control;
 ```
 
-[code: `sp1-midi/boards/.../stem_player.dts` lines 295–302]
+[code: `assets/sp1-midi-2026-05-13/boards/.../stem_player.dts` lines 295–302]
 
 So baud is **115200** with full hardware flow control. The CYBT module presumably uses HCI over UART, which is the standard Bluetooth host-controller-interface transport.
 

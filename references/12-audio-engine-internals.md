@@ -289,7 +289,7 @@ Application code can call `snapshot_perf_stats()` (returns by value with spinloc
 
 The Zephyr backend wraps the I²S0 peripheral. It:
 
-1. Allocates DMA buffer blocks (`CONFIG_I2S_NRFX_TX_BLOCK_COUNT=8` in `sp1-midi/prj.conf` — gives 8 ping-pong buffers)
+1. Allocates DMA buffer blocks (`CONFIG_I2S_NRFX_TX_BLOCK_COUNT=8` in `assets/sp1-midi-2026-05-13/prj.conf` — gives 8 ping-pong buffers)
 2. Sets up I²S in master mode at 48 kHz, 24-bit data, 32-bit slot
 3. Registers a callback that calls `AudioEngine::render_block()` to fill each buffer as it's consumed
 4. Hands buffers to the I²S DMA engine for transmission

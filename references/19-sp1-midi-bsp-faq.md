@@ -40,7 +40,7 @@ A: Main registers a 5000 ms channel and feeds it during init. Subsystems can reg
 A: 1) Add to `AppState` enum, 2) Add entry/run/exit handlers, 3) Add to SMF state table. See `19-sp1-midi-bsp.md` "How to extend".
 
 **Q: Where do I add audio engine code?**
-A: Drop `assets/audiothingies-2026-05-09/` and `assets/storagethingies-2026-05-09/` into a new directory under `sp1-midi/`. Add files to `APP_SOURCES` in `CMakeLists.txt`. Initialize the engine in `main()` after codecs are ready.
+A: Drop `assets/audiothingies-2026-05-09/` and `assets/storagethingies-2026-05-09/` into a new directory under `assets/sp1-midi-2026-05-13/`. Add files to `APP_SOURCES` in `CMakeLists.txt`. Initialize the engine in `main()` after codecs are ready.
 
 **Q: Is the function button the only direct-GPIO button?**
 A: Yes. All other buttons are on analog ladders (read via SAADC). See `02-hardware-overview.md`.

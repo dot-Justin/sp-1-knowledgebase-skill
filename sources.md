@@ -61,6 +61,58 @@ python3 -m http.server 8788
 
 **Cite as:** `[Source: assets/solderless-2026-05-12/js/storage.js lines X-Y]`. Treat as canonical reference for SP-1 host-side protocol details.
 
+### `SP-1-dev-2026-05-13/` (TimK's repo: canonical pin map + wiki)
+
+**Bundled snapshot of `github.com/timknapen/SP-1-dev` (MIT licensed, Copyright Tim Knapen 2026).** Contains the authoritative pin definitions plus all 14 wiki pages as markdown.
+
+**Layout:**
+
+- `assets/SP-1-dev-2026-05-13/LICENSE` — MIT
+- `assets/SP-1-dev-2026-05-13/README.md` — TimK's repo README
+- `assets/SP-1-dev-2026-05-13/src/stemplayer_pins.h` — **the canonical SP-1 pin map**, cited dozens of times throughout this skill. C header; works with both nRF SDK and Zephyr.
+- `assets/SP-1-dev-2026-05-13/wiki/Home.md` — wiki landing page
+- `assets/SP-1-dev-2026-05-13/wiki/Hardware-overview.md` — chip-level overview
+- `assets/SP-1-dev-2026-05-13/wiki/Peripherals.md` — peripheral map
+- `assets/SP-1-dev-2026-05-13/wiki/Getting-started.md` — dev environment intro
+- `assets/SP-1-dev-2026-05-13/wiki/Bootloader.md` — app-integration spec (flash offset 0x20000, max size 0xDEFFF, 5s watchdog, pre-initialized peripherals, RESETREAS cleanup, SYSTEM_OFF requirement)
+- `assets/SP-1-dev-2026-05-13/wiki/Data-Structure.md` — sector = 0x2000 (8192) bytes = 16 native 512-byte eMMC blocks; first sector is album metadata
+- `assets/SP-1-dev-2026-05-13/wiki/Album-metadata-format.md` — full album header layout (`ALBUM_PRESENT` magic, song entries at offset 82, 136 bytes each)
+- `assets/SP-1-dev-2026-05-13/wiki/Audio-format.md` — sector trailer layout (per the wiki: 2 sync + 2 tempo + 4 LED per block; see `corrections.md` for the encoder-side reality)
+- `assets/SP-1-dev-2026-05-13/wiki/I2S.md` — nRF I²S slave mode, BCLK from 3.072 MHz external osc, LRCLK from CS42L42, 256-sample / 128-frame buffer
+- `assets/SP-1-dev-2026-05-13/wiki/I2C.md` — codec addresses, pull-up values, init sequences, mute behavior
+- `assets/SP-1-dev-2026-05-13/wiki/PWM.md` — (stub: PWM drives LEDs, no detail)
+- `assets/SP-1-dev-2026-05-13/wiki/SAADC.md` — (stub: heading only)
+- `assets/SP-1-dev-2026-05-13/wiki/Battery-charger.md` — BQ24232 pin map (ISET=P1.00), 500 mA USB cap
+- `assets/SP-1-dev-2026-05-13/wiki/Bluetooth-Module.md` — CYBT-353027-02 UART pin map + secondary SPI control path
+
+**Cite as:** `[code: assets/SP-1-dev-2026-05-13/src/stemplayer_pins.h]` or `[TKT wiki: Audio-format, assets/SP-1-dev-2026-05-13/wiki/Audio-format.md]`.
+
+**Note:** `img/` and `icon.png` were intentionally excluded (642 KB of device illustrations; not needed for agent reasoning). For the illustrations, fetch from `github.com/timknapen/SP-1-dev` directly.
+
+### `sp1-midi-2026-05-13/` (ericlewis's Zephyr BSP)
+
+**Bundled snapshot of `github.com/ericlewis/sp1-midi` (MIT licensed, Copyright Eric Lewis 2026).** Public, posted 2026-05-09. **The only buildable public custom firmware** for the SP-1.
+
+This BSP implements a USB MIDI 2.0 controller — **not** a stem player. But the board definitions, drivers, and BSP infrastructure are the practical foundation for any custom SP-1 firmware.
+
+**Key paths:**
+
+- `assets/sp1-midi-2026-05-13/LICENSE` — MIT
+- `assets/sp1-midi-2026-05-13/README.md` — build instructions, project overview
+- `assets/sp1-midi-2026-05-13/CMakeLists.txt`, `Kconfig`, `prj.conf`, `app.overlay` — Zephyr build config
+- `assets/sp1-midi-2026-05-13/boards/teenageengineering/stem_player/` — board files: `stem_player.dts` (canonical DTS), `stem_player_defconfig`, pinctrl
+- `assets/sp1-midi-2026-05-13/drivers/audio/cs42l42_codec.{c,h}` — Cirrus CS42L42 headphone codec driver (I²C addr 0x48)
+- `assets/sp1-midi-2026-05-13/drivers/audio/tas2505_codec.{c,h}` — TI TAS2505 speaker amp driver (I²C addr 0x18)
+- `assets/sp1-midi-2026-05-13/drivers/charger/charger_bq24232.c` — BQ24232 GPIO-based charger control
+- `assets/sp1-midi-2026-05-13/subsys/storage/emmc/EmmcDriver.cpp` — eMMC read driver (bit-banged CMD + SPIM3 DAT0)
+- `assets/sp1-midi-2026-05-13/subsys/power/PowerManager.cpp` — battery/charger/USB monitoring
+- `assets/sp1-midi-2026-05-13/subsys/system/{Watchdog,ResetBreadcrumbs}.cpp` — system services
+- `assets/sp1-midi-2026-05-13/app/` — MIDI controller app skeleton (faders → CC, buttons → notes, transport → MMC), state machine (IDLE / RUNNING / SHUTTING_DOWN / DEEP_SLEEP), LED PWM
+
+**Cite as:** `[code: assets/sp1-midi-2026-05-13/boards/teenageengineering/stem_player/stem_player.dts]` or similar.
+
+**Build:** see `references/18-zephyr-build-environment.md` and `references/19-sp1-midi-bsp.md` for the full bring-up. Requires Zephyr SDK + west.
+
 ### `audiothingies-2026-05-09/` and `audiothingies-2026-05-09.zip`
 
 **Bundled archive of ericlewis's C++17 reference implementation of the stock audio engine.** Originally shared as a Discord file attachment in #firmware on 2026-05-09 00:18:55 UTC. The flat extracted tree + the original zip are both present in `assets/`.
@@ -200,7 +252,7 @@ Local clone of the Lines archive (same content as `github.com/dot-Justin/TE-SP-1
 - `raw/assets/uploads/` — 813 binary attachments (images, PDFs, docs)
 - `raw/metadata/upload_manifest.json` — token → local-path mapping
 
-### `sp1-midi/` (local copy of `ericlewis/sp1-midi`)
+### `assets/sp1-midi-2026-05-13/` (local copy of `ericlewis/sp1-midi`)
 
 Same as the GitHub repo. Reading local files is faster than fetching.
 

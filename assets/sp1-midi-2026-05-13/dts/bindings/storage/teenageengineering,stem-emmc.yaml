@@ -1,0 +1,18 @@
+# SPDX-License-Identifier: Apache-2.0
+
+description: Teenage Engineering Stem Player eMMC device wrapper
+
+compatible: "teenageengineering,stem-emmc"
+
+include:
+  - name: base.yaml
+  - name: power.yaml
+    property-allowlist:
+      - supply-gpios
+      - vin-supply
+
+properties:
+  reset-gpios:
+    type: phandle-array
+    required: true
+    description: Active-low reset pin for the eMMC device.

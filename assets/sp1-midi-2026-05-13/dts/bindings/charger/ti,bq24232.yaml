@@ -1,0 +1,30 @@
+# SPDX-License-Identifier: Apache-2.0
+
+description: Texas Instruments BQ24232 standalone charger with GPIO control/status pins
+
+compatible: "ti,bq24232"
+
+include: base.yaml
+
+properties:
+  pgood-gpios:
+    type: phandle-array
+    required: true
+    description: Active-state power-good indication for valid external input power.
+
+  chg-gpios:
+    type: phandle-array
+    required: true
+    description: Active-state charge-status indication while a charge cycle is in progress.
+
+  ce-gpios:
+    type: phandle-array
+    required: true
+    description: Charge enable control. The active state enables charging.
+
+  iset-override-gpios:
+    type: phandle-array
+    required: true
+    description: |
+      Charge-current override control. The active state enables the alternate
+      ISET path used by the board to reduce charge current.

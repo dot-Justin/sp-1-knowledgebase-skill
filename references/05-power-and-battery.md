@@ -42,7 +42,7 @@ Public datasheet: search "TI BQ24232" — Texas Instruments publishes the full s
 
 ## BQ24232 pin map (nRF52840 side)
 
-[Source: `sp1-midi/boards/.../stem_player.dts` lines 253–260; `SP-1-dev/src/stemplayer_pins.h` lines 80–84. The `sp1-midi/README.md` lists P0.19 for ISET but this contradicts both the DTS and TimK's pin header — trust the DTS / header.]
+[Source: `assets/sp1-midi-2026-05-13/boards/.../stem_player.dts` lines 253–260; `assets/SP-1-dev-2026-05-13/src/stemplayer_pins.h` lines 80–84. The `assets/sp1-midi-2026-05-13/README.md` lists P0.19 for ISET but this contradicts both the DTS and TimK's pin header — trust the DTS / header.]
 
 | Signal | Pin | Direction | Active level | Function |
 | --- | --- | --- | --- | --- |
@@ -68,7 +68,7 @@ iset-override-gpios = <&gpio1 0 GPIO_ACTIVE_LOW>;
 | --- | --- | --- |
 | Battery rail (divided) | P0.28 (AIN4) | SAADC channel 4, gain 1/4, reference VDD/4, 12-bit, 3 µs acquisition |
 
-The battery feeds a resistor divider to bring the voltage into the SAADC's input range. The exact divider ratio is not in the publicly visible documentation as of synthesis date — see `sp1-midi/subsys/power/PowerManager.cpp` for whether the BSP applies a calibrated scale factor, or measure on your own hardware.
+The battery feeds a resistor divider to bring the voltage into the SAADC's input range. The exact divider ratio is not in the publicly visible documentation as of synthesis date — see `assets/sp1-midi-2026-05-13/subsys/power/PowerManager.cpp` for whether the BSP applies a calibrated scale factor, or measure on your own hardware.
 
 A nominal mapping (subject to driver verification):
 - 0 mV ADC reading ≈ battery near 0 V (impossible / disconnected)
@@ -103,7 +103,7 @@ This is a **known unknown** at synthesis date — see `known-unknowns.md` for th
 
 - The **function button** (P0.27, direct GPIO) is what stock firmware uses to power down. `sp1-midi` registers a 3-second longpress on this button that fires `INPUT_KEY_POWER` [code: `stem_player.dts` lines 230–237].
 - ericlewis emphasized: *"ALWAYS REMEMBER TO PROGRAM IN YOUR POWER DOWN"* [Discord #firmware, ericlewis, 2026-05-09 01:02].
-- The actual nRF52840 deep-sleep route uses Zephyr's `CONFIG_POWEROFF=y` (enabled in `sp1-midi/prj.conf`) and the `sys_poweroff()` API.
+- The actual nRF52840 deep-sleep route uses Zephyr's `CONFIG_POWEROFF=y` (enabled in `assets/sp1-midi-2026-05-13/prj.conf`) and the `sys_poweroff()` API.
 - For a complete power-off, custom firmware should:
   1. Mute/disable the audio codecs (CS42L42 reset asserted, TAS2505 reset asserted)
   2. Disable the BT module (assert P0.10 reset, then de-power its UART)

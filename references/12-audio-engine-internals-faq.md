@@ -43,7 +43,7 @@ A: 128 frames × 2 channels × 4 bytes (int32) per stem = 1 KB. 4 stems = 4 KB. 
 A: `produced_frame_` (what's been rendered) and `consumed_frame_` (what's been transmitted by I²S DMA). These wrap modulo album frame count. Reverse playback uses negative `source_sample_index_` in the VarispeedResampler.
 
 **Q: What's the I²S TX buffer count?**
-A: 8 (`CONFIG_I2S_NRFX_TX_BLOCK_COUNT=8` in `sp1-midi/prj.conf`). Deeper than typical to absorb transient eMMC cache misses without audible underrun.
+A: 8 (`CONFIG_I2S_NRFX_TX_BLOCK_COUNT=8` in `assets/sp1-midi-2026-05-13/prj.conf`). Deeper than typical to absorb transient eMMC cache misses without audible underrun.
 
 **Q: How does the engine drive the Track LEDs?**
 A: Reads `current_track_led_word()` from per-block side data on the eMMC. 4 bytes encode 4 brightness levels. Avoids real-time envelope-following. See `12-audio-engine-internals.md` "Track LED animation".

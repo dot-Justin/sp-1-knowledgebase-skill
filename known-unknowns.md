@@ -15,7 +15,7 @@ For each unresolved area, this file describes:
 **Question:** How do you talk to the CYBT-353027-02 Bluetooth module from custom firmware?
 
 **Known:**
-- The module is wired to the nRF52840 via UART (TX P1.02, RX P1.04, RTS P1.01, CTS P1.03, Reset P0.10) [code: `sp1-midi/boards/.../stem_player.dts`]
+- The module is wired to the nRF52840 via UART (TX P1.02, RX P1.04, RTS P1.01, CTS P1.03, Reset P0.10) [code: `assets/sp1-midi-2026-05-13/boards/.../stem_player.dts`]
 - TimK's public BSP defines the pins but does not implement a stack [code: `ericlewis/sp1-midi`]
 - **emvee1968 claims a working Bluetooth pairing implementation** using the vol+/vol- combo, developed "in a few hours with Claude Code" — but the code is **not yet released** [Discord #firmware, emvee1968, 2026-05-08 23:26 + 23:42]
 - TimK has not personally implemented BT: *"I never even properly looked into that"* [Discord #firmware, tkt1000, 2026-05-08 23:27]
@@ -47,12 +47,12 @@ See `update-log.md` 2026-05-13 and `working-confirmed.md` for the full resolutio
 - The function button is **direct GPIO** (P0.27), not on a ladder like the other buttons [Discord #firmware, ericlewis, 2026-05-09 00:59]
 - The stock firmware uses this to enter a deep sleep / power-off state
 - emvee1968's firmware *does not currently power off properly* — he has to disconnect the battery after flashing to get into the bootloader [Discord #firmware, emvee1968, 2026-05-08 23:56]
-- ericlewis's `sp1-midi` BSP has `PowerManager.cpp` (subsys/power) with battery/charger/USB monitoring [code: `ericlewis/sp1-midi/subsys/power/`]
+- ericlewis's `sp1-midi` BSP has `PowerManager.cpp` (subsys/power) with battery/charger/USB monitoring [code: `assets/sp1-midi-2026-05-13/subsys/power/`]
 - ericlewis: *"ALWAYS REMEMBER TO PROGRAM IN YOUR POWER DOWN"* [Discord #firmware, ericlewis, 2026-05-09 01:02]
 
 **Why unresolved:** The PowerManager in `sp1-midi` exists but isn't wired up by the example MIDI controller app to handle the "off" state. Custom firmware authors have to integrate it themselves and verify nRF52840 SYSTEM_OFF behavior with the BQ24232 charger and TAS2505/CS42L42 codec power lines.
 
-**Next move:** Read `ericlewis/sp1-midi/subsys/power/PowerManager.cpp` and study `CONFIG_POWEROFF=y` Zephyr APIs. If still stuck, ask ericlewis.
+**Next move:** Read `assets/sp1-midi-2026-05-13/subsys/power/PowerManager.cpp` and study `CONFIG_POWEROFF=y` Zephyr APIs. If still stuck, ask ericlewis.
 
 ---
 
@@ -62,13 +62,13 @@ See `update-log.md` 2026-05-13 and `working-confirmed.md` for the full resolutio
 
 **Mostly resolved as of 2026-05-12** following TKT wiki Battery-charger page incorporation:
 
-- `sp1-midi/drivers/charger/charger_bq24232.c` exists with GPIO-based control:
+- `assets/sp1-midi-2026-05-13/drivers/charger/charger_bq24232.c` exists with GPIO-based control:
   - nPGOOD = P0.24 (open-drain, low when USB power good)
   - nCHG = P0.22 (open-drain, low while charging)
   - CE = P0.21 (active-low charge enable)
   - **ISET = P1.00** (corrected from earlier erroneous "P0.19" — see `corrections.md`)
   - BATT_LEVEL = P0.28 / AIN4
-  [code: `ericlewis/sp1-midi/boards/teenageengineering/stem_player/stem_player.dts`; `timknapen/SP-1-dev/src/stemplayer_pins.h`]
+  [code: `assets/sp1-midi-2026-05-13/boards/teenageengineering/stem_player/stem_player.dts`; `assets/SP-1-dev-2026-05-13/src/stemplayer_pins.h`]
 - **Maximum USB current draw: 500 mA** [TKT wiki: Battery-charger, accessed 2026-05-12]
 - ISET voltage reflects actual charging current; can be monitored via a voltage divider on AIN [TKT wiki: Battery-charger, accessed 2026-05-12]
 

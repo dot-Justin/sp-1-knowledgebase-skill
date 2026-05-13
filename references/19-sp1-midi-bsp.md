@@ -28,7 +28,7 @@ When you flash `sp1-midi` to an SP-1, the device behaves as follows:
 | Press Function | MMC Record On (0x06) or Record Off (0x07), toggling |
 | Long-press Function (3 seconds) | `INPUT_KEY_POWER` fires (handler in app would call `sys_poweroff()`) |
 
-[code: `sp1-midi/app/main.cpp` lines 129–209 — `on_input_event()`]
+[code: `assets/sp1-midi-2026-05-13/app/main.cpp` lines 129–209 — `on_input_event()`]
 
 The faders use a 12-bit ADC range (0–4080 mV); the BSP polls at 20 ms intervals and emits CC events when the value changes by more than `kFaderDeadband = 8` (~0.2%).
 
@@ -44,7 +44,7 @@ The faders use a 12-bit ADC range (0–4080 mV); the BSP polls at 20 ms interval
 | Bus speed | Full Speed (12 Mbps) |
 | Device class | Misc / IAD / 0x02 / 0x01 |
 
-[code: `sp1-midi/app/main.cpp` lines 27–76]
+[code: `assets/sp1-midi-2026-05-13/app/main.cpp` lines 27–76]
 
 The "Teenage Engineering" manufacturer string is presumably for compatibility with hosts that expect TE devices — **change this** if you're publishing custom firmware under your own name, and use a different PID (the 0x1209 0x0001 combo is not registered to anyone in particular and may collide with other PID.codes test devices).
 
@@ -83,13 +83,13 @@ static leds::Leds           g_leds;
 static power::PowerManager  g_power;
 ```
 
-[code: `sp1-midi/app/main.cpp` lines 92–94]
+[code: `assets/sp1-midi-2026-05-13/app/main.cpp` lines 92–94]
 
 The app uses **static globals** rather than dependency injection. This is unusual for modern C++ but practical in embedded code where there's no need for multiple instances. If you fork this BSP, you can either keep this style or refactor to a more testable architecture.
 
 ## The state machine
 
-`AppMachine` is the Zephyr SMF (State Machine Framework) instance with C++ facade [code: `sp1-midi/include/stem_player/Smf.hpp`]:
+`AppMachine` is the Zephyr SMF (State Machine Framework) instance with C++ facade [code: `assets/sp1-midi-2026-05-13/include/stem_player/Smf.hpp`]:
 
 ```cpp
 enum AppState {
@@ -139,7 +139,7 @@ Zephyr `charger` driver. Tracks USB attach via `nPGOOD`, charge state via `nCHG`
 
 ## MidiController internals
 
-[code: `sp1-midi/app/MidiController.hpp` + `.cpp`]
+[code: `assets/sp1-midi-2026-05-13/app/MidiController.hpp` + `.cpp`]
 
 ```cpp
 struct MidiController {
@@ -179,7 +179,7 @@ constexpr uint8_t kMmcRecordOff     = 0x07;
 constexpr uint8_t kMmcPause         = 0x09;
 ```
 
-[code: `sp1-midi/app/MidiController.hpp` lines 28–36]
+[code: `assets/sp1-midi-2026-05-13/app/MidiController.hpp` lines 28–36]
 
 These are wrapped in a SysEx envelope: `F0 7F 7F 06 <cmd> F7`. The full SysEx is sent via the USB MIDI 2.0 endpoint.
 
@@ -227,7 +227,7 @@ Flash this BSP and your SP-1 is no longer a stem player — it's a USB MIDI cont
 
 ### Add audio playback
 
-1. Drop `assets/audiothingies-2026-05-09/` and `assets/storagethingies-2026-05-09/` source into `sp1-midi/subsys/` (or a new `sp1-midi/audio/` tree)
+1. Drop `assets/audiothingies-2026-05-09/` and `assets/storagethingies-2026-05-09/` source into `assets/sp1-midi-2026-05-13/subsys/` (or a new `assets/sp1-midi-2026-05-13/audio/` tree)
 2. Add to `APP_SOURCES` in `CMakeLists.txt`
 3. Instantiate `audio::AudioEngine` and `storage::DiskManager` as globals or members of `AppMachine`
 4. Initialize them in `main()` after the codecs come up

@@ -25,7 +25,7 @@ A: **Page-and-register** model. Write 0x00 = page-select on each page, then the 
 A: A list of `{ register, byte0, byte1, byte2 }` entries (24-bit fixed-point) loaded at init. Almost certainly speaker EQ + bass limiter to protect the small internal driver. Ask TimK / ericlewis for what specifically each coefficient implements.
 
 **Q: How do I check if headphones are plugged in?**
-A: Call `cs42l42_codec_is_headphone_connected(dev)` — reads `TSRS_PLUG_STATUS = 0x130F`. [code: `sp1-midi/drivers/audio/cs42l42_codec.h`]
+A: Call `cs42l42_codec_is_headphone_connected(dev)` — reads `TSRS_PLUG_STATUS = 0x130F`. [code: `assets/sp1-midi-2026-05-13/drivers/audio/cs42l42_codec.h`]
 
 **Q: How does stock firmware mute the speaker when headphones are inserted?**
 A: Not directly documented in public code, but presumably: jack-detect on CS42L42 → callback that mutes TAS2505 (write `0x7F` to page-1 register 46). Custom firmware needs to replicate this UX explicitly.

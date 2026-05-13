@@ -10,7 +10,7 @@ A: A TI single-cell LiPo charger IC. **GPIO-controlled** (no I²C), so the firmw
 A: P0.24 (nPGOOD, in), P0.22 (nCHG, in), P0.21 (CE, out), P1.00 (ISET override, out). Note the README's P0.19 claim is wrong. See `03-pcb-and-schematic.md` Discrepancies.
 
 **Q: How do I measure battery voltage?**
-A: SAADC channel 4 / AIN4 / P0.28, behind a resistor divider. Use `sp1-midi/subsys/power/PowerManager.cpp` for the calibrated scale rather than computing from raw mV.
+A: SAADC channel 4 / AIN4 / P0.28, behind a resistor divider. Use `assets/sp1-midi-2026-05-13/subsys/power/PowerManager.cpp` for the calibrated scale rather than computing from raw mV.
 
 **Q: How do I know if USB is plugged in?**
 A: Read **nPGOOD** (P0.24, active low). Low = USB power present. The `PowerManager` exposes a higher-level "is charging / on USB / on battery" interface.

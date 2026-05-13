@@ -61,7 +61,7 @@ If the utility is offline, the alternatives are:
 cmake -B build -GNinja -DBOARD=stem_player -DSNIPPET=cdc-acm-console
 ```
 
-[code: `sp1-midi/README.md` Quick Start; `sp1-midi/prj.conf` enables `CONFIG_USBD_CDC_ACM_CLASS=y`, `CONFIG_SHELL=y`, `CONFIG_SHELL_BACKEND_SERIAL=y`]
+[code: `assets/sp1-midi-2026-05-13/README.md` Quick Start; `assets/sp1-midi-2026-05-13/prj.conf` enables `CONFIG_USBD_CDC_ACM_CLASS=y`, `CONFIG_SHELL=y`, `CONFIG_SHELL_BACKEND_SERIAL=y`]
 
 This gives you a Zephyr shell over a USB CDC ACM endpoint. You see boot logs, can type commands, and probe at runtime. The device shows up as a composite USB device alongside the MIDI 2.0 endpoint.
 

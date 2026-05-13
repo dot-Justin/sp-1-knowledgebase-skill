@@ -1,6 +1,6 @@
 # eMMC Storage
 
-**Synthesized through:** Lines #846 (2026-05-06), Discord through 2026-05-11. Code-of-record: `storagethingies` (private, ericlewis 2026-05-09) + `sp1-midi/subsys/storage/emmc/`.
+**Synthesized through:** Lines #846 (2026-05-06), Discord through 2026-05-11. Code-of-record: `storagethingies` (private, ericlewis 2026-05-09) + `assets/sp1-midi-2026-05-13/subsys/storage/emmc/`.
 
 The SP-1 stores its audio album on a separate **Toshiba THGBMNG5D1LBAIL** 4 GB eMMC (eMMC 5.0). This file covers the chip, the protocol the nRF uses to talk to it, the sector layout, the prefetch model, and the album metadata format. For the byte-level audio sample layout *within* a sector see `09-audio-format-spec.md`. For the block-skipping trick that enables tape FF/RW see `11-block-interleaving-tape-fx.md`.
 
@@ -34,7 +34,7 @@ Why this hybrid?
 2. **DATA phase** uses SPIM3 because the nRF's SPI peripheral can clock data efficiently and DMA-style into a buffer. In 1-bit eMMC mode, DAT0 is read continuously after the command — exactly the role a SPI MISO line plays.
 3. The PWM peripheral is borrowed for **burst timing** during async data reads, ensuring CLK toggles consistently while the SPIM3 receives data.
 
-This is documented in `assets/storagethingies-2026-05-09/EmmcDriver.cpp` and `sp1-midi/subsys/storage/emmc/EmmcDriver.cpp`. The driver header explicitly credits the implementation:
+This is documented in `assets/storagethingies-2026-05-09/EmmcDriver.cpp` and `assets/sp1-midi-2026-05-13/subsys/storage/emmc/EmmcDriver.cpp`. The driver header explicitly credits the implementation:
 
 > [credit: "Tim Knapen's eMMC driver implementation for Stem Player" — reference JESD84-B50]
 

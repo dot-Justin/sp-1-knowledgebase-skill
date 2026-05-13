@@ -13,23 +13,27 @@ For the broader custom-firmware ecosystem see `20-custom-firmware-state.md`. For
 #### `github.com/timknapen/SP-1-dev`
 
 **Owner:** TimK (timknapen)
-**Status:** Public, active.
+**Status:** Public, active. MIT licensed.
 **Contents:**
 - `README.md` — introduction and disclaimer
 - `src/stemplayer_pins.h` — canonical pin definitions (C header)
-- `img/` — device illustrations
+- `img/` — device illustrations (642 KB of PNGs — not bundled)
 - `LICENSE`
-- **Wiki** (hosted on GitHub, not local files) — the canonical technical documentation including the **Bootloader** page (`/wiki/Bootloader`).
+- **Wiki** (hosted on GitHub) — 14 technical pages covering hardware, bootloader, peripherals, I²S/I²C/PWM/SAADC, audio format, album metadata, battery charger, Bluetooth module
 
-**Use this for:** Authoritative pin map, bootloader protocol documentation, hardware overview. Pin header is C-style and works for nRF-SDK as well as Zephyr.
+**Bundled subset in this skill:** `assets/SP-1-dev-2026-05-13/` contains `LICENSE` + `README.md` + `src/stemplayer_pins.h` + `wiki/*.md` (all 14 wiki pages as markdown, ~24 KB total). `img/` is **not** bundled (graphics-heavy; fetch from the source repo if you need device illustrations).
+
+**Use this for:** Authoritative pin map (the `stemplayer_pins.h` header is THE canonical pin reference), bootloader app-integration spec (the `Bootloader.md` wiki page), hardware overview, sector trailer layout per the wiki.
 
 #### `github.com/ericlewis/sp1-midi`
 
 **Owner:** ericlewis
-**Status:** Public, posted 2026-05-09.
-**Contents:** Full Zephyr BSP for the SP-1 (board definition, drivers, app skeleton). Implements a USB MIDI 2.0 controller — **not** a stem player.
+**Status:** Public, posted 2026-05-09. MIT licensed.
+**Contents:** Full Zephyr BSP for the SP-1 (board definition, drivers, app skeleton). Implements a USB MIDI 2.0 controller — **not** a stem player. The only buildable public custom firmware.
 
-**Use this for:** A buildable starting point for custom firmware. Forks of this repo are the practical path to writing your own firmware. See `19-sp1-midi-bsp.md`.
+**Bundled in this skill:** `assets/sp1-midi-2026-05-13/` — full repo snapshot. CMakeLists, Kconfig, prj.conf, app.overlay, boards/, drivers/, subsys/, app/, dts/, include/ — everything you need to read or fork. See `references/19-sp1-midi-bsp.md` for a walkthrough.
+
+**Use this for:** A buildable starting point for custom firmware. Forks of this repo are the practical path to writing your own firmware. See `references/19-sp1-midi-bsp.md`.
 
 #### `github.com/ericlewis/libpo32`
 

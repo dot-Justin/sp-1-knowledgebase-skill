@@ -412,3 +412,66 @@ The original Lines posts were public on `llllllll.co` since 2024-04-09. The part
 - No author/copyright tags beyond what's already public in the forum content.
 
 The forum posts contain user opinions, real names where the users chose to share them, and email-like handles (some users picked email-style usernames). All of this is content the users themselves posted publicly to `llllllll.co` — not a privacy issue to mirror.
+
+---
+
+## 2026-05-13 — Intake batch #4: SP-1-dev + sp1-midi + TKT wiki bundled
+
+### Source ingested
+
+Three additions in one batch, all from public MIT-licensed GitHub repos plus a wiki:
+
+1. **`github.com/timknapen/SP-1-dev`** (TimK's documentation repo): `LICENSE` + `README.md` + `src/stemplayer_pins.h`. Bundled at `assets/SP-1-dev-2026-05-13/`. Skipped: `img/` (642 KB of device illustrations — graphics-heavy, agents don't need; fetch from source if needed) and `icon.png`.
+2. **TKT wiki pages** (14 pages on `github.com/timknapen/SP-1-dev/wiki`): Home, Hardware-overview, Peripherals, Getting-started, Bootloader, Data-Structure, Album-metadata-format, Audio-format, I2S, I2C, PWM, SAADC, Battery-charger, Bluetooth-Module. Fetched via `raw.githubusercontent.com/wiki/timknapen/SP-1-dev/<Page>.md`. Bundled at `assets/SP-1-dev-2026-05-13/wiki/` (24 KB total).
+3. **`github.com/ericlewis/sp1-midi`** (ericlewis's Zephyr BSP): full repo snapshot. Bundled at `assets/sp1-midi-2026-05-13/` (305 KB, 50 files: CMakeLists, Kconfig, app.overlay, boards/, drivers/, subsys/, app/, dts/, include/, prj.conf, README, LICENSE).
+
+### Why bundle now
+
+The skill cites the TKT wiki 50+ times and `stemplayer_pins.h` / `stem_player.dts` dozens of times. Every reference was previously a fetch-on-demand network round-trip away. Bundling makes the skill self-contained and offline-usable for the most-cited authoritative sources.
+
+Both repos are MIT-licensed (`Copyright (c) 2026 Tim Knapen` / `Copyright (c) 2026 Eric Lewis`); attribution preserved. No social risk this batch — both are public open-source repos with explicit redistribution permission via MIT.
+
+### Naming convention
+
+Used `<repo>-2026-05-13` to mark the snapshot date. Both repos may evolve upstream; the bundled copies are pinned to today's state. Future re-snapshots would land at `<repo>-YYYY-MM-DD` for clarity.
+
+The TKT wiki lives at `assets/SP-1-dev-2026-05-13/wiki/` (combined with TimK's repo rather than as a separate `assets/SP-1-dev-wiki-2026-05-13/`) because the wiki is the documentation companion to the repo and they're conceptually one unit.
+
+### Changes landed
+
+- ✅ `assets/SP-1-dev-2026-05-13/{LICENSE,README.md,src/stemplayer_pins.h,wiki/*.md}` (17 files, 86 KB)
+- ✅ `assets/sp1-midi-2026-05-13/` (50 files across boards/, drivers/, subsys/, app/, dts/, include/, plus toplevel build files; 305 KB)
+- ✅ Sed-swapped citations across the skill:
+  - `` `sp1-midi/X` `` and `` `ericlewis/sp1-midi/X` `` → `` `assets/sp1-midi-2026-05-13/X` ``
+  - `` `SP-1-dev/src/X` `` and `` `timknapen/SP-1-dev/src/X` `` → `` `assets/SP-1-dev-2026-05-13/src/X` ``
+  - `` `SP-1-dev/README.md` `` → `` `assets/SP-1-dev-2026-05-13/README.md` ``
+  - Backtick-anchored to avoid matching the GitHub URL `github.com/timknapen/SP-1-dev` which should remain as a public repo URL
+- ✅ `sources.md` — added two new "Bundled assets" entries (SP-1-dev-2026-05-13 with full wiki listing; sp1-midi-2026-05-13 with key-path listing) plus citation-form guidance for both
+- ✅ `references/27-tools-and-utilities.md` — updated `github.com/timknapen/SP-1-dev` and `github.com/ericlewis/sp1-midi` entries to point at the bundled paths as the primary access route
+- ✅ `SKILL.md` item 8 — added both new bundles to the redistributable-corpus list (with explicit MIT-license note implicit in the descriptions)
+- ✅ `hallucination-watchlist.md` — updated the SP-1-dev "no Python/Rust tools" entry to note the repo is now bundled (so the claim can be self-verified by reading the bundled subset)
+
+### PII scan
+
+- Email/credentials pattern: clean
+- Filesystem paths: clean
+- Author/copyright: only MIT LICENSE headers (Copyright 2026 Tim Knapen / Eric Lewis — required for attribution) and the `@author Tim Knapen` + `@copyright Copyright (c) 2025` annotations in `stemplayer_pins.h` (standard MIT-licensed-file attribution with the author's public personal site URL `timknapen.be`). All public, all part of how the authors chose to attribute themselves on their MIT-licensed code.
+
+### Things still NOT bundled
+
+- `libpo32/` — different product (PO-32 Tonic). Hallucination-risk to bundle since the skill repeatedly warns against conflating PO-32 with SP-1.
+- `TE-SP-1-Dev-discord-archive/` — private scrape; the skill explicitly says "Do not link to this."
+- Vendor datasheets (nRF52840, CS42L42, TAS2505, BQ24232, CYBT-353027-02) — all public, all large, fetchable on demand.
+- Stock TE firmware binary — community-private, never bundled.
+- Kanye stems — copyrighted, never bundled.
+- `theunflappable/test_bootloader.py` — not on local disk in `resources/`; would need to fetch from Discord. Same Discord-attachment provenance as audiothingies. Could be added in a future batch if obtained.
+
+### Current `assets/` corpus after batch #4
+
+- TE-Stem-Player-manual.pdf, TE-Stem-User-Guide.pdf, TE-Stem-User-Guide.docx (TE official manuals)
+- solderless-2026-05-12/ + .zip (public web tool snapshot)
+- audiothingies-2026-05-09/ + .zip (ericlewis audio engine ref impl)
+- storagethingies-2026-05-09/ + .zip (ericlewis eMMC ref impl)
+- lines-thread-archive/ (846-post forum mirror, agent subset)
+- SP-1-dev-2026-05-13/ (TimK's repo + wiki)
+- sp1-midi-2026-05-13/ (ericlewis's Zephyr BSP)

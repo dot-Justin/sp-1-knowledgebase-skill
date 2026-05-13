@@ -1,0 +1,13 @@
+menu "Stem Player Audio Drivers"
+
+config STEM_PLAYER_AUDIO_CODEC_CS42L42
+	bool "CS42L42 codec driver"
+	default y
+	depends on AUDIO_CODEC
+
+config STEM_PLAYER_AUDIO_CODEC_TAS2505
+	bool "TAS2505 codec driver"
+	default y
+	depends on AUDIO_CODEC
+
+endmenu

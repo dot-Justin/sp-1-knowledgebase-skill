@@ -86,11 +86,11 @@ This is significant for any project that wants the SP-1 to **drive external MIDI
 | Bluetooth module | **Cypress/Infineon CYBT-353027-02** | UART-attached Bluetooth Classic + LE module |
 | FPC connector | **Omron XF3B-1945-31A** | 19-pin, 0.3 mm pitch; connects PCB to user-facing button/LED/jack flex |
 
-**Citations for IC identities:** [Lines #5–70 (community ID); Discord #hardware, tkt1000, 2026-05-07; code: `sp1-midi/boards/.../stem_player.dts`; code: `SP-1-dev/src/stemplayer_pins.h`].
+**Citations for IC identities:** [Lines #5–70 (community ID); Discord #hardware, tkt1000, 2026-05-07; code: `assets/sp1-midi-2026-05-13/boards/.../stem_player.dts`; code: `assets/SP-1-dev-2026-05-13/src/stemplayer_pins.h`].
 
 ## Memory map (nRF52840 flash)
 
-[code: `sp1-midi/boards/.../stem_player.dts`]
+[code: `assets/sp1-midi-2026-05-13/boards/.../stem_player.dts`]
 
 | Partition | Offset | Size | Purpose |
 | --- | --- | --- | --- |
@@ -204,9 +204,9 @@ The DTS includes `nfct-pins-as-gpios;` at the root — this reclaims the NFC per
 
 There is a small documentation conflict between three sources on which pin the BQ24232's **ISET override** is connected to.
 
-- `sp1-midi/README.md` says: **P0.19**
-- `sp1-midi/boards/.../stem_player.dts` says: **P1.00** [`iset-override-gpios = <&gpio1 0 GPIO_ACTIVE_LOW>`]
-- `SP-1-dev/src/stemplayer_pins.h` line 80 says: **P1.00** [`PIN_BQ_ISET NRF_GPIO_PIN_MAP(1, 00)`]
+- `assets/sp1-midi-2026-05-13/README.md` says: **P0.19**
+- `assets/sp1-midi-2026-05-13/boards/.../stem_player.dts` says: **P1.00** [`iset-override-gpios = <&gpio1 0 GPIO_ACTIVE_LOW>`]
+- `assets/SP-1-dev-2026-05-13/src/stemplayer_pins.h` line 80 says: **P1.00** [`PIN_BQ_ISET NRF_GPIO_PIN_MAP(1, 00)`]
 
 The DTS and TimK's pin header agree on **P1.00**. The README appears to be the error. When working with the charger driver, trust the DTS / pin header. See `05-power-and-battery.md` for more on the BQ24232 driver.
 

@@ -130,7 +130,15 @@ When working on SP-1 topics:
 
 7. **The user (dotjustin) maintains this skill.** Questions that come up during work get added to `cc-skill/questions-for-timk.md` (in the user's project directory, not in the skill) for later async resolution. Don't add to the skill itself without verifying claims.
 
-8. **The bundled material in `assets/` is the redistributable corpus.** Currently: TE manuals (PDF + DOCX), the `solderless-2026-05-12/` archive (snapshot of the public web tool), and the `audiothingies-2026-05-09/` + `storagethingies-2026-05-09/` archives (ericlewis's C++17 reference implementations of the stock audio engine and storage layer, originally shared as Discord attachments 2026-05-09; bundled as authoritative reference for the audio engine and eMMC driver). Material **not** bundled and not redistributable: stock TE firmware binary, Kanye stems, anything from non-public Discord channels.
+8. **The bundled material in `assets/` is the redistributable corpus.** Currently:
+   - TE manuals (PDF + DOCX)
+   - `solderless-2026-05-12/` — snapshot of the public web tool
+   - `audiothingies-2026-05-09/` + `storagethingies-2026-05-09/` — ericlewis's C++17 reference implementations (originally Discord attachments 2026-05-09)
+   - `lines-thread-archive/` — agent-friendly subset of the 846-post forum mirror (full archive at `github.com/dot-Justin/TE-SP-1-lines-thread-archive`)
+   - `SP-1-dev-2026-05-13/` — TimK's MIT-licensed repo (`stemplayer_pins.h` + 14 wiki pages)
+   - `sp1-midi-2026-05-13/` — ericlewis's MIT-licensed public Zephyr BSP
+
+   Material **not** bundled and not redistributable: stock TE firmware binary, Kanye stems, anything from non-public Discord channels.
 
 ## Synthesis date and freshness
 

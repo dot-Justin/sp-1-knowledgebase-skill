@@ -25,13 +25,13 @@ A: Two analog "ladder" ADC channels read multi-button combinations (Track + Play
 A: nRF is **master**. BCLK = P0.12 at 3.072 MHz (= 48 kHz × 64). LRCK = P0.11. SDOUT = P1.09. Reference clock is a 3.072 MHz external oscillator enabled via P0.13. See `02-hardware-overview.md`.
 
 **Q: How is the flash partitioned for custom firmware?**
-A: Bootloader 0x00000000–0x00020000 (128 KB), app slot0 0x00020000–0x000ff000 (892 KB), Zephyr settings storage 0x000ff000–0x00100000 (4 KB). [code: `sp1-midi/.../stem_player.dts`]
+A: Bootloader 0x00000000–0x00020000 (128 KB), app slot0 0x00020000–0x000ff000 (892 KB), Zephyr settings storage 0x000ff000–0x00100000 (4 KB). [code: `assets/sp1-midi-2026-05-13/.../stem_player.dts`]
 
 **Q: Are NFC pins used?**
 A: They are **repurposed as GPIO** via `nfct-pins-as-gpios;` in the DTS. P0.09 → TAS2505 reset; P0.10 → BT module reset.
 
 **Q: Where does the README disagree with the DTS?**
-A: The `sp1-midi/README.md` lists the BQ24232 ISET on P0.19, but the DTS and TimK's pin header both say P1.00. **Trust P1.00.** See `02-hardware-overview.md` Discrepancy section.
+A: The `assets/sp1-midi-2026-05-13/README.md` lists the BQ24232 ISET on P0.19, but the DTS and TimK's pin header both say P1.00. **Trust P1.00.** See `02-hardware-overview.md` Discrepancy section.
 
 **Q: How much headroom does custom firmware have?**
-A: `sp1-midi` bare BSP uses ~168 KB flash and ~43 KB RAM. The full stock firmware uses ~264 KB flash and ~219 KB RAM. Plenty of room. [code: `sp1-midi/README.md`]
+A: `sp1-midi` bare BSP uses ~168 KB flash and ~43 KB RAM. The full stock firmware uses ~264 KB flash and ~219 KB RAM. Plenty of room. [code: `assets/sp1-midi-2026-05-13/README.md`]

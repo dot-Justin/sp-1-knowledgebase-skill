@@ -1,0 +1,13 @@
+# SPDX-License-Identifier: Apache-2.0
+
+description: Texas Instruments TAS2505 audio amplifier / codec
+
+include: [i2c-device.yaml]
+
+compatible: "ti,tas2505"
+
+properties:
+  reset-gpios:
+    type: phandle-array
+    required: true
+    description: Active-low reset pin for the amplifier / codec.
