@@ -19,10 +19,10 @@ A: **No.** The community treats it as TE's intellectual property. It's been extr
 A: tkt1000 says "fully functional" with multiple variants tested via the update utility. He hasn't published yet because "working on something more important now that we want to release first" [Discord #hardware, 2026-05-08 14:51]. Speculation: this is either the solderless utility update or a complete BSP with audio.
 
 **Q: What's in `audiothingies` and `storagethingies`?**
-A: ericlewis's C++17 clean-room reimplementation of the stock audio engine + storage driver. Shared privately in Discord 2026-05-09. Not yet in a public repo. Will likely be incorporated into the eventual public BSP.
+A: ericlewis's C++17 clean-room reimplementation of the stock audio engine + storage driver. Originally shared as Discord file attachments 2026-05-09. **Now bundled in this skill** at `assets/audiothingies-2026-05-09/` and `assets/storagethingies-2026-05-09/`. Will likely also be incorporated into ericlewis's eventual public BSP.
 
 **Q: Can I get `audiothingies` / `storagethingies`?**
-A: Ask ericlewis in Discord. He shared them as Discord file attachments to help moecal1947 understand the audio engine; they aren't intentionally hidden, just not in a public repo yet.
+A: Read them right here — bundled in this skill at `assets/audiothingies-2026-05-09/` and `assets/storagethingies-2026-05-09/`. The originals were Discord attachments from ericlewis, shared to help moecal1947 understand the audio engine; they aren't intentionally hidden, just not in a public ericlewis-owned repo yet.
 
 **Q: What can virtualflannel's custom OS do that stock can't?**
 A: Beat repeat, bit crusher, send delay with performance feedback, filter with performance modulation, pitch ±12 cents. Stock has filter/distortion/gate/echo; virtualflannel adds beat repeat + bit crusher.

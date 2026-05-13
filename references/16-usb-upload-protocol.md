@@ -155,7 +155,7 @@ Per moecal1947's design discussion [Discord #general, 2026-05-09 09:36]:
 
 > USB CDC or bulk transport -> RAM buffer -> CMD25 multi-block eMMC write
 
-`storagethingies/EmmcDriver` has read paths only — no write paths implemented. So building this faster uploader requires:
+`assets/storagethingies-2026-05-09/EmmcDriver` has read paths only — no write paths implemented. So building this faster uploader requires:
 
 1. Implementing CMD24 (single-block) + CMD25 (multi-block) + CMD23 (block-count preset) on the eMMC driver side.
 2. Replacing the per-chunk `0x39` handler with a bulk-endpoint USB MSC class implementation (or a custom vendor class).

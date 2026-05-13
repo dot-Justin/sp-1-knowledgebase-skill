@@ -1,6 +1,6 @@
 # MIDI Timing Encoding
 
-**Synthesized through:** Lines #846 (2026-05-06), Discord through 2026-05-11, TKT wiki Audio-format page accessed 2026-05-12, and **solderless source archive** ingested 2026-05-13. Code-of-record for stock-firmware-read side: `storagethingies/DiskManager.hpp` `block_sync_words` field; `audiothingies/AudioEngine.hpp` `current_sync_word()`. Code-of-record for encoder-write side: `wav-parser.js::encodeToSP1` in solderless archive. See `update-log.md` 2026-05-13.
+**Synthesized through:** Lines #846 (2026-05-06), Discord through 2026-05-11, TKT wiki Audio-format page accessed 2026-05-12, and **solderless source archive** ingested 2026-05-13. Code-of-record for stock-firmware-read side: `assets/storagethingies-2026-05-09/DiskManager.hpp` `block_sync_words` field; `assets/audiothingies-2026-05-09/AudioEngine.hpp` `current_sync_word()`. Code-of-record for encoder-write side: `wav-parser.js::encodeToSP1` in solderless archive. See `update-log.md` 2026-05-13.
 
 **Important clarification (2026-05-13):** The TKT wiki and `storagethingies` describe what **stock TE firmware reads** from each sector — up to **8 bytes of side data per TE-block**, split as 2 sync + 2 tempo + 4 LED, × 4 blocks = 32 bytes per sector. But the **solderless encoder writes only 6 bytes per sector**, at the end of block 0: 2 bytes tempo (uint16 LE) + 4 bytes per-stem envelope (uint8). The encoder writes **no sync counter and no LED data**. Custom albums produced by solderless still play correctly with stock firmware effects, which means either (a) most of the wiki-described side data is optional from the firmware's perspective, or (b) stock firmware uses default zero values where data is absent. Treat the wiki layout as a **read spec** (what the firmware understands), not a **write spec** (what the encoder must produce). See `corrections.md` 2026-05-13 and `references/21-original-firmware-stems.md` for the encoder's reduced 6-byte trailer.
 
@@ -8,7 +8,7 @@ The rest of this file describes what's known about the timing-data encoding from
 
 The SP-1 stock firmware embeds **MIDI clock timing data directly into the audio stream** on the eMMC. Each TE-block (4 per sector) can carry **4 bytes of musical-timing side data** — split as a 16-bit sync counter and a 16-bit tempo field — that encodes the musical beat position [TKT wiki: Audio-format, accessed 2026-05-12]. This isn't decoration — the device's effects (looping, gate, delay, two of the LPF presets) **depend** on this timing data to sync musically with the audio.
 
-**Note on terminology:** earlier synthesis described the per-block timing payload as a single "32-bit sync word." The TKT wiki splits this into **2 bytes sync + 2 bytes tempo** per block (followed by 4 bytes of LED data). The `storagethingies/DiskManager.hpp` `block_sync_words[4]` array packs both fields together as a `uint32_t`. See `corrections.md` for the reconciliation.
+**Note on terminology:** earlier synthesis described the per-block timing payload as a single "32-bit sync word." The TKT wiki splits this into **2 bytes sync + 2 bytes tempo** per block (followed by 4 bytes of LED data). The `assets/storagethingies-2026-05-09/DiskManager.hpp` `block_sync_words[4]` array packs both fields together as a `uint32_t`. See `corrections.md` for the reconciliation.
 
 This file documents what is known about the encoding, how the firmware uses it, and what stem-encoding tools must produce.
 
@@ -58,7 +58,7 @@ Offset within block's side-data:
 
 Each of the 4 TE-blocks in a sector has this 8-byte trailer, totaling 32 bytes of side data per sector. Audio occupies bytes 0–2039 of each 2048-byte TE-block; side data occupies bytes 2040–2047.
 
-**In memory after read** [code: `storagethingies/DiskManager.hpp` — `AudioSlot::Record`:]
+**In memory after read** [code: `assets/storagethingies-2026-05-09/DiskManager.hpp` — `AudioSlot::Record`:]
 
 ```cpp
 struct Record {
@@ -70,7 +70,7 @@ struct Record {
 
 The `uint32_t` in `block_sync_words` is the same 4 bytes that the wiki splits into sync+tempo. Bit-field ordering within the `uint32_t` (which 16 bits are sync, which are tempo, endianness) is **not** publicly documented and should be verified by inspecting `try_get_block_side_data_cached()` or a real album image's bytes. The audio engine queries `try_get_block_side_data_cached()` to retrieve the current block's sync word during playback.
 
-[code: `audiothingies/AudioEngine.hpp` line 67:]
+[code: `assets/audiothingies-2026-05-09/AudioEngine.hpp` line 67:]
 
 ```cpp
 uint32_t current_sync_word() const;

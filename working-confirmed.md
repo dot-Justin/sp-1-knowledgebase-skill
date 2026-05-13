@@ -12,12 +12,12 @@ For features still in development, see `known-unknowns.md`. For features that we
 | --- | --- |
 | Original device firmware dumped end-to-end | murray, voltage glitch attack on nRF52840 APPROTECT, attempt #8,504, 2025-01-25 [Lines thread summary] |
 | Boots and plays original album stems | Documented since device launch; physical units owned by 100+ community members |
-| Eight-channel 24-bit/48 kHz audio playback | [code: `audiothingies/StockRuntimeMixer.cpp`] |
-| Four-stem mixing with per-stem faders | [code: `audiothingies/StockRuntimeMixer.cpp` — Q12 fixed-point weights] |
-| Multi-rate FF (2.5x, 4x, 8x, 16x) and RW (1x, 2.5x, 4x, 8x) | [code: `audiothingies/AudioEngine.hpp` — `kFastForwardRates`, `kRewindRates`] |
-| Tape FX (smooth pause/resume ramp) | [code: `audiothingies/AudioEngine.cpp`] |
-| LPF (cascaded biquad with LFO) | [code: `audiothingies/effects/BiquadFilter.hpp` + Discord #firmware, ericlewis, 2026-05-09 00:32] |
-| Distortion (polynomial waveshaper) | [code: `audiothingies/effects/DistortionNode.hpp` + same Discord post] |
+| Eight-channel 24-bit/48 kHz audio playback | [code: `assets/audiothingies-2026-05-09/StockRuntimeMixer.cpp`] |
+| Four-stem mixing with per-stem faders | [code: `assets/audiothingies-2026-05-09/StockRuntimeMixer.cpp` — Q12 fixed-point weights] |
+| Multi-rate FF (2.5x, 4x, 8x, 16x) and RW (1x, 2.5x, 4x, 8x) | [code: `assets/audiothingies-2026-05-09/AudioEngine.hpp` — `kFastForwardRates`, `kRewindRates`] |
+| Tape FX (smooth pause/resume ramp) | [code: `assets/audiothingies-2026-05-09/AudioEngine.cpp`] |
+| LPF (cascaded biquad with LFO) | [code: `assets/audiothingies-2026-05-09/effects/BiquadFilter.hpp` + Discord #firmware, ericlewis, 2026-05-09 00:32] |
+| Distortion (polynomial waveshaper) | [code: `assets/audiothingies-2026-05-09/effects/DistortionNode.hpp` + same Discord post] |
 | Gate (linear volume envelope) | Same |
 | Echo/Reverb (always-feeding circular delay, per-stem) | Same |
 | Custom stems on stock firmware | [Lines #799–805, TimK — confirmed playing user audio without firmware modification] |
@@ -105,29 +105,29 @@ This is a **MIDI controller**, not a stem player. It does not play audio. But it
 
 ---
 
-## In `audiothingies.zip` / `storagethingies.zip` (private — shared 2026-05-09 by ericlewis)
+## In `assets/audiothingies-2026-05-09/` / `assets/storagethingies-2026-05-09/` (bundled — ericlewis Discord shares, 2026-05-09)
 
 These are header-only C++17 reference implementations of the stock audio + storage stack, **suitable for porting into a Zephyr firmware**. They have not been published as a buildable BSP. Code is authoritative as a description of how the engine works.
 
 | Component | Evidence |
 | --- | --- |
-| AudioEngine state machine (Play / Slow / FF / RW transports) | [code: `audiothingies/AudioEngine.cpp`] |
+| AudioEngine state machine (Play / Slow / FF / RW transports) | [code: `assets/audiothingies-2026-05-09/AudioEngine.cpp`] |
 | Smoothed speed transitions (one-pole lowpass, coefficient `0.02f` = `0x3CA3D70A`) | [Discord #firmware, ericlewis, 2026-05-09 00:12] |
 | Fractional resampling with linear interpolation | Same |
 | 24-bit fixed-point phase increment for variable-speed playback | Same |
 | Block-skipping for FF (half-sector at 2.5x, quarter-sector at 4x) | [Discord #firmware, ericlewis, 2026-05-09 00:22] |
-| StockRuntimeMixer with Q12 fixed-point weights and 9-step cubic output gain curve | [code: `audiothingies/StockRuntimeMixer.cpp`] |
-| Frame-accurate transport sync word generation | [code: `audiothingies/AudioEngine.hpp` — `current_sync_word()`] |
-| LED state word generation | [code: `audiothingies/AudioEngine.hpp` — `current_track_led_word()`] |
-| Solo mask + per-stem fader bypass | [code: `audiothingies/AudioEngine.cpp`] |
-| Zephyr I2S TX backend | [code: `audiothingies/backends/zephyr_i2s_tx.cpp`] |
-| eMMC SMF init (11 states: POWER_ON → CMD0 → CMD1_POLL → CMD2 → CMD3 → CMD9 → CMD7 → CMD8 → CMD16 → VERIFY → SETUP_ASYNC) | [code: `storagethingies/EmmcDriver.cpp`] |
+| StockRuntimeMixer with Q12 fixed-point weights and 9-step cubic output gain curve | [code: `assets/audiothingies-2026-05-09/StockRuntimeMixer.cpp`] |
+| Frame-accurate transport sync word generation | [code: `assets/audiothingies-2026-05-09/AudioEngine.hpp` — `current_sync_word()`] |
+| LED state word generation | [code: `assets/audiothingies-2026-05-09/AudioEngine.hpp` — `current_track_led_word()`] |
+| Solo mask + per-stem fader bypass | [code: `assets/audiothingies-2026-05-09/AudioEngine.cpp`] |
+| Zephyr I2S TX backend | [code: `assets/audiothingies-2026-05-09/backends/zephyr_i2s_tx.cpp`] |
+| eMMC SMF init (11 states: POWER_ON → CMD0 → CMD1_POLL → CMD2 → CMD3 → CMD9 → CMD7 → CMD8 → CMD16 → VERIFY → SETUP_ASYNC) | [code: `assets/storagethingies-2026-05-09/EmmcDriver.cpp`] |
 | Async eMMC reads (interrupt-driven, DMA-style via SPIM3 + PWM for burst timing) | [code: same] |
-| DiskManager with 10-slot circular prefetch buffer | [code: `storagethingies/DiskManager.hpp`] |
-| Album metadata: up to 16 songs with artist/title strings | [code: `storagethingies/DiskManager.cpp`] |
+| DiskManager with 10-slot circular prefetch buffer | [code: `assets/storagethingies-2026-05-09/DiskManager.hpp`] |
+| Album metadata: up to 16 songs with artist/title strings | [code: `assets/storagethingies-2026-05-09/DiskManager.cpp`] |
 | Frame → sector mapping with audio slot caching | [code: same] |
-| All four DSP effect node implementations (biquad, distortion, chorus/flanger, delay/echo, gate) + StemEffectRack with spinlock-protected effect switching | [code: `audiothingies/effects/`] |
-| Right-aligned 24-bit PCM container in `int32_t` (max ±8,388,607) | [code: `audiothingies/PcmPacking.hpp`] |
+| All four DSP effect node implementations (biquad, distortion, chorus/flanger, delay/echo, gate) + StemEffectRack with spinlock-protected effect switching | [code: `assets/audiothingies-2026-05-09/effects/`] |
+| Right-aligned 24-bit PCM container in `int32_t` (max ±8,388,607) | [code: `assets/audiothingies-2026-05-09/PcmPacking.hpp`] |
 
 ---
 

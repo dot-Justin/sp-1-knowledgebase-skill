@@ -36,4 +36,4 @@ git clone https://github.com/dot-Justin/sp-1-knowledgebase-skill ~/.claude/skill
 
 This skill is a derivative work of community research on Lines (`llllllll.co`) and the SP-1 Discord. Key contributors named throughout the references include TimK / tkt1000 / timknapen, ericlewis, murray, Galapagoose, JoseJX, B_E_N, emvee1968, virtualflannel_46386, moecal1947, fishdog_, zee_33, theunflappable, Duloz, and many others. Citations point back to the original posts and code.
 
-The bundled TE manuals in [`assets/`](./assets/) are the only redistributed material. Community-private artifacts (stock TE firmware, Kanye stems, `audiothingies.zip` / `storagethingies.zip`) are described but not included.
+Bundled in [`assets/`](./assets/): TE manuals (PDF + DOCX), the solderless web-tool snapshot (`solderless-2026-05-12/`), and ericlewis's C++17 reference implementations of the stock audio engine and storage layer (`audiothingies-2026-05-09/`, `storagethingies-2026-05-09/`). Community-private artifacts NOT included: stock TE firmware binary, Kanye stems.

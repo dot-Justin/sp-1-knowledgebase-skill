@@ -80,15 +80,15 @@ The firmware contains a layered audio engine:
 - **Effects** (filter/distortion/gate/chorus/delay) → moved into `audiothingies::effects::*`
 - **I²S TX** (DMA buffer management) → moved into `audiothingies::backends::zephyr_i2s_tx`
 
-ericlewis's `audiothingies/storagethingies` reflects this analysis, with the layers cleanly separated in clean-room C++17 code.
+ericlewis's `assets/audiothingies-2026-05-09/storagethingies` reflects this analysis, with the layers cleanly separated in clean-room C++17 code.
 
 ### eMMC driver structure
 
-The stock firmware's eMMC driver uses the same hybrid GPIO bit-bang + SPIM3 approach that `storagethingies/EmmcDriver` implements. The 11-state init sequence (POWER_ON → CMD0 → CMD1_POLL → CMD2 → CMD3 → CMD9 → CMD7 → CMD8 → CMD16 → VERIFY → SETUP_ASYNC) was extracted from disassembly and reimplemented.
+The stock firmware's eMMC driver uses the same hybrid GPIO bit-bang + SPIM3 approach that `assets/storagethingies-2026-05-09/EmmcDriver` implements. The 11-state init sequence (POWER_ON → CMD0 → CMD1_POLL → CMD2 → CMD3 → CMD9 → CMD7 → CMD8 → CMD16 → VERIFY → SETUP_ASYNC) was extracted from disassembly and reimplemented.
 
 ### Effects implementation details
 
-The DSP node descriptions in `13-dsp-effects.md` come from cross-referencing the disassembly with `audiothingies/effects/*`. Notable findings:
+The DSP node descriptions in `13-dsp-effects.md` come from cross-referencing the disassembly with `assets/audiothingies-2026-05-09/effects/*`. Notable findings:
 
 - **Pre-gain 16.0** for distortion → identified by the multiply-by-constant in disassembly
 - **Polynomial waveshaper `x − 0.5·x³`** → identified by the FMUL/FSUB sequence in the inner loop
@@ -123,7 +123,7 @@ If you have access to a copy of the firmware:
 
 1. Open it in Ghidra with the SVD overlay
 2. Search for specific constants mentioned in this skill (e.g., `0x3CA3D70A`, `8192`, `kGateLevels`)
-3. Cross-reference the disassembly with `audiothingies/` source
+3. Cross-reference the disassembly with `assets/audiothingies-2026-05-09/` source
 4. Verify the constants match in both places
 
 If you find a discrepancy, that's a real research finding. Report it to the Discord — TimK and ericlewis would want to know if `audiothingies` diverges from stock behavior.

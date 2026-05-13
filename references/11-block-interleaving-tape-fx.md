@@ -1,6 +1,6 @@
 # Block Interleaving and Tape FX
 
-**Synthesized through:** Lines #846 (2026-05-06), Discord through 2026-05-11, and **solderless source archive** ingested 2026-05-13. Primary sources: ericlewis's Discord explanation 2026-05-09 + `storagethingies/DiskManager.hpp` constant `kBlockOrder[4] = {0, 2, 1, 3}` + the canonical encoder `wav-parser.js::encodeToSP1` in the solderless archive, which uses the identical `BLOCK_ORDER = [0, 2, 1, 3]` constant and the formula `block_id = BLOCK_ORDER[frame_in_sector % 4]`. See `update-log.md` 2026-05-13.
+**Synthesized through:** Lines #846 (2026-05-06), Discord through 2026-05-11, and **solderless source archive** ingested 2026-05-13. Primary sources: ericlewis's Discord explanation 2026-05-09 + `assets/storagethingies-2026-05-09/DiskManager.hpp` constant `kBlockOrder[4] = {0, 2, 1, 3}` + the canonical encoder `wav-parser.js::encodeToSP1` in the solderless archive, which uses the identical `BLOCK_ORDER = [0, 2, 1, 3]` constant and the formula `block_id = BLOCK_ORDER[frame_in_sector % 4]`. See `update-log.md` 2026-05-13.
 
 The single cleverest design decision in the SP-1's audio format is the **on-disk block interleaving**. It lets the device do tape FF/RW effects at high speeds without exceeding the eMMC's read bandwidth, simply by **reading less data from each sector**. This file explains how it works.
 
@@ -24,7 +24,7 @@ TE took a third path: **change the on-disk layout so that "reading less" produce
 
 Each TE sector (8192 bytes, 340 audio frames) is divided into 4 TE blocks of 2048 bytes (85 frames) each. Frames in the sector are distributed across the 4 blocks in a specific pattern.
 
-[code: `storagethingies/DiskManager.hpp` line 34: `static constexpr int kBlockOrder[4] = {0, 2, 1, 3};`]
+[code: `assets/storagethingies-2026-05-09/DiskManager.hpp` line 34: `static constexpr int kBlockOrder[4] = {0, 2, 1, 3};`]
 
 [Source: ericlewis, Discord #firmware, 2026-05-09 00:22:]
 
@@ -61,7 +61,7 @@ The audio engine has three render modes that correspond to three sector read siz
 | **Half-sector mode** | 2.5x | 8 (first 8 native eMMC blocks = TE blocks 0 + 2) | 4096 | 170 (every other frame, with frame indices 0, 2, 4, ..., 338) |
 | **Quarter-sector mode** | 4x – 16x | 4 (first 4 native eMMC blocks = TE block 0 only) | 2048 | 85 (every 4th frame, with frame indices 0, 4, 8, ..., 336) |
 
-[code: `storagethingies/DiskManager.hpp` slot tracking shows `read_blocks` ∈ {16, 8, 4}; `audiothingies/StockRuntimeMixer::read_blocks_for_speed()` implements the mapping]
+[code: `assets/storagethingies-2026-05-09/DiskManager.hpp` slot tracking shows `read_blocks` ∈ {16, 8, 4}; `assets/audiothingies-2026-05-09/StockRuntimeMixer::read_blocks_for_speed()` implements the mapping]
 
 When in half-sector mode, the firmware **only reads the first 4 KB of each sector** (TE blocks 0 and 2, which together contain all even-numbered frames). The remaining 4 KB of the sector (TE blocks 1 and 3, with odd-numbered frames) is **skipped entirely**. The eMMC reads half the data, so the bandwidth required is half — which lets the firmware play back at 2.5x speed (consuming frames twice as fast as normal, but only reading half as many frames per sector means the per-sector bandwidth stays at the 1.0x rate).
 
@@ -143,7 +143,7 @@ The naming is confusing because `kBlockOrder[i]` describes which **logical** blo
 
 ## Variable read sizes in `DiskManager`
 
-[code: `storagethingies/DiskManager.hpp` — `AudioSlot::read_blocks` field; `service_audio_prefetch_window()`]
+[code: `assets/storagethingies-2026-05-09/DiskManager.hpp` — `AudioSlot::read_blocks` field; `service_audio_prefetch_window()`]
 
 The DiskManager records, per audio slot, how many native eMMC blocks were read into that slot's buffer (16, 8, or 4). The audio engine queries `read_blocks` when extracting frames so it can:
 
@@ -151,7 +151,7 @@ The DiskManager records, per audio slot, how many native eMMC blocks were read i
 2. Skip the missing frame slots during decoding
 3. Apply the frame-duplication policy
 
-`audiothingies/StockRuntimeMixer::read_blocks_for_speed(speed)` is the mapping from desired playback speed to `read_blocks`. Speed thresholds:
+`assets/audiothingies-2026-05-09/StockRuntimeMixer::read_blocks_for_speed(speed)` is the mapping from desired playback speed to `read_blocks`. Speed thresholds:
 
 - `speed < 2.5x` → `read_blocks = 16` (full sector)
 - `2.5x ≤ speed < 4x` → `read_blocks = 8` (half sector)
@@ -161,7 +161,7 @@ The DiskManager records, per audio slot, how many native eMMC blocks were read i
 
 Tape RW (rewind) is **conceptually the same**: read fewer blocks per sector at higher RW speeds, just iterate sectors in descending order. The frame duplication for sample-and-hold output works identically.
 
-`audiothingies/AudioEngine.hpp` has separate rate arrays:
+`assets/audiothingies-2026-05-09/AudioEngine.hpp` has separate rate arrays:
 
 ```cpp
 static constexpr std::array<float, 4> kFastForwardRates = {2.5f, 4.0f, 8.0f, 16.0f};
@@ -178,7 +178,7 @@ emvee1968's first attempt at FF/RW in custom firmware did not use this block-ski
 
 > One thing I have been struggling with is the tape effects for fast forward and rewind.. spent hours trying to get that working, every time it results in degraded audio / artifacts / glitches / drop outs… seems the eMMC cannot be read fast enough. [Discord #firmware, 2026-05-09 00:04]
 
-ericlewis's reply pointed at this exact mechanism and shared `audiothingies.zip` and `storagethingies.zip` as the reference. Custom firmware that tries to FF/RW by "just reading sectors faster" will fail; the only way to do it is the block-skipping + frame-duplication trick.
+ericlewis's reply pointed at this exact mechanism and shared `assets/audiothingies-2026-05-09.zip` and `assets/storagethingies-2026-05-09.zip` as the reference. Custom firmware that tries to FF/RW by "just reading sectors faster" will fail; the only way to do it is the block-skipping + frame-duplication trick.
 
 ## The pause / play "bend" effect
 
@@ -195,7 +195,7 @@ The smoothing coefficient `0.02f` is represented internally as `0x3CA3D70A` in h
 - **Play:** target_speed = 1.0, current_speed ramps up
 - **Switch transports:** target_speed = 1.0 → 2.5 (for example), current_speed bends through 1.5, 2.0 on the way
 
-The fractional resampling that handles this — sub-sample interpolation — is implemented by `audiothingies/VarispeedResampler.hpp`:
+The fractional resampling that handles this — sub-sample interpolation — is implemented by `assets/audiothingies-2026-05-09/VarispeedResampler.hpp`:
 
 ```cpp
 // Q24 fixed-point phase

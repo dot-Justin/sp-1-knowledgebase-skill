@@ -11,7 +11,7 @@ A:
 - speed < 2.5x → `read_blocks=16` (full sector)
 - 2.5x ≤ speed < 4x → `read_blocks=8` (half sector, blocks 0+2)
 - speed ≥ 4x → `read_blocks=4` (quarter sector, block 0 only)
-[code: `audiothingies/StockRuntimeMixer::read_blocks_for_speed()`]
+[code: `assets/audiothingies-2026-05-09/StockRuntimeMixer::read_blocks_for_speed()`]
 
 **Q: How are frames distributed across blocks?**
 A:
@@ -30,7 +30,7 @@ A: **No.** That's the cleverness — the data layout produces the right frames a
 A: 1.0x playback works fine (engine reads all 16 native blocks = all 340 frames). But at 2.5x the half-sector read pulls frames 0–169 (the first half by physical byte position) instead of every-other-frame. Audio will skip in obvious chunks rather than fast-forwarding smoothly.
 
 **Q: What FF/RW rates are supported?**
-A: FF: `{2.5, 4, 8, 16}x` per `audiothingies/AudioEngine.hpp::kFastForwardRates`. RW: `{1, 2.5, 4, 8}x` per `kRewindRates`. **TimK said in Discord that he measured stock firmware going only up to 2.5x and his own custom firmware up to 2x; the higher rates in code may be aspirational.** See `corrections.md` and pending question to TimK.
+A: FF: `{2.5, 4, 8, 16}x` per `assets/audiothingies-2026-05-09/AudioEngine.hpp::kFastForwardRates`. RW: `{1, 2.5, 4, 8}x` per `kRewindRates`. **TimK said in Discord that he measured stock firmware going only up to 2.5x and his own custom firmware up to 2x; the higher rates in code may be aspirational.** See `corrections.md` and pending question to TimK.
 
 **Q: How does the smooth play/pause "bend" work?**
 A: One-pole lowpass smoothing on `current_speed` toward `target_speed` with coefficient 0.02 (= 2% per audio block). Combined with `VarispeedResampler`'s fractional resampling. At target speeds below 2.5x this gives smooth musical pitch bending. See `12-audio-engine-internals.md`.
@@ -45,4 +45,4 @@ A: Yes but it's CPU-expensive and won't reach the high FF rates. Stock TE firmwa
 A: The block-skipping mechanism is BPM-independent — it just reads fewer bytes per sector. Variable BPM affects the timing/sync side data, not the block layout. Sync words can encode tempo changes; see `10-midi-timing-encoding.md`.
 
 **Q: What did emvee1968 get wrong before reading audiothingies?**
-A: emvee1968 tried to implement FF by reading sectors faster, which fails on this eMMC. ericlewis pointed at the block-skipping mechanism and shared `audiothingies.zip` and `storagethingies.zip` to demonstrate the proper approach. See `corrections.md`.
+A: emvee1968 tried to implement FF by reading sectors faster, which fails on this eMMC. ericlewis pointed at the block-skipping mechanism and shared `assets/audiothingies-2026-05-09.zip` and `assets/storagethingies-2026-05-09.zip` to demonstrate the proper approach. See `corrections.md`.

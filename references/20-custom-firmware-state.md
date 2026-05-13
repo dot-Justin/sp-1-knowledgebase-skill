@@ -13,14 +13,14 @@ This file enumerates the **custom firmwares** known to exist for the SP-1, their
 | **TimK's private firmware** | "Fully functional" — details not public | Private; tested with update utility | tkt1000, Discord #hardware, 2026-05-08 |
 | **emvee1968's firmware** | Basic playback + gate effect + Bluetooth pairing | Unreleased (awaiting 2 more units) | emvee1968, Discord #firmware, 2026-05-08 |
 | **virtualflannel_46386's custom OS** | Full FX page: beat repeat, bit crusher, delay, filter, pitch ±12 cents, mixer | Unreleased (awaiting solderless return) | virtualflannel_46386, Discord #general, 2026-05-11 |
-| **`audiothingies` / `storagethingies`** | Reference implementations of stock audio engine + storage | Privately shared (not in a public repo) | ericlewis, Discord #firmware, 2026-05-09 |
+| **`audiothingies` / `storagethingies`** | Reference implementations of stock audio engine + storage | **Bundled in skill** at `assets/audiothingies-2026-05-09/` and `assets/storagethingies-2026-05-09/` (originally Discord attachments) | ericlewis, Discord #firmware, 2026-05-09 |
 | **`theunflappable`'s `test_bootloader.py`** | Bootloader protocol implementation (host-side) | Privately shared in Discord | theunflappable, Discord #firmware, 2026-05-08 |
 | **moecal1947's Python uploader** | Slow but working USB album uploader | Privately shared / in development | moecal1947, Discord #general, 2026-05-09 |
 | **zee_33's LED-bit-bang dump firmware** | Minimal firmware that exfiltrates flash bytes via LEDs | Privately developed; not yet published | zee_33, Discord #firmware, 2026-05-08 |
 
 ## Stock TE firmware
 
-The original firmware that ships with every SP-1. Extracted by murray on 2025-01-25 via voltage glitch attack (`14-approtect-glitch-attack.md`). **Not publicly redistributed** — community treats it as TE's IP. Reverse-engineering produced public artifacts (`audiothingies/`, `storagethingies/`, the bootloader documentation) but the binary itself stays in private hands.
+The original firmware that ships with every SP-1. Extracted by murray on 2025-01-25 via voltage glitch attack (`14-approtect-glitch-attack.md`). **Not publicly redistributed** — community treats it as TE's IP. Reverse-engineering produced public artifacts (`assets/audiothingies-2026-05-09/`, `assets/storagethingies-2026-05-09/`, the bootloader documentation) but the binary itself stays in private hands.
 
 What it does:
 - Plays the bundled album (Donda or Jesus Is King depending on the unit's batch)
@@ -116,7 +116,7 @@ Release plan [Discord #general, virtualflannel_46386, 2026-05-11 17:56]:
 
 Waiting for `solderless.engineering` to return online. ETA depends on tkt1000's update.
 
-## `audiothingies.zip` and `storagethingies.zip`
+## `assets/audiothingies-2026-05-09.zip` and `assets/storagethingies-2026-05-09.zip`
 
 Shared by ericlewis in Discord #firmware on 2026-05-09 (00:18:55 and 00:21:46 UTC) as private reference code. Headers and sources for:
 

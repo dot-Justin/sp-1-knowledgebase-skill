@@ -254,7 +254,7 @@ Often the descriptor changes don't take effect because the host caches USB devic
 
 ### Device boots but no audio
 
-The `sp1-midi` BSP is a **MIDI controller** — it does NOT play audio out of the box. To get audio playback, integrate `audiothingies/` and `storagethingies/` into your app, set up the I²S TX path, and configure the codecs. See `12-audio-engine-internals.md`.
+The `sp1-midi` BSP is a **MIDI controller** — it does NOT play audio out of the box. To get audio playback, integrate `assets/audiothingies-2026-05-09/` and `assets/storagethingies-2026-05-09/` into your app, set up the I²S TX path, and configure the codecs. See `12-audio-engine-internals.md`.
 
 ## When you don't have SWD
 

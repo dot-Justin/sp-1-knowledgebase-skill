@@ -1,6 +1,6 @@
 # Audio Engine Internals
 
-**Synthesized through:** Lines #846 (2026-05-06), Discord through 2026-05-11. Code-of-record: `audiothingies/AudioEngine.{hpp,cpp}`, `StockRuntimeMixer.{hpp,cpp}`, `VarispeedResampler.hpp`.
+**Synthesized through:** Lines #846 (2026-05-06), Discord through 2026-05-11. Code-of-record: `assets/audiothingies-2026-05-09/AudioEngine.{hpp,cpp}`, `StockRuntimeMixer.{hpp,cpp}`, `VarispeedResampler.hpp`.
 
 This file walks through the C++ audio engine that ericlewis published. It is a clean-room reimplementation of the stock TE playback engine, structurally aligned to how the stock firmware works. The DSP effects are covered separately in `13-dsp-effects.md`; this file covers the surrounding mixer, transport, resampling, output gain, and side-data plumbing.
 
@@ -28,7 +28,7 @@ Each block below covers one stage.
 
 ## AudioEngine — high-level state machine
 
-[code: `audiothingies/AudioEngine.hpp`]
+[code: `assets/audiothingies-2026-05-09/AudioEngine.hpp`]
 
 `AudioEngine` is the top-level facade. It owns a `StockRuntimeMixer` and exposes:
 
@@ -53,7 +53,7 @@ std::atomic<uint8_t>    solo_mask_;
 
 ## Transport modes and rates
 
-[code: `audiothingies/AudioEngine.hpp` lines 17–29:]
+[code: `assets/audiothingies-2026-05-09/AudioEngine.hpp` lines 17–29:]
 
 ```cpp
 enum class TransportMode : uint8_t {
@@ -88,7 +88,7 @@ The coefficient `0.02f` is `0x3CA3D70A` in IEEE 754 hex (this exact bit pattern 
 
 ## VarispeedResampler — fractional-speed playback
 
-[code: `audiothingies/VarispeedResampler.hpp`]
+[code: `assets/audiothingies-2026-05-09/VarispeedResampler.hpp`]
 
 ```cpp
 static constexpr float kMinSpeed = -8.0f;
@@ -122,7 +122,7 @@ The signed `int64_t` for the sample index means **reverse playback** is the same
 
 ## StockRuntimeMixer — the heart of rendering
 
-[code: `audiothingies/StockRuntimeMixer.hpp`]
+[code: `assets/audiothingies-2026-05-09/StockRuntimeMixer.hpp`]
 
 This is the per-block rendering engine. Each call to `render_block()` produces a chunk of output (up to 128 frames = 256 stereo samples) from the eMMC data + per-stem weights + transport state + active effects.
 
@@ -285,7 +285,7 @@ Application code can call `snapshot_perf_stats()` (returns by value with spinloc
 
 ## I²S TX backend
 
-[code: `audiothingies/backends/zephyr_i2s_tx.cpp`]
+[code: `assets/audiothingies-2026-05-09/backends/zephyr_i2s_tx.cpp`]
 
 The Zephyr backend wraps the I²S0 peripheral. It:
 

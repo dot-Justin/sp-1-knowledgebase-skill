@@ -31,7 +31,7 @@ A:
 uint32_t sync = audio_engine.current_sync_word();
 uint16_t counter = sync & 0xFFFF;
 ```
-[code: `audiothingies/AudioEngine.hpp` line 67]
+[code: `assets/audiothingies-2026-05-09/AudioEngine.hpp` line 67]
 
 **Q: How often does the sync word update?**
 A: **Every TE-block** = every 85 frames ≈ 1.77 ms. Much finer than the MIDI tick rate, so you can determine which tick is current with sample-accuracy.

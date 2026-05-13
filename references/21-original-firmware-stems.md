@@ -252,10 +252,10 @@ Once the album image is built (one big byte buffer: metadata sector + song audio
 | Behavior | Stock TE firmware | Custom firmware |
 | --- | --- | --- |
 | Plays 4 stems at 48 kHz | Yes | Depends — see `references/20-custom-firmware-state.md` |
-| Per-stem fader mixing | Yes | Stock-equivalent only via `audiothingies/StockRuntimeMixer` |
+| Per-stem fader mixing | Yes | Stock-equivalent only via `assets/audiothingies-2026-05-09/StockRuntimeMixer` |
 | Track button mute/solo | Yes | Yes |
 | FF/RW at 2.5x, 4x, 8x, 16x | 2.5x verified; higher rates documented in code | Custom firmwares typically max at 2.0x without block-skipping |
-| Tape FX (smooth pause/play bend) | Yes | Yes in `audiothingies/VarispeedResampler`-based firmware |
+| Tape FX (smooth pause/play bend) | Yes | Yes in `assets/audiothingies-2026-05-09/VarispeedResampler`-based firmware |
 | Filter, distortion, gate, echo effects | Yes, all 4 with 4 variations | Varies — emvee has gate; virtualflannel has different custom effects |
 | Tempo-synced effect modulation | Yes (uses sync words and/or tempo field) | Not implemented in any public firmware yet |
 | Bluetooth audio output | Yes (presumed, not formally verified) | emvee has pairing working; full audio over BT not yet |

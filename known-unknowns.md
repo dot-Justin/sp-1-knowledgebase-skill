@@ -111,7 +111,7 @@ See `update-log.md` 2026-05-13 and `working-confirmed.md` for the full resolutio
 
 **Why unresolved:** The DSP descriptions are at a high level. Exact coefficients, exact tempo synchronization, exact "send delay with performance feedback" behavior, exact bit-crusher quantization details — these are not in the publicly available material. They are inferred from stock firmware behavior.
 
-**Next move:** Wait for virtualflannel_46386 / emvee1968 release. Or read more of `audiothingies/effects/` (BiquadFilter, DistortionNode, ChorusFlangerNode, DelayEchoNode, GateEnvelopeNode, StemEffectRack). Or ask ericlewis.
+**Next move:** Wait for virtualflannel_46386 / emvee1968 release. Or read more of `assets/audiothingies-2026-05-09/effects/` (BiquadFilter, DistortionNode, ChorusFlangerNode, DelayEchoNode, GateEnvelopeNode, StemEffectRack). Or ask ericlewis.
 
 ---
 
@@ -121,7 +121,7 @@ See `update-log.md` 2026-05-13 and `working-confirmed.md` for the full resolutio
 
 **Known:**
 - The Toshiba THGBMNG5D1LBAIL is rated for High Speed mode (52 MHz)
-- It works reliably at 32 MHz **without** High Speed mode enabled [code: `storagethingies/EmmcDriver.cpp`]
+- It works reliably at 32 MHz **without** High Speed mode enabled [code: `assets/storagethingies-2026-05-09/EmmcDriver.cpp`]
 - Above 32 MHz: unreliable in TimK's testing
 - This is unusual — the eMMC 5.0 spec requires High Speed mode for >26 MHz
 
@@ -171,11 +171,11 @@ See `update-log.md` 2026-05-13 and `working-confirmed.md` for the full resolutio
 - The firmware was dumped by murray (attempt #8504, 2025-01-25, voltage glitch attack on APPROTECT)
 - Disassembled in Ghidra by Duloz and others
 - High-level behavior is understood: load stems from eMMC, mix with fader weights, apply per-stem effects, send to I2S
-- `audiothingies/` reflects ericlewis's reimplementation of this engine in clean C++17 — *equivalent in behavior* but not a byte-for-byte port
+- `assets/audiothingies-2026-05-09/` reflects ericlewis's reimplementation of this engine in clean C++17 — *equivalent in behavior* but not a byte-for-byte port
 
 **Why unresolved (depending on what "resolved" means):** The disassembled binary is enormous; specific functions for every transport mode, every effect, the LCD/LED state machine, the menu system — have not all been documented in narrative form. ericlewis's `audiothingies` is the closest thing to a written explanation, plus the Discord conversations.
 
-**Next move:** Read `audiothingies/AudioEngine.cpp` for the playback model. For deeper behavior matching, run the original firmware in QEMU or on real hardware and observe.
+**Next move:** Read `assets/audiothingies-2026-05-09/AudioEngine.cpp` for the playback model. For deeper behavior matching, run the original firmware in QEMU or on real hardware and observe.
 
 ---
 
@@ -196,14 +196,14 @@ See `update-log.md` 2026-05-13 and `working-confirmed.md` for the full resolutio
   right = (data[2]<<24) | (data[5]<<16) | (data[4]<<8)
   ```
   This puts the 24-bit value **left-aligned** in `int32_t` (bits 31:8 = sample, bits 7:0 = 0).
-- `storagethingies/DiskManager.hpp::decode_te_frame_payload_i32` and `audiothingies/PcmPacking.hpp::float_to_pcm_right24_fast` use **right-aligned** representation (bits 23:0 = sample, bits 31:24 = sign extension).
+- `assets/storagethingies-2026-05-09/DiskManager.hpp::decode_te_frame_payload_i32` and `assets/audiothingies-2026-05-09/PcmPacking.hpp::float_to_pcm_right24_fast` use **right-aligned** representation (bits 23:0 = sample, bits 31:24 = sign extension).
 - The **byte assignments agree** in both sources: byte 0 = L_mid, byte 1 = L_msb, byte 2 = R_msb, byte 3 = L_lsb, byte 4 = R_lsb, byte 5 = R_mid.
 
 **Why unresolved:** the two sources express the same data with an 8-bit shift difference. The most likely reconciliation is that the wiki shows an intermediate engine representation while `PcmPacking.hpp` shows the canonical in-memory format used by the mixer — but this hasn't been confirmed. Could also be wiki imprecision.
 
 **Why it matters:** anyone writing a decoder from the wiki formula and feeding it to a mixer expecting right-aligned samples will get audio that's 256× too loud (or, with int saturation, distorted). The functional/byte-level audio data is the same; the only question is the bit shift in the destination word.
 
-**Next move:** read both `storagethingies/DiskManager.hpp::decode_te_frame_payload_i32` and the wiki page directly (not through WebFetch's summarizer) and reconcile. If still ambiguous, ask ericlewis or TimK whether the engine internally uses left- or right-aligned 24-bit values.
+**Next move:** read both `assets/storagethingies-2026-05-09/DiskManager.hpp::decode_te_frame_payload_i32` and the wiki page directly (not through WebFetch's summarizer) and reconcile. If still ambiguous, ask ericlewis or TimK whether the engine internally uses left- or right-aligned 24-bit values.
 
 ---
 

@@ -13,7 +13,7 @@ Format per entry: **What was believed → What turned out to be true → Why →
 ### Believed: "24-bit PCM, little-endian"
 **Actual:** There are **two distinct representations** to talk about: in-memory and on-disk. Neither matches "24-bit little-endian PCM."
 
-**In-memory:** samples are 24-bit signed values stored **right-aligned inside `int32_t` containers**, with maximum magnitude 8,388,607 (= 2^23 − 1). The conversion function is named `float_to_pcm_right24_fast` and returns `int32_t` [code: `audiothingies/PcmPacking.hpp`].
+**In-memory:** samples are 24-bit signed values stored **right-aligned inside `int32_t` containers**, with maximum magnitude 8,388,607 (= 2^23 − 1). The conversion function is named `float_to_pcm_right24_fast` and returns `int32_t` [code: `assets/audiothingies-2026-05-09/PcmPacking.hpp`].
 
 **On-disk (per stem, 6 bytes):**
 
@@ -29,14 +29,14 @@ left  = ((int8_t)data[1] << 16) | (data[0] << 8) | data[3];
 right = ((int8_t)data[2] << 16) | (data[5] << 8) | data[4];
 ```
 
-[code: `storagethingies/DiskManager.hpp` lines 65–82, `decode_te_frame_payload_i32`]
+[code: `assets/storagethingies-2026-05-09/DiskManager.hpp` lines 65–82, `decode_te_frame_payload_i32`]
 
 **Why the wrong claim circulates:** AI summaries of the Lines thread inferred a "standard PCM" wire format from snippets without reading the decode code. The actual layout is more interleaved than any standard format.
 
 **Citations:**
 - Correction: [Discord #general, tkt1000, 2026-05-10 22:53 — *"24 bit PCM little endian … that doesn't make sense"*]
-- Truth (in-memory): [code: `audiothingies/PcmPacking.hpp`]
-- Truth (on-disk): [code: `storagethingies/DiskManager.hpp`]
+- Truth (in-memory): [code: `assets/audiothingies-2026-05-09/PcmPacking.hpp`]
+- Truth (on-disk): [code: `assets/storagethingies-2026-05-09/DiskManager.hpp`]
 - Full detail: `references/09-audio-format-spec.md`
 
 ### Believed: "Frame layout is 2048-byte chunks"
@@ -45,7 +45,7 @@ right = ((int8_t)data[2] << 16) | (data[5] << 8) | data[4];
 The earlier "2048-byte chunk" framing came from coarser intermediate understanding — it described one of the *four* 2048-byte sub-units of a sector (which corresponds to the 0/2/1/3 interleaving units used for tape FF/RW). It is not the unit Claude should use when describing the format.
 
 **Citations:**
-- Truth (frames/sector): [code: `storagethingies/DiskManager.hpp`, `audiothingies/StockRuntimeMixer.cpp`]
+- Truth (frames/sector): [code: `assets/storagethingies-2026-05-09/DiskManager.hpp`, `assets/audiothingies-2026-05-09/StockRuntimeMixer.cpp`]
 - Truth (eMMC blocks per sector + interleaving): [Discord #firmware, ericlewis, 2026-05-09 00:22 — *"Because of the 0, 2, 1, 3 interleaving: Block 0 contains frames: 0, 4, 8, 12 …"*]
 
 ---
@@ -53,7 +53,7 @@ The earlier "2048-byte chunk" framing came from coarser intermediate understandi
 ### Believed: "Each TE-block carries a single 32-bit sync word with a 16-bit counter and unknown upper 16 bits"
 **Actual:** Per TKT wiki [Audio-format, accessed 2026-05-12], the 4-byte timing payload per TE-block is split into **two distinct 16-bit fields**: a sync counter (bytes 0–1) and a tempo value (bytes 2–3). The "unknown upper 16 bits" are the tempo field.
 
-**Why the wrong claim circulates:** the `storagethingies/DiskManager.hpp` `block_sync_words[4]` array uses `uint32_t`, which packs the two 16-bit fields together. Earlier synthesis treated this packed `uint32_t` as a single semantic "sync word." The wiki page distinguishes them.
+**Why the wrong claim circulates:** the `assets/storagethingies-2026-05-09/DiskManager.hpp` `block_sync_words[4]` array uses `uint32_t`, which packs the two 16-bit fields together. Earlier synthesis treated this packed `uint32_t` as a single semantic "sync word." The wiki page distinguishes them.
 
 **Still unknown:** the exact encoding of the 16-bit tempo field (raw BPM? Q8.8 fixed-point? sample period?) and byte ordering on disk (presumed little-endian).
 
@@ -74,7 +74,7 @@ The full header layout is:
 82   song entries           N × 136 bytes (4 + 4 + 64 + 64)
 ```
 
-**Note on C struct vs on-disk:** `storagethingies/DiskManager.hpp`'s `AlbumInfo` and `SongInfo` declare name fields as `[65]` — the 65th byte is a C null terminator. On disk the corresponding fields are exactly 64 bytes.
+**Note on C struct vs on-disk:** `assets/storagethingies-2026-05-09/DiskManager.hpp`'s `AlbumInfo` and `SongInfo` declare name fields as `[65]` — the 65th byte is a C null terminator. On disk the corresponding fields are exactly 64 bytes.
 
 **Citations:**
 - Earlier (now superseded): `references/21-original-firmware-stems.md` "Open question: does the album header use a specific magic value or version field?"
@@ -150,7 +150,7 @@ Desoldering is still a valid approach (fishdog_ documented it: 380–420 °C, 17
 ## Fast-forward / rewind speed
 
 ### Believed (TimK working version, May 2026): "Maximum FF speed is 2.0x in custom firmware; original goes up to 2.5x"
-**Actual (per ericlewis, with audiothingies code as reference):** The original firmware supports rates of **2.5x, 4x, 8x, 16x for FF** and **1x, 2.5x, 4x, 8x for RW** [code: `audiothingies/AudioEngine.hpp` — `kFastForwardRates`, `kRewindRates`]. The trick is **block-skipping**: above 2.5x the firmware switches from full-sector reads to half-sector reads (just blocks 0 and 1 of the four), and at 4x it switches to quarter-sector reads (just block 0), then duplicates frames to fill the gap. The 0/2/1/3 interleaving makes this work without any extra CPU math.
+**Actual (per ericlewis, with audiothingies code as reference):** The original firmware supports rates of **2.5x, 4x, 8x, 16x for FF** and **1x, 2.5x, 4x, 8x for RW** [code: `assets/audiothingies-2026-05-09/AudioEngine.hpp` — `kFastForwardRates`, `kRewindRates`]. The trick is **block-skipping**: above 2.5x the firmware switches from full-sector reads to half-sector reads (just blocks 0 and 1 of the four), and at 4x it switches to quarter-sector reads (just block 0), then duplicates frames to fill the gap. The 0/2/1/3 interleaving makes this work without any extra CPU math.
 
 This is not strictly a correction of TimK's claim — TimK's "I got FFWD only up to 2x" is accurate for his implementation as of 2026-05-09; he just hadn't implemented the block-skipping trick yet. But the **theoretical max throughput is ~4 MB/s** per ericlewis, far above what 2x requires, and the original firmware achieves up to 2.5x using the interleaving trick.
 

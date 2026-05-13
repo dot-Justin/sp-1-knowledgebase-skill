@@ -59,7 +59,7 @@ Use this when deciding **who to ask** for which question.
 
 - **JoseJX** — sector / chunk layout, PCM frame decoding, timing metadata interpretation (early work).
 - **Galapagoose** — MIDI clock encoding (0xF8, 31250 baud, 128 µs pulse) finalization.
-- **ericlewis** — modern authoritative reference via `audiothingies/` code.
+- **ericlewis** — modern authoritative reference via `assets/audiothingies-2026-05-09/` code.
 
 ### Bootloader
 
@@ -100,7 +100,7 @@ Use this when deciding **who to ask** for which question.
 
 When you need to know who said what:
 
-- *"How does the eMMC driver work?"* → ericlewis (`storagethingies/EmmcDriver`) or TimK (origin of the implementation)
+- *"How does the eMMC driver work?"* → ericlewis (`assets/storagethingies-2026-05-09/EmmcDriver`) or TimK (origin of the implementation)
 - *"Where are the SWD pads?"* → TimK (his wiki, pending update)
 - *"What does the 32-bit sync word encode beyond the counter?"* → ericlewis or Galapagoose
 - *"How do I dump my SP-1's firmware?"* → murray (glitch attack) or zee_33 (LED bit-bang)

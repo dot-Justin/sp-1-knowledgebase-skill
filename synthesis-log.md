@@ -65,14 +65,14 @@ Fetched and incorporated content from `github.com/timknapen/SP-1-dev/wiki` pages
 | --- | --- | --- |
 | Lines forum thread | Posts 1–846 (2024-04-09 to 2026-05-06) | Thread closed by moderators 2026-05-06 over copyright/spam concerns. Still readable. |
 | Discord — #general | 2026-05-06 through 2026-05-11 | Server launched 2026-05-06 |
-| Discord — #firmware | 2026-05-06 through 2026-05-11 | Includes ericlewis tape-FX explanation (2026-05-09) and shared `audiothingies.zip` / `storagethingies.zip` |
+| Discord — #firmware | 2026-05-06 through 2026-05-11 | Includes ericlewis tape-FX explanation (2026-05-09) and shared `assets/audiothingies-2026-05-09.zip` / `assets/storagethingies-2026-05-09.zip` |
 | Discord — #hardware | 2026-05-06 through 2026-05-11 | Includes fishdog_'s eMMC desolder method |
 | Discord — #news | 2026-05-04 through 2026-05-11 | Includes update-utility offline notice (2026-05-09) |
 | Discord — #introductions | Not technically substantive — skipped except for handle/handle disambiguation |
 | `github.com/timknapen/SP-1-dev` | Through 2026-05; wiki pages re-fetched 2026-05-12 | All 14 wiki pages enumerated; `Bootloader`, `Data-Structure`, `Album-metadata-format`, `Audio-format` contents incorporated |
 | `github.com/ericlewis/sp1-midi` | Posted 2026-05-09 by ericlewis | Zephyr BSP for MIDI-controller mode; not a stem-player firmware |
-| `audiothingies.zip` (private — shared Discord 2026-05-09 by ericlewis) | C++17 audio engine, mixer, DSP nodes | Authoritative for audio engine internals |
-| `storagethingies.zip` (private — shared Discord 2026-05-09 by ericlewis) | C++17 eMMC driver, DiskManager | Authoritative for storage internals |
+| `assets/audiothingies-2026-05-09.zip` (bundled in skill; originally a Discord attachment from ericlewis on 2026-05-09) | C++17 audio engine, mixer, DSP nodes | Authoritative for audio engine internals |
+| `assets/storagethingies-2026-05-09.zip` (bundled in skill; originally a Discord attachment from ericlewis on 2026-05-09) | C++17 eMMC driver, DiskManager | Authoritative for storage internals |
 | `github.com/ericlewis/libpo32` | C99 library for a different TE product (PO-32) | Referenced only for context |
 
 ## Freshness rules

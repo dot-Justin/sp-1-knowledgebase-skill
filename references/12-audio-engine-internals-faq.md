@@ -4,7 +4,7 @@
 A: DiskManager → StockRuntimeMixer.gather → StemEffectRack.process → StockRuntimeMixer.mix → master compander → float-to-int24 → Zephyr I²S TX. See `12-audio-engine-internals.md`.
 
 **Q: How many transport modes are there?**
-A: Four: **Play (1.0x), Slow (0.5x), FastForward, Rewind**. FastForward and Rewind have 4 rate stops each. See `audiothingies/AudioEngine.hpp` `TransportMode` enum.
+A: Four: **Play (1.0x), Slow (0.5x), FastForward, Rewind**. FastForward and Rewind have 4 rate stops each. See `assets/audiothingies-2026-05-09/AudioEngine.hpp` `TransportMode` enum.
 
 **Q: What's the smoothing coefficient for play/pause bends?**
 A: `0.02f` (= `0x3CA3D70A` in IEEE 754). Each audio block, `current_speed` moves 2% of the way toward `target_speed`. See `12-audio-engine-internals.md`.

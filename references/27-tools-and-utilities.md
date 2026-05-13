@@ -91,23 +91,31 @@ python3 -m http.server 8788
 
 **Caveats:** Archive is from before the announced "offline for update." When the live site returns, behavior may differ; re-archive if needed.
 
-### Private / shared-in-Discord tools
+### Bundled-in-skill source archives (originally Discord attachments)
 
-#### `audiothingies.zip`
-
-**Author:** ericlewis
-**Status:** Shared as Discord attachment in #firmware on 2026-05-09 00:18:55 UTC.
-**Contents:** C++17 header-only reference implementation of the stock audio engine: AudioEngine, StockRuntimeMixer, VarispeedResampler, StemEffectRack, 5 effect nodes, PcmPacking, Zephyr I²S TX backend.
-
-**Use this for:** Understanding stock TE audio behavior at the code level. Reimplementation of the audio engine for custom firmware. Not buildable as-is (requires storage layer and integration).
-
-#### `storagethingies.zip`
+#### `assets/audiothingies-2026-05-09/` (and `.zip`)
 
 **Author:** ericlewis
-**Status:** Shared as Discord attachment in #firmware on 2026-05-09 00:21:46 UTC.
-**Contents:** C++17 reference implementation of the eMMC driver + DiskManager. Includes `decode_te_frame_payload_i32` — the authoritative audio frame byte-layout decoder.
+**Origin:** Shared as Discord attachment in #firmware on 2026-05-09 00:18:55 UTC.
+**Status:** Bundled in this skill repo. Flat extracted tree + original zip both present.
+**Contents:** C++17 header-only reference implementation of the stock audio engine: AudioEngine, StockRuntimeMixer, VarispeedResampler, StemEffectRack, 5 effect nodes (BiquadFilter, ChorusFlangerNode, DelayEchoNode, DistortionNode, GateEnvelopeNode), DspTables, DspUtils, PcmPacking, AudioNode, plus a Zephyr I²S TX backend.
 
-**Use this for:** Understanding eMMC bring-up and the sector / block layout. Pair with `audiothingies` for a complete audio playback system. The frame decoder is the single source of truth for the on-disk PCM format.
+**Use this for:** Understanding stock TE audio behavior at the code level. Reimplementation of the audio engine for custom firmware. Not buildable as-is (requires storage layer and Zephyr integration).
+
+**Cite as:** `[Source: assets/audiothingies-2026-05-09/AudioEngine.cpp lines X-Y]` or similar.
+
+#### `assets/storagethingies-2026-05-09/` (and `.zip`)
+
+**Author:** ericlewis
+**Origin:** Shared as Discord attachment in #firmware on 2026-05-09 00:21:46 UTC.
+**Status:** Bundled in this skill repo. Flat extracted tree + original zip both present.
+**Contents:** C++17 reference implementation of the eMMC driver + DiskManager: `DiskManager.{hpp,cpp}`, `EmmcDriver.{hpp,cpp}`, `StemEmmcDevice.{hpp,cpp}`, `EMMC.hpp`, `DiskFormat.hpp`. Includes `decode_te_frame_payload_i32` in `DiskManager.hpp` — the authoritative audio frame byte-layout decoder.
+
+**Use this for:** Understanding eMMC bring-up (CMD0/CMD1/CMD2/CMD3/CMD7/CMD8/CMD9/CMD16 init sequence) and the sector / block layout. Pair with `audiothingies` for a complete audio playback system. The frame decoder is the single source of truth for the on-disk PCM format.
+
+**Cite as:** `[Source: assets/storagethingies-2026-05-09/DiskManager.hpp lines X-Y]` or similar.
+
+### Private / shared-in-Discord tools (not bundled)
 
 #### `test_bootloader.py`
 

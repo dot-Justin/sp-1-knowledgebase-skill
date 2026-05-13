@@ -181,7 +181,7 @@ Each section below describes one file's update: what was wrong/missing pre-batch
 5. **Alternative bootloader modes / 0x1A96 magic** — the `0x1A96` magic value is not present in any public host implementation. Mode switch via `0x70 [1]` + `0x50` reboot is the documented path. Reframe as: "the GPREGRET magic value (if any) is firmware-internal; the host-side procedure is the two-command sequence."
 
 **Entries to keep open:**
-- Sample bit-alignment (left vs right aligned) — solderless decodes to right-aligned int32 with sign extension (`if (s & 0x800000) s |= 0xFF000000;`), consistent with `audiothingies/PcmPacking.hpp`. The TKT wiki's left-aligned formula is still anomalous. Add a note that solderless agrees with audiothingies.
+- Sample bit-alignment (left vs right aligned) — solderless decodes to right-aligned int32 with sign extension (`if (s & 0x800000) s |= 0xFF000000;`), consistent with `assets/audiothingies-2026-05-09/PcmPacking.hpp`. The TKT wiki's left-aligned formula is still anomalous. Add a note that solderless agrees with audiothingies.
 - High Speed eMMC mode — not addressed by solderless (host doesn't talk to eMMC directly).
 - BT module integration — not addressed.
 - Power-off in custom firmware — not addressed.
@@ -296,3 +296,62 @@ Sanity checks performed post-edit:
 - No file claims the encoder writes 32 bytes of side data per sector.
 - Tempo formula `(48000 * 60) / (24 * bpm)` appears in `21-original-firmware-stems.md`, `working-confirmed.md`, `corrections.md`, `hallucination-watchlist.md` consistently.
 - "10510" and "00100" state strings appear in `15-bootloader-protocol.md`, `working-confirmed.md`, `hallucination-watchlist.md`, `corrections.md` consistently.
+
+---
+
+## 2026-05-13 — Intake batch #2: audiothingies + storagethingies bundled
+
+### Source ingested
+
+**Files:**
+- `~/Projects/sp-1/cc-skill/resources/audiothingies.zip` (59 KB)
+- `~/Projects/sp-1/cc-skill/resources/storagethingies.zip` (37 KB)
+
+**Provenance:** ericlewis's C++17 header-only reference implementations of the stock audio engine and storage layer. Originally shared as Discord file attachments in #firmware on 2026-05-09 (audiothingies at 00:18:55 UTC, storagethingies at 00:21:46 UTC) to help moecal1947 understand how the stock SP-1 audio playback worked. Both were previously cited throughout the skill as `[code: audiothingies/...]` / `[code: storagethingies/...]` but treated as community-private "ask ericlewis in Discord" material.
+
+### Why bundle now (and the social-risk tradeoff)
+
+The skill had been describing these as "community-private — not in a public repo." That meant every citation pointed at files Claude couldn't read in a fresh clone. Practical pain: every "how does the audio engine work?" question forced Claude to either (a) hallucinate plausible details or (b) say "ask ericlewis." Both bad.
+
+The risk in bundling: ericlewis didn't explicitly say "redistribute these freely." He shared them to a Discord channel, not to a public repo. Bundling them in a public GitHub repo (`dot-Justin/sp-1-knowledgebase-skill`) crosses from "semi-private community share" to "fully public." Per unverified community hearsay (logged in the user's auto-memory), there's a faction in the SP-1 dev group that's reportedly cautious about sharing — so this is exactly the kind of thing that could attract pushback.
+
+User decision (logged 2026-05-13): bundle them anyway. Attribution is preserved everywhere ("ericlewis's C++17 reference implementation, originally Discord attachments 2026-05-09"). If pushback materializes, the plan is to add a repo link / accommodate the request in a future iteration.
+
+### Layout chosen
+
+- `assets/audiothingies-2026-05-09.zip` — original zip, byte-identical to the Discord attachment
+- `assets/audiothingies-2026-05-09/` — flat extracted form (MacOS metadata stripped), citations use this path. Subdirs preserved: `effects/`, `backends/`.
+- `assets/storagethingies-2026-05-09.zip` — original zip
+- `assets/storagethingies-2026-05-09/` — extracted, but **flattened further**: the inner `storage/{,emmc/,format/}` directory hierarchy from the zip was collapsed because existing skill citations use the form `storagethingies/EmmcDriver.cpp` (no `storage/emmc/` prefix). All files now live at the top level.
+
+### Changes landed
+
+- ✅ `assets/audiothingies-2026-05-09/` — 19 files extracted, mac metadata stripped
+- ✅ `assets/audiothingies-2026-05-09.zip` — original
+- ✅ `assets/storagethingies-2026-05-09/` — 8 files extracted + flattened to top level
+- ✅ `assets/storagethingies-2026-05-09.zip` — original
+- ✅ All `` `audiothingies/...` `` and `` `storagethingies/...` `` markdown citations rewritten to `` `assets/audiothingies-2026-05-09/...` `` / `` `assets/storagethingies-2026-05-09/...` `` via sed
+- ✅ `SKILL.md` item 8 — updated redistribution policy. Bundled corpus now: TE manuals, solderless snapshot, audiothingies, storagethingies. Not-bundled: stock TE firmware binary, Kanye stems.
+- ✅ `sources.md` — added "Bundled assets" entries for both archives with full per-file layout + citation guidance. Moved old "private" entries to point at the new bundled descriptions.
+- ✅ `synthesis-log.md` — updated source-coverage table rows for audiothingies/storagethingies from "private" → "bundled in skill"
+- ✅ `working-confirmed.md` — updated section header from "(private — shared 2026-05-09 by ericlewis)" → "(bundled — ericlewis Discord shares, 2026-05-09)"
+- ✅ `hallucination-watchlist.md` — updated the "ericlewis vs TimK" disambiguation block to say the code is now bundled in this skill
+- ✅ `references/20-custom-firmware-state.md` — updated the firmware-state table entry from "Privately shared (not in a public repo)" → "Bundled in skill" with paths
+- ✅ `references/20-custom-firmware-state-faq.md` — updated FAQs "What's in audiothingies/storagethingies?" and "Can I get them?"
+- ✅ `references/27-tools-and-utilities.md` — promoted both archives from the "Private / shared-in-Discord tools" section into a new "Bundled-in-skill source archives" section with full descriptions
+- ✅ `README.md` — updated the redistribution disclosure paragraph
+
+### PII scan of bundled files
+
+Performed before commit:
+
+- Email/URL/credentials pattern scan — clean (no matches)
+- Author / copyright / personal-identifier scan — clean (one false-positive on "lewis" matching `numeric_limits<int32_t>`)
+- Filesystem-path scan (`/home/`, `/Users/`, `C:\Users\`) — clean
+- TODO/FIXME with names — one match for "1-bit SPIM/PWM/PPI hack" in `EMMC.hpp`, which describes the technical SPIM single-bit-line workaround, not a person
+
+Nothing identifying. Safe to push public.
+
+### Citation form note
+
+Both archives keep their original zip alongside the flat extracted form. Inside the skill, citations should use the extracted form (`assets/audiothingies-2026-05-09/AudioEngine.cpp`); the zip is preserved for byte-identical reference if someone needs to verify the archive wasn't modified post-extraction.

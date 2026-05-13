@@ -1,6 +1,6 @@
 # Audio Format Spec
 
-**Synthesized through:** Lines #846 (2026-05-06), Discord through 2026-05-11. Code-of-record: `storagethingies/DiskManager.hpp` (the `decode_te_frame_payload_i32` function is the authoritative byte-layout reference).
+**Synthesized through:** Lines #846 (2026-05-06), Discord through 2026-05-11. Code-of-record: `assets/storagethingies-2026-05-09/DiskManager.hpp` (the `decode_te_frame_payload_i32` function is the authoritative byte-layout reference).
 
 This is **the most important reference for understanding the SP-1.** The on-disk audio sample byte layout is not obvious — it's an interleaved layout where neighboring bytes belong to different samples. AI summaries have produced wrong claims about this format (`"24-bit PCM little-endian"`) and TimK has explicitly called those out as hallucinations.
 
@@ -25,7 +25,7 @@ This file describes the actual format, byte-by-byte, with code references.
 
 For what the stock firmware **reads** (and what an album from TE looks like), see `10-midi-timing-encoding.md`. For what a custom encoder must **write**, see `21-original-firmware-stems.md`.
 
-**Encoder confirmation (2026-05-13):** the byte layout below is now **doubly confirmed** — `storagethingies/DiskManager.hpp::decode_te_frame_payload_i32` (decoder) and `wav-parser.js::encodeToSP1` (encoder) write/read the bytes in exactly the order given. The solderless source archive is the canonical reference implementation; anything claiming a different layout should be treated as wrong.
+**Encoder confirmation (2026-05-13):** the byte layout below is now **doubly confirmed** — `assets/storagethingies-2026-05-09/DiskManager.hpp::decode_te_frame_payload_i32` (decoder) and `wav-parser.js::encodeToSP1` (encoder) write/read the bytes in exactly the order given. The solderless source archive is the canonical reference implementation; anything claiming a different layout should be treated as wrong.
 
 ## Frame structure on disk
 
@@ -41,7 +41,7 @@ Byte offset within frame:
 
 This is the part that confuses everyone. **Within a single stem's 6 bytes, the bytes for left and right channels are interleaved in a specific non-obvious order.**
 
-From `storagethingies/DiskManager.hpp` lines 65–82 — this is the authoritative decoder:
+From `assets/storagethingies-2026-05-09/DiskManager.hpp` lines 65–82 — this is the authoritative decoder:
 
 ```cpp
 inline void decode_te_frame_payload_i32(const uint8_t* frame_payload,
@@ -97,7 +97,7 @@ There is no public documentation from TE explaining why; the layout was reverse-
 
 Once decoded, each sample becomes an `int32_t` with the 24-bit value **sign-extended into bits 31:24** and packed into the lower 24 bits otherwise. Maximum positive value: 8,388,607 (= 2^23 − 1). Maximum negative: -8,388,608.
 
-For converting **between** float and packed 24-bit values, `audiothingies/PcmPacking.hpp` provides:
+For converting **between** float and packed 24-bit values, `assets/audiothingies-2026-05-09/PcmPacking.hpp` provides:
 
 ```cpp
 inline int32_t float_to_pcm_right24_fast(float sample) {
@@ -106,7 +106,7 @@ inline int32_t float_to_pcm_right24_fast(float sample) {
 }
 ```
 
-[code: `audiothingies/PcmPacking.hpp`]
+[code: `assets/audiothingies-2026-05-09/PcmPacking.hpp`]
 
 The function name `_right24_fast` tells you everything: **right**-aligned, **24-bit**, **fast** (no branch on overflow except for NaN-handling). This is the in-memory format the audio engine uses internally and the format that gets sent over I²S to the codecs.
 
@@ -196,7 +196,7 @@ The album header layout per `TKT wiki: Album-metadata-format` (accessed 2026-05-
 
 **Album validity:** the magic bytes `ALBUM_PRESENT` must appear both at offset 0 **and** at the very last bytes of the album image [TKT wiki: Album-metadata-format]. The trailing magic is a second integrity check.
 
-**Cross-reference with `storagethingies/DiskManager.hpp`:** the C struct declares `artist[65]` and `title[65]` whereas the on-disk fields are 64 bytes. The extra byte in the C struct is for a null terminator in memory; on disk the field is exactly 64 bytes. Do not write 65 bytes per name field.
+**Cross-reference with `assets/storagethingies-2026-05-09/DiskManager.hpp`:** the C struct declares `artist[65]` and `title[65]` whereas the on-disk fields are 64 bytes. The extra byte in the C struct is for a null terminator in memory; on disk the field is exactly 64 bytes. Do not write 65 bytes per name field.
 
 **Endianness:** integer fields are presumed little-endian to match the nRF52840 (not explicitly stated in the wiki). Verify against a real album image before committing an encoder.
 

@@ -7,7 +7,7 @@ A: 4 stems, stereo, **24-bit signed, 48 kHz**. Stored on the eMMC in a custom 6-
 A: **No.** That's a recurring hallucination tkt1000 has called out. The actual byte order **per stem** is: `L_mid, L_msb, R_msb, L_lsb, R_lsb, R_mid` — left and right samples are interleaved at the byte level, with MSBs adjacent in bytes 1–2. See `09-audio-format-spec.md` and `corrections.md`.
 
 **Q: How is the in-memory PCM represented?**
-A: **24-bit right-aligned in `int32_t`**, with the sign bit at position 23 extending into bits 31:24. Max value `8,388,607` (= 2^23 − 1). See `audiothingies/PcmPacking.hpp` (`float_to_pcm_right24_fast`).
+A: **24-bit right-aligned in `int32_t`**, with the sign bit at position 23 extending into bits 31:24. Max value `8,388,607` (= 2^23 − 1). See `assets/audiothingies-2026-05-09/PcmPacking.hpp` (`float_to_pcm_right24_fast`).
 
 **Q: What sample order are the 4 stems in?**
 A: Stems are stored sequentially within a frame: stem 0 (bytes 0–5), stem 1 (bytes 6–11), stem 2 (bytes 12–17), stem 3 (bytes 18–23). By convention stem 0 = drums, 1 = bass, 2 = melody, 3 = vocals — but this is convention, not enforced by the format.
@@ -45,4 +45,4 @@ A: **No.** Raw uncompressed 24-bit/48 kHz PCM. A 30-minute album is ~311 MB.
 A: Timing is encoded as MIDI-clock counter values in each TE-block's sync word (4 per sector). Song boundaries are recorded in the album header. The audio data itself is just frames; no embedded timecode beyond the sync words. See `10-midi-timing-encoding.md`.
 
 **Q: Where is the canonical decode function?**
-A: `decode_te_frame_payload_i32()` in `storagethingies/DiskManager.hpp`, lines 65–82. This is the single source of truth for byte → sample.
+A: `decode_te_frame_payload_i32()` in `assets/storagethingies-2026-05-09/DiskManager.hpp`, lines 65–82. This is the single source of truth for byte → sample.

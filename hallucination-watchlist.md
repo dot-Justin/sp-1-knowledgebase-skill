@@ -18,8 +18,8 @@ These are word-for-word from Discord #general, 2026-05-10 22:51–22:57 UTC, in 
 
 **Why this is wrong:** There are two distinct representations, neither of which is "24-bit little-endian PCM":
 
-- **In-memory:** right-aligned 24-bit signed values in `int32_t`, max magnitude ±8,388,607 (= 2^23 − 1). Function: `float_to_pcm_right24_fast`. The 32-bit container's bytes land in nRF52840 native order (little-endian) but that's an architecture property of the int32, not a property of the audio format. [code: `audiothingies/PcmPacking.hpp`]
-- **On-disk (per stem, 6 bytes):** `L_mid, L_msb, R_msb, L_lsb, R_lsb, R_mid` — left and right channels are interleaved at the byte level, with MSBs adjacent, LSBs adjacent, mid bytes at the outsides. This is not little-endian or big-endian in any standard sense. [code: `storagethingies/DiskManager.hpp` lines 65–82, `decode_te_frame_payload_i32`]
+- **In-memory:** right-aligned 24-bit signed values in `int32_t`, max magnitude ±8,388,607 (= 2^23 − 1). Function: `float_to_pcm_right24_fast`. The 32-bit container's bytes land in nRF52840 native order (little-endian) but that's an architecture property of the int32, not a property of the audio format. [code: `assets/audiothingies-2026-05-09/PcmPacking.hpp`]
+- **On-disk (per stem, 6 bytes):** `L_mid, L_msb, R_msb, L_lsb, R_lsb, R_mid` — left and right channels are interleaved at the byte level, with MSBs adjacent, LSBs adjacent, mid bytes at the outsides. This is not little-endian or big-endian in any standard sense. [code: `assets/storagethingies-2026-05-09/DiskManager.hpp` lines 65–82, `decode_te_frame_payload_i32`]
 
 **Correct claim format:** "Audio samples are 24-bit signed. In memory they sit right-aligned in `int32_t` containers. On disk, each stem stores 6 bytes per frame in the interleaved order documented in `references/09-audio-format-spec.md` — neighboring bytes can belong to different channels."
 
@@ -33,7 +33,7 @@ These are word-for-word from Discord #general, 2026-05-10 22:51–22:57 UTC, in 
 
 **If you need a tool for SP-1 work:**
 - The actual Zephyr BSP for MIDI-controller mode lives at `github.com/ericlewis/sp1-midi` (different person from TimK).
-- The audio engine and storage code lives in `audiothingies.zip` and `storagethingies.zip`, shared privately on Discord 2026-05-09 by ericlewis. **Not currently in any public repo.**
+- The audio engine and storage code lives in `assets/audiothingies-2026-05-09/` and `assets/storagethingies-2026-05-09/` (bundled in this skill). Originally shared as Discord file attachments by ericlewis 2026-05-09; not in any of ericlewis's public GitHub repos.
 - The `solderless.engineering` web updater is a separate project.
 - The slow Python USB uploader exists in moecal1947's private code as of 2026-05-09; not yet public.
 
@@ -60,7 +60,7 @@ These are recurring failure modes Claude has either fallen into or is at high ri
 They are **two different people** who are both active and authoritative.
 
 - **TimK** (Lines), **tkt1000** (Discord), **timknapen** (GitHub) — same person. PCB schematic reversal, eMMC driver implementation, original Zephyr custom firmware (private), bootloader documentation. Owns `github.com/timknapen/SP-1-dev`.
-- **ericlewis** (Discord, GitHub) — different person. Published `sp1-midi` BSP (MIDI controller, 2026-05-09), shared `audiothingies.zip`/`storagethingies.zip` privately in Discord (2026-05-09), wrote `libpo32` for a different TE product, has working tape FF/RW implementation, deep knowledge of effects internals.
+- **ericlewis** (Discord, GitHub) — different person. Published `sp1-midi` BSP (MIDI controller, 2026-05-09), shared `audiothingies`/`storagethingies` (now bundled in this skill at `assets/audiothingies-2026-05-09/` and `assets/storagethingies-2026-05-09/`) as Discord attachments 2026-05-09, wrote `libpo32` for a different TE product, has working tape FF/RW implementation, deep knowledge of effects internals.
 
 Both are active in the Discord. When citing, name the person and the source.
 
@@ -85,7 +85,7 @@ The `app/` directory of `ericlewis/sp1-midi` is a **MIDI controller**, not a ste
 - Implement Bluetooth
 - Implement original-firmware UX
 
-If asked "how does the SP-1 play audio?", do not look in `sp1-midi/app/` — look in `audiothingies/AudioEngine.cpp` and the original firmware analysis.
+If asked "how does the SP-1 play audio?", do not look in `sp1-midi/app/` — look in `assets/audiothingies-2026-05-09/AudioEngine.cpp` and the original firmware analysis.
 
 ### Don't claim a feature is "in the firmware" without citing which firmware
 
@@ -104,7 +104,7 @@ As of synthesis date (2026-05-09) it is **offline** for an update [Discord #news
 
 ### Don't fabricate eMMC clock speeds
 
-The chip works reliably at **32 MHz in 1-bit mode** [code: `storagethingies/EmmcDriver.cpp`]. **High Speed mode is not enabled** and higher clocks are unreliable. TimK ran into this and worked around it. Do not claim higher speeds are possible without citation.
+The chip works reliably at **32 MHz in 1-bit mode** [code: `assets/storagethingies-2026-05-09/EmmcDriver.cpp`]. **High Speed mode is not enabled** and higher clocks are unreliable. TimK ran into this and worked around it. Do not claim higher speeds are possible without citation.
 
 ### Don't claim the eMMC is encrypted
 

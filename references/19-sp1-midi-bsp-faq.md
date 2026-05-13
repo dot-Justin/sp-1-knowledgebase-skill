@@ -28,7 +28,7 @@ A: Zephyr SMF with 4 states: IDLE, RUNNING, SHUTTING_DOWN, DEEP_SLEEP. Skeleton 
 A: Monitors battery via AIN4, charger via BQ24232 GPIOs, USB attach. Exposes "is charging / on USB" queries.
 
 **Q: Does it play audio at all?**
-A: **No.** The codecs are configured but the I²S TX path isn't wired up. To play audio, integrate `audiothingies/` and `storagethingies/` and add an I²S TX backend. See `12-audio-engine-internals.md`.
+A: **No.** The codecs are configured but the I²S TX path isn't wired up. To play audio, integrate `assets/audiothingies-2026-05-09/` and `assets/storagethingies-2026-05-09/` and add an I²S TX backend. See `12-audio-engine-internals.md`.
 
 **Q: Can I send MIDI from a host to control LEDs / state?**
 A: Yes — `MidiController::on_rx()` is the incoming handler. Currently minimal; extend it to map host CC events to LEDs etc.
@@ -40,7 +40,7 @@ A: Main registers a 5000 ms channel and feeds it during init. Subsystems can reg
 A: 1) Add to `AppState` enum, 2) Add entry/run/exit handlers, 3) Add to SMF state table. See `19-sp1-midi-bsp.md` "How to extend".
 
 **Q: Where do I add audio engine code?**
-A: Drop `audiothingies/` and `storagethingies/` into a new directory under `sp1-midi/`. Add files to `APP_SOURCES` in `CMakeLists.txt`. Initialize the engine in `main()` after codecs are ready.
+A: Drop `assets/audiothingies-2026-05-09/` and `assets/storagethingies-2026-05-09/` into a new directory under `sp1-midi/`. Add files to `APP_SOURCES` in `CMakeLists.txt`. Initialize the engine in `main()` after codecs are ready.
 
 **Q: Is the function button the only direct-GPIO button?**
 A: Yes. All other buttons are on analog ladders (read via SAADC). See `02-hardware-overview.md`.

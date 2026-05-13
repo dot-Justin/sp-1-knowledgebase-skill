@@ -1,12 +1,12 @@
 # DSP Effects
 
-**Synthesized through:** Lines #846 (2026-05-06), Discord through 2026-05-11. Code-of-record: `audiothingies/effects/` (5 effect nodes + StemEffectRack + DspTables + DspUtils).
+**Synthesized through:** Lines #846 (2026-05-06), Discord through 2026-05-11. Code-of-record: `assets/audiothingies-2026-05-09/effects/` (5 effect nodes + StemEffectRack + DspTables + DspUtils).
 
-The SP-1 has **four user-facing effect types**, each with **4 variations**. Selecting an effect sends audio through a specific node from the `audiothingies/effects/` library. This file documents what each effect actually does in DSP terms, drawing from the source code and from ericlewis's Discord explanations.
+The SP-1 has **four user-facing effect types**, each with **4 variations**. Selecting an effect sends audio through a specific node from the `assets/audiothingies-2026-05-09/effects/` library. This file documents what each effect actually does in DSP terms, drawing from the source code and from ericlewis's Discord explanations.
 
 ## High-level architecture
 
-[code: `audiothingies/effects/StemEffectRack.hpp`]
+[code: `assets/audiothingies-2026-05-09/effects/StemEffectRack.hpp`]
 
 ```cpp
 enum class EffectType {
@@ -42,7 +42,7 @@ The transition phase is spinlock-protected to avoid tearing between the UI threa
 
 ## FILTER (cascaded biquad with LFO modulation)
 
-[code: `audiothingies/effects/BiquadFilter.hpp`]
+[code: `assets/audiothingies-2026-05-09/effects/BiquadFilter.hpp`]
 
 A 2-channel (stereo) biquad IIR filter, with **four variations**:
 
@@ -79,7 +79,7 @@ Per TimK: *"the embedded timing data is essential for looping, gate, delay, and 
 
 ## DISTORTION (polynomial waveshaper + post-EQ)
 
-[code: `audiothingies/effects/DistortionNode.hpp`]
+[code: `assets/audiothingies-2026-05-09/effects/DistortionNode.hpp`]
 
 A soft-clipping distortion with a post-filter, in **four variations** that differ in tone cutoff:
 
@@ -118,7 +118,7 @@ The four variations produce darkening tone — variation 0 is bright/raspy, vari
 
 ## GATE (linear volume envelope)
 
-[code: `audiothingies/effects/GateEnvelopeNode.hpp`]
+[code: `assets/audiothingies-2026-05-09/effects/GateEnvelopeNode.hpp`]
 
 Internally referred to as a "volume ramp," not a threshold-based noise gate. **Four variations** select target gain levels from a table:
 
@@ -162,7 +162,7 @@ So variations 0 and 1 are chorus/flanger; variations 2 and 3 are echo. This is a
 
 ### ChorusFlangerNode
 
-[code: `audiothingies/effects/ChorusFlangerNode.hpp` — header only briefly inspected here]
+[code: `assets/audiothingies-2026-05-09/effects/ChorusFlangerNode.hpp` — header only briefly inspected here]
 
 A modulated delay line:
 - **Chorus** (variation 0): delay ~10–30 ms, slow LFO modulation (~0.5 Hz), moderate feedback
@@ -174,7 +174,7 @@ The "always-on delay tap" is **off** for chorus/flanger variations — the dry-o
 
 ### DelayEchoNode (used directly as variations 2/3 of CHORUS_DELAY, plus always-on tap for FILTER/DISTORTION/GATE)
 
-[code: `audiothingies/effects/DelayEchoNode.hpp`]
+[code: `assets/audiothingies-2026-05-09/effects/DelayEchoNode.hpp`]
 
 ```cpp
 static constexpr size_t kDelayBufferSamples = 8192U;        // ~170 ms at 48 kHz
@@ -206,7 +206,7 @@ This is the trick that makes "echo" feel responsive. A normal delay effect, on a
 
 ## EffectState fields
 
-[code: `audiothingies/effects/StemEffectRack.hpp` line 24:]
+[code: `assets/audiothingies-2026-05-09/effects/StemEffectRack.hpp` line 24:]
 
 ```cpp
 struct EffectState {
@@ -236,7 +236,7 @@ Each effect's `set_sample_rate()` is called with `detail::kDefaultSampleRate = 4
 
 ## DspUtils — supporting math
 
-[code: `audiothingies/effects/DspUtils.hpp`]
+[code: `assets/audiothingies-2026-05-09/effects/DspUtils.hpp`]
 
 This header provides:
 
@@ -250,7 +250,7 @@ The biquad is a standard direct-form II implementation; the state is two float v
 
 ## DspTables — precomputed coefficients
 
-[code: `audiothingies/effects/DspTables.hpp`]
+[code: `assets/audiothingies-2026-05-09/effects/DspTables.hpp`]
 
 Holds:
 

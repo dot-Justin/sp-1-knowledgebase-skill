@@ -36,7 +36,7 @@ A: Trade precision for memory. 8 dB of dynamic range loss is acceptable for dela
 A: **Looping, gate, delay, and 2 of the 4 LPF presets** [per TimK]. Stock firmware likely drives the LFO/envelope phases from `current_sync_word()` rather than free-running. The public reference code's effects are free-running; not yet sync-locked.
 
 **Q: Where are the biquad coefficients?**
-A: `audiothingies/effects/DspTables.hpp` — `kButterworthLowpassTable` for the filter and distortion post-filter, `kGateLevels` for gate variations, `kDelayWetProfiles` for delay variations.
+A: `assets/audiothingies-2026-05-09/effects/DspTables.hpp` — `kButterworthLowpassTable` for the filter and distortion post-filter, `kGateLevels` for gate variations, `kDelayWetProfiles` for delay variations.
 
 **Q: Why a `current_mix_gain_` in the distortion node?**
 A: Crossfades the effect on/off over an audio block. Prevents the click that would happen if the distortion's high-gain output snapped on without ramping.

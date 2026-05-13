@@ -209,7 +209,7 @@ If any channel times out, the device resets. This prevents bugs from putting the
 
 A few important non-features:
 
-- **No audio playback.** The codecs are configured but never fed I²S data. To play audio, integrate `audiothingies/` and add I²S TX setup.
+- **No audio playback.** The codecs are configured but never fed I²S data. To play audio, integrate `assets/audiothingies-2026-05-09/` and add I²S TX setup.
 - **No eMMC read.** The driver is available but the app doesn't call it.
 - **No Bluetooth.** UART pins are defined but no stack is brought up.
 - **No automatic power-off.** Long-press is detected but the app must explicitly call `sys_poweroff()` from its handler (the BSP doesn't do this in the example HSM).
@@ -227,11 +227,11 @@ Flash this BSP and your SP-1 is no longer a stem player — it's a USB MIDI cont
 
 ### Add audio playback
 
-1. Drop `audiothingies/` and `storagethingies/` source into `sp1-midi/subsys/` (or a new `sp1-midi/audio/` tree)
+1. Drop `assets/audiothingies-2026-05-09/` and `assets/storagethingies-2026-05-09/` source into `sp1-midi/subsys/` (or a new `sp1-midi/audio/` tree)
 2. Add to `APP_SOURCES` in `CMakeLists.txt`
 3. Instantiate `audio::AudioEngine` and `storage::DiskManager` as globals or members of `AppMachine`
 4. Initialize them in `main()` after the codecs come up
-5. Set up the I²S TX backend (`audiothingies/backends/zephyr_i2s_tx.cpp`) to call `AudioEngine::render_block()` for each DMA buffer
+5. Set up the I²S TX backend (`assets/audiothingies-2026-05-09/backends/zephyr_i2s_tx.cpp`) to call `AudioEngine::render_block()` for each DMA buffer
 6. Add HSM states for `AUDIO_PLAYING` and a transport sub-state for FF/RW/pause
 
 ### Add Bluetooth
@@ -245,7 +245,7 @@ This is the path emvee1968 reports as "a few hours with Claude Code" — see `07
 
 ### Add a new effect
 
-1. Drop `audiothingies/effects/*.hpp` into your effects directory
+1. Drop `assets/audiothingies-2026-05-09/effects/*.hpp` into your effects directory
 2. Instantiate `effects::StemEffectRack` per stem
 3. Wire it into the audio render pipeline between mixer and codec
 4. Map button combos to effect activation via `MidiController::on_rx()` (or via local button handlers)

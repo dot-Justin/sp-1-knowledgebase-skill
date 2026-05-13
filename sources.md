@@ -61,6 +61,36 @@ python3 -m http.server 8788
 
 **Cite as:** `[Source: assets/solderless-2026-05-12/js/storage.js lines X-Y]`. Treat as canonical reference for SP-1 host-side protocol details.
 
+### `audiothingies-2026-05-09/` and `audiothingies-2026-05-09.zip`
+
+**Bundled archive of ericlewis's C++17 reference implementation of the stock audio engine.** Originally shared as a Discord file attachment in #firmware on 2026-05-09 00:18:55 UTC. The flat extracted tree + the original zip are both present in `assets/`.
+
+**Layout:**
+
+- `assets/audiothingies-2026-05-09/AudioEngine.{cpp,hpp}` — playback state machine (Play / Slow / FF / RW transports), smoothed speed transitions, frame-accurate sync word and LED word generation
+- `assets/audiothingies-2026-05-09/StockRuntimeMixer.{cpp,hpp}` — Q12 fixed-point fader weights, 9-step cubic output gain curve, block-skipping for FF, solo mask
+- `assets/audiothingies-2026-05-09/VarispeedResampler.hpp` — sub-sample interpolation, Q24 fixed-point phase increment
+- `assets/audiothingies-2026-05-09/PcmPacking.hpp` — `float_to_pcm_right24_fast` (right-aligned 24-bit-in-int32 representation)
+- `assets/audiothingies-2026-05-09/AudioNode.hpp` — base audio-node interface
+- `assets/audiothingies-2026-05-09/effects/` — `BiquadFilter`, `ChorusFlangerNode`, `DelayEchoNode`, `DistortionNode`, `GateEnvelopeNode`, `StemEffectRack`, `DspTables`, `DspUtils`, `EffectNode`
+- `assets/audiothingies-2026-05-09/backends/zephyr_i2s_tx.{cpp,hpp}` — Zephyr I²S TX backend
+
+**Cite as:** `[Source: assets/audiothingies-2026-05-09/AudioEngine.cpp lines X-Y]` or `[code: assets/audiothingies-2026-05-09/effects/BiquadFilter.hpp]`.
+
+### `storagethingies-2026-05-09/` and `storagethingies-2026-05-09.zip`
+
+**Bundled archive of ericlewis's C++17 reference implementation of the eMMC driver and DiskManager.** Originally shared as a Discord file attachment in #firmware on 2026-05-09 00:21:46 UTC. The flat extracted tree + the original zip are both present in `assets/`.
+
+**Layout** (the original `storage/{,emmc/,format/}` nesting has been flattened):
+
+- `assets/storagethingies-2026-05-09/DiskManager.{cpp,hpp}` — 10-slot prefetch buffer, album metadata, frame → sector mapping, `decode_te_frame_payload_i32` (authoritative audio frame byte-layout decoder)
+- `assets/storagethingies-2026-05-09/EmmcDriver.{cpp,hpp}` — 11-state SMF init (CMD0 → CMD16), async DMA-style reads via SPIM3 + PWM
+- `assets/storagethingies-2026-05-09/StemEmmcDevice.{cpp,hpp}` — higher-level wrapper around the driver
+- `assets/storagethingies-2026-05-09/EMMC.hpp` — command opcodes / constants
+- `assets/storagethingies-2026-05-09/DiskFormat.hpp` — sector/block constants
+
+**Cite as:** `[Source: assets/storagethingies-2026-05-09/DiskManager.hpp lines X-Y]` or `[code: assets/storagethingies-2026-05-09/EmmcDriver.cpp]`.
+
 ---
 
 ## Public GitHub repos (anyone can access)
@@ -79,7 +109,7 @@ These are URLs anyone can visit. The skill cites these inline; Claude can also f
 4. **Getting started** — `/wiki/Getting-started`
 5. **Bootloader** — `/wiki/Bootloader` — covers app integration (flash offset 0x20000, max size 0xDEFFF, 5s watchdog, pre-initialized peripherals, `RESETREAS` cleanup, `SYSTEM_OFF` requirement). **Does not cover the upload protocol wire format or `0x39` packet framing.**
 6. **Data Structure** — `/wiki/Data-Structure` — sector = 0x2000 (8192) bytes = 16 native 512-byte eMMC blocks; first sector is album metadata, audio starts at `0x2000`.
-7. **Album metadata format** — `/wiki/Album-metadata-format` — full album header layout (`ALBUM_PRESENT` magic at offset 0 and at end, song entries at offset 82, 136 bytes each). **The authoritative source for album header structure** — supersedes the in-memory C struct in `storagethingies/DiskManager.hpp`.
+7. **Album metadata format** — `/wiki/Album-metadata-format` — full album header layout (`ALBUM_PRESENT` magic at offset 0 and at end, song entries at offset 82, 136 bytes each). **The authoritative source for album header structure** — supersedes the in-memory C struct in `assets/storagethingies-2026-05-09/DiskManager.hpp`.
 8. **Audio format** — `/wiki/Audio-format` — 4 blocks × 2048 bytes = 8192-byte sector, blocks ordered {0,2,1,3}, **per-block trailer of 2 sync + 2 tempo + 4 LED bytes**, sample extraction formula. **The authoritative source for the sector trailer layout.**
 9. **I2S** — `/wiki/I2S` — confirms nRF I²S is in **slave** mode (BCLK from 3.072 MHz external osc, LRCLK from CS42L42 PLL). Buffer size 256 samples / 128 frames. 24-bit left-aligned.
 10. **I2C** — `/wiki/I2C` — addresses (CS42L42=0x48, TAS2505=0x18), 4.7 kΩ pull-ups, 400 kHz max, 2.5 ms post-reset wait, PLL register addresses, mute register behavior, headphone detect bit. (`SAADC`, `PWM` pages currently lack technical detail.)
@@ -156,13 +186,11 @@ Same as the GitHub repo.
 
 Same as the GitHub repo. Not directly relevant to SP-1 work.
 
-### `audiothingies.zip` and `storagethingies.zip`
+### `audiothingies-2026-05-09/` and `storagethingies-2026-05-09/`
 
-ericlewis's private C++17 reference implementations of the audio engine and storage layer. Shared in the Discord but not in a public repo.
+**Now bundled in this skill** — see the "Bundled assets" section above for full description. Originally Discord file attachments from ericlewis on 2026-05-09; bundled in `assets/` so citations like `assets/audiothingies-2026-05-09/PcmPacking.hpp` resolve to real files.
 
-**If the user has these locally:** they can be extracted to `/tmp/sp1-investigation/` or similar for inspection. They contain the authoritative answers to byte-layout, sector-layout, frame-decode, and effect-implementation questions.
-
-**If the user doesn't have these:** Claude can describe the contents from the synthesized reference files (`08-emmc-storage.md`, `09-audio-format-spec.md`, `11-block-interleaving-tape-fx.md`, `12-audio-engine-internals.md`, `13-dsp-effects.md`) but cannot offer to read the raw source. Suggest asking ericlewis in Discord.
+These contain the authoritative answers to byte-layout, sector-layout, frame-decode, and effect-implementation questions. The synthesized reference files (`08-emmc-storage.md`, `09-audio-format-spec.md`, `11-block-interleaving-tape-fx.md`, `12-audio-engine-internals.md`, `13-dsp-effects.md`) all cite them as `[code: assets/audiothingies-2026-05-09/...]` or `[code: assets/storagethingies-2026-05-09/...]`.
 
 ### Discord scrape
 
@@ -213,7 +241,7 @@ Available from Infineon's website. Public.
 ## How Claude should use this file
 
 1. **Default to the synthesized references first.** They're curated for accuracy.
-2. **When a reference points back to a primary source** (e.g., "see `audiothingies/PcmPacking.hpp`"), this file tells Claude where that source lives.
+2. **When a reference points back to a primary source** (e.g., "see `assets/audiothingies-2026-05-09/PcmPacking.hpp`"), this file tells Claude where that source lives.
 3. **When a user asks for "the original post" or "the original code,"** look here for the canonical location.
 4. **When in doubt, ask the user** which sources they have access to (bundled-only? plus the GitHub repos? plus the local corpus?). The answer determines what Claude can offer.
 5. **Citations in the skill are by handle + date + source channel** (e.g., `[Discord #firmware, ericlewis, 2026-05-09]`). These citations should let the user trace back to the primary source through this file.

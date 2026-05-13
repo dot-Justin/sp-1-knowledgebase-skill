@@ -6,7 +6,7 @@ A: `github.com/timknapen/SP-1-dev` + its GitHub Wiki. Pin map, bootloader docume
 **Q: What's the public custom firmware BSP?**
 A: `github.com/ericlewis/sp1-midi`. The only buildable public starting point. See `19-sp1-midi-bsp.md`.
 
-**Q: Where do I find `audiothingies.zip` / `storagethingies.zip`?**
+**Q: Where do I find `assets/audiothingies-2026-05-09.zip` / `assets/storagethingies-2026-05-09.zip`?**
 A: Shared by ericlewis in the Discord #firmware channel on 2026-05-09. Not in a public repo (yet). Ask ericlewis if you need them.
 
 **Q: Where's the Lines thread archive?**
@@ -37,7 +37,7 @@ A: **Doesn't exist yet.** moecal1947's slow tool works (~4.5 days for 311 MB). e
 A: **Doesn't exist yet.** emvee1968 and virtualflannel_46386 have internal pipelines but neither has released. Open question for community contributors.
 
 **Q: What about a public album image extractor?**
-A: **Doesn't exist yet.** Could be built from `storagethingies/DiskManager`'s decoder + a custom host wrapper. Good contributor target.
+A: **Doesn't exist yet.** Could be built from `assets/storagethingies-2026-05-09/DiskManager`'s decoder + a custom host wrapper. Good contributor target.
 
 **Q: What hardware do I need for eMMC desolder?**
 A: Hot air rework station + 175 °C preheater + unpopulated USB-to-eMMC adapter PCB. See `24-emmc-direct-extraction.md`.

@@ -34,15 +34,15 @@ Why this hybrid?
 2. **DATA phase** uses SPIM3 because the nRF's SPI peripheral can clock data efficiently and DMA-style into a buffer. In 1-bit eMMC mode, DAT0 is read continuously after the command — exactly the role a SPI MISO line plays.
 3. The PWM peripheral is borrowed for **burst timing** during async data reads, ensuring CLK toggles consistently while the SPIM3 receives data.
 
-This is documented in `storagethingies/EmmcDriver.cpp` and `sp1-midi/subsys/storage/emmc/EmmcDriver.cpp`. The driver header explicitly credits the implementation:
+This is documented in `assets/storagethingies-2026-05-09/EmmcDriver.cpp` and `sp1-midi/subsys/storage/emmc/EmmcDriver.cpp`. The driver header explicitly credits the implementation:
 
 > [credit: "Tim Knapen's eMMC driver implementation for Stem Player" — reference JESD84-B50]
 
-[code: `storagethingies/EmmcDriver.hpp`]
+[code: `assets/storagethingies-2026-05-09/EmmcDriver.hpp`]
 
 ## Initialization sequence
 
-The driver brings the eMMC up via an 11-step state machine (Zephyr SMF) [code: `storagethingies/EmmcDriver.cpp`]:
+The driver brings the eMMC up via an 11-step state machine (Zephyr SMF) [code: `assets/storagethingies-2026-05-09/EmmcDriver.cpp`]:
 
 ```
 POWER_ON
@@ -70,7 +70,7 @@ SETUP_ASYNC    (configure SPIM3 + PWM for async reads)
 
 Once SETUP_ASYNC completes, the driver is ready for `read_sector()` calls. The implementation supports both **synchronous reads** (small operations) and **interrupt-driven async reads** (large prefetch operations).
 
-## API (`storagethingies/EmmcDriver.hpp`)
+## API (`assets/storagethingies-2026-05-09/EmmcDriver.hpp`)
 
 ```cpp
 bool init();
@@ -99,7 +99,7 @@ The SP-1 uses a **custom logical sector size** different from the eMMC's native 
 | **Frames per block** | 85 | 85 × 24 = 2040 bytes (the 8 byte remainder is block padding/metadata) |
 | **Frames per sector** | 340 | 4 × 85 = 340 frames |
 
-Constants in code [code: `storagethingies/DiskManager.hpp` lines 16–29]:
+Constants in code [code: `assets/storagethingies-2026-05-09/DiskManager.hpp` lines 16–29]:
 
 ```cpp
 static constexpr size_t kSectorSize        = 8192;
@@ -119,11 +119,11 @@ static constexpr size_t kSlotTrailerWords    = 6;
 
 ### Block order on disk: 0, 2, 1, 3
 
-The four 2 KB TE blocks within a sector are stored in physical order **0, 2, 1, 3** [code: `storagethingies/DiskManager.hpp` line 34 — `static constexpr int kBlockOrder[4] = {0, 2, 1, 3};`]. This interleaving is the trick that makes tape FF/RW work without real-time DSP throughput on the eMMC bus. See `11-block-interleaving-tape-fx.md` for the full explanation.
+The four 2 KB TE blocks within a sector are stored in physical order **0, 2, 1, 3** [code: `assets/storagethingies-2026-05-09/DiskManager.hpp` line 34 — `static constexpr int kBlockOrder[4] = {0, 2, 1, 3};`]. This interleaving is the trick that makes tape FF/RW work without real-time DSP throughput on the eMMC bus. See `11-block-interleaving-tape-fx.md` for the full explanation.
 
 ## Album header
 
-The first sector(s) of the album hold the **AlbumInfo** metadata structure [code: `storagethingies/DiskManager.hpp` lines 38–51]:
+The first sector(s) of the album hold the **AlbumInfo** metadata structure [code: `assets/storagethingies-2026-05-09/DiskManager.hpp` lines 38–51]:
 
 ```cpp
 struct SongInfo {
@@ -151,7 +151,7 @@ So an album:
 
 ## Prefetch and slot model
 
-The audio engine doesn't read the eMMC directly for every audio frame — that would be impossible at 48 kHz with the chip's bandwidth. Instead, `DiskManager` maintains a **10-slot prefetch cache** [code: `storagethingies/DiskManager.hpp` — `kAudioPrefetchSlots = 10`, `audio_slots_` array].
+The audio engine doesn't read the eMMC directly for every audio frame — that would be impossible at 48 kHz with the chip's bandwidth. Instead, `DiskManager` maintains a **10-slot prefetch cache** [code: `assets/storagethingies-2026-05-09/DiskManager.hpp` — `kAudioPrefetchSlots = 10`, `audio_slots_` array].
 
 Each slot holds:
 

@@ -88,7 +88,7 @@ A: Live site **offline** as of 2026-05-09 for an update [tkt1000, Discord #news]
 **Q: Who's TimK / tkt1000 / timknapen?**
 A: Same person. Lead firmware engineer. Owns `github.com/timknapen/SP-1-dev`. **Not the same person as ericlewis.** → `synthesis-log.md` identity map.
 
-**Q: What's in `audiothingies.zip`?**
+**Q: What's in `assets/audiothingies-2026-05-09.zip`?**
 A: ericlewis's C++17 reference implementation of the stock audio engine. Shared in Discord 2026-05-09. Not in a public repo. → `references/12-audio-engine-internals.md`.
 
 **Q: How do I dump firmware on my own SP-1?**
@@ -130,7 +130,7 @@ When working on SP-1 topics:
 
 7. **The user (dotjustin) maintains this skill.** Questions that come up during work get added to `cc-skill/questions-for-timk.md` (in the user's project directory, not in the skill) for later async resolution. Don't add to the skill itself without verifying claims.
 
-8. **The bundled material in `assets/` is the redistributable corpus.** Currently: TE manuals (PDF + DOCX) and the `solderless-2026-05-12/` archive (community-backup snapshot of the public web tool). Don't quote or redistribute community-private material that's NOT bundled: stock TE firmware binary, Kanye stems, `audiothingies.zip` / `storagethingies.zip` (ericlewis's private C++17 reference implementations).
+8. **The bundled material in `assets/` is the redistributable corpus.** Currently: TE manuals (PDF + DOCX), the `solderless-2026-05-12/` archive (snapshot of the public web tool), and the `audiothingies-2026-05-09/` + `storagethingies-2026-05-09/` archives (ericlewis's C++17 reference implementations of the stock audio engine and storage layer, originally shared as Discord attachments 2026-05-09; bundled as authoritative reference for the audio engine and eMMC driver). Material **not** bundled and not redistributable: stock TE firmware binary, Kanye stems, anything from non-public Discord channels.
 
 ## Synthesis date and freshness
 
