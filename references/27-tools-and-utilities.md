@@ -67,12 +67,29 @@ For the broader custom-firmware ecosystem see `20-custom-firmware-state.md`. For
 #### `solderless.engineering` / `solderless-engineering.pages.dev`
 
 **Maintainer:** TimK + loksi + tunelight + keebstudios
-**Status:** Offline for an update as of 2026-05-09 [Discord #news, tkt1000].
-**What it does:** Browser-based firmware flasher for the SP-1. Uses Web Serial in Chromium-family browsers to talk the bootloader protocol.
+**Status:** Offline for an update as of 2026-05-09 [Discord #news, tkt1000]. **A 2026-05-12 source snapshot is archived locally** — see "Local archive" below.
+**What it does:** Browser-based firmware flasher + album uploader for the SP-1. Uses Web Serial in Chromium-family browsers to talk the bootloader protocol. The main page also embeds a "TKT stem loader" subpage (TimK's earlier standalone uploader UX) — both implement the same protocol.
 
-**Use this for:** Easy firmware flashing without any local tooling. Requires holding Track 1 + Track 4 while plugging in USB-C.
+**Use this for:** Easy firmware flashing without any local tooling. Easy album upload. Requires holding Track 1 + Track 4 while plugging in USB-C.
 
-**When offline:** Use `theunflappable`'s Python tool or write your own client against the bootloader protocol.
+**When offline:** Run the local archive (see below); or use `theunflappable`'s Python tool; or write your own client against the bootloader protocol.
+
+#### **Bundled in skill** — `assets/solderless-2026-05-12/` and `assets/solderless-2026-05-12.zip`
+
+**Location:** Inside this skill's `assets/` directory (bundled with the repo). Both the extracted flat tree and the original zip are present.
+**Provenance:** Obtained as a community backup on 2026-05-13. Contents dated 2026-05-12 (the README) and 2026-05-09 (the deployed JS/HTML — last upstream `pages.dev` edit before the announced "offline for an update" period).
+**Contents:** Complete static dump of `solderless-engineering.pages.dev` — `index.html`, `stemloader.html`, the four JS modules (`protocol.js`, `firmware.js`, `wav-parser.js`, `storage.js`), the TKT stemloader's own copies, plus CSS / fonts / SVGs.
+**How to run:**
+
+```sh
+cd assets/solderless-2026-05-12
+python3 -m http.server 8788
+# Then open http://127.0.0.1:8788/ in Chrome or Edge (Safari does not support Web Serial)
+```
+
+**Use this for:** Running solderless locally when the public site is down. Reading the JS as the canonical SP-1 protocol reference. The skill cites this archive throughout `references/15-bootloader-protocol.md`, `references/16-usb-upload-protocol.md`, `references/21-original-firmware-stems.md`, and elsewhere.
+
+**Caveats:** Archive is from before the announced "offline for update." When the live site returns, behavior may differ; re-archive if needed.
 
 ### Private / shared-in-Discord tools
 
@@ -168,13 +185,12 @@ For removing the white plastic piece on the SP-1's face. Low enough heat that pl
 
 A handful of tools that would be valuable but don't exist yet:
 
-- **Public album image construction tool** — given 4 WAV stems, output a correctly formatted `.sp1` album image with sync words and proper interleaving
-- **Public album image extractor** — given an `.sp1` file, output 4 WAV stems for inspection
-- **Public fast USB uploader** — would close the gap from 4.5 days down to ~minutes
-- **Public solderless replacement** — a standalone (non-web) firmware flasher with album-upload support, for use when solderless.engineering is offline
-- **Public reference for the album header byte layout** — to confirm encoders produce headers that stock firmware accepts
+- **Public CLI / library port of `encodeToSP1`** — a non-web, non-JavaScript tool that takes 4 WAV stems + album metadata and emits a `.sp1` album image. The encoder is fully documented in `references/21-original-firmware-stems.md`; what's missing is a published CLI/Python/Rust port.
+- **Public album image extractor** — given an `.sp1` file, output 4 WAV stems for inspection.
+- **Public fast USB uploader** — would close the gap from 9 hours (solderless's ~10 KB/s) or 4.5 days (moecal's tool) down to ~minutes. Requires CMD25 multi-block eMMC write support and USB bulk endpoints on the firmware side.
+- **Public solderless replacement (non-web)** — a standalone CLI firmware flasher + album uploader, for use when solderless.engineering is offline and the user doesn't want to run a local web server. The protocol is fully documented; the port has not been written.
 
-These are good targets for community contributors. None exist as of synthesis date (2026-05-11).
+These are good targets for community contributors. The protocol byte spec is no longer a blocker — see `update-log.md` 2026-05-13.
 
 ## Where to go next
 

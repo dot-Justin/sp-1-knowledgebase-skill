@@ -21,9 +21,11 @@ This file describes the actual format, byte-by-byte, with code references.
 | Frames per TE sector | **340** |
 | TE sector size | **8192 bytes** (16 native eMMC blocks × 512 bytes) |
 | Audio bytes per sector | 340 × 24 = **8160 bytes** |
-| Non-audio bytes per sector | 8192 − 8160 = **32 bytes** — split as **8 bytes of side-data per TE-block** × 4 blocks [TKT wiki: Audio-format, accessed 2026-05-12]
+| Non-audio bytes per sector | 8192 − 8160 = **32 bytes** total. **What the solderless encoder actually writes:** only **6 bytes**, at the end of block 0 (sector bytes 2042..2047) — 2 bytes tempo (uint16 LE) + 4 bytes per-stem peak envelope (uint8 each). The TKT wiki documents a fuller "8 bytes of side-data per TE-block × 4" layout (2 sync + 2 tempo + 4 LED per block) that the stock firmware can read; the encoder ships only the 6-byte subset that's needed for tempo display + level meters [Source: `assets/solderless-2026-05-12/js/wav-parser.js::encodeToSP1` lines 124–129; corroborated by both main and TKT stemloader copies]. See `corrections.md` 2026-05-13 and `references/21-original-firmware-stems.md`.
 
-The 8 side-data bytes per TE-block are: **2 bytes sync counter + 2 bytes tempo + 4 bytes LED data** [TKT wiki: Audio-format, accessed 2026-05-12]. See `10-midi-timing-encoding.md` for what those fields mean.
+For what the stock firmware **reads** (and what an album from TE looks like), see `10-midi-timing-encoding.md`. For what a custom encoder must **write**, see `21-original-firmware-stems.md`.
+
+**Encoder confirmation (2026-05-13):** the byte layout below is now **doubly confirmed** — `storagethingies/DiskManager.hpp::decode_te_frame_payload_i32` (decoder) and `wav-parser.js::encodeToSP1` (encoder) write/read the bytes in exactly the order given. The solderless source archive is the canonical reference implementation; anything claiming a different layout should be treated as wrong.
 
 ## Frame structure on disk
 

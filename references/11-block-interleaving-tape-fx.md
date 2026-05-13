@@ -1,6 +1,6 @@
 # Block Interleaving and Tape FX
 
-**Synthesized through:** Lines #846 (2026-05-06), Discord through 2026-05-11. Primary source: ericlewis's Discord explanation 2026-05-09 + `storagethingies/DiskManager.hpp` constant `kBlockOrder[4] = {0, 2, 1, 3}`.
+**Synthesized through:** Lines #846 (2026-05-06), Discord through 2026-05-11, and **solderless source archive** ingested 2026-05-13. Primary sources: ericlewis's Discord explanation 2026-05-09 + `storagethingies/DiskManager.hpp` constant `kBlockOrder[4] = {0, 2, 1, 3}` + the canonical encoder `wav-parser.js::encodeToSP1` in the solderless archive, which uses the identical `BLOCK_ORDER = [0, 2, 1, 3]` constant and the formula `block_id = BLOCK_ORDER[frame_in_sector % 4]`. See `update-log.md` 2026-05-13.
 
 The single cleverest design decision in the SP-1's audio format is the **on-disk block interleaving**. It lets the device do tape FF/RW effects at high speeds without exceeding the eMMC's read bandwidth, simply by **reading less data from each sector**. This file explains how it works.
 

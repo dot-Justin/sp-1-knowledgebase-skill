@@ -24,14 +24,56 @@ For features still in development, see `known-unknowns.md`. For features that we
 
 ---
 
-## In `solderless.engineering` web utility (when online)
+## In `solderless.engineering` web utility (when online or via local archive)
 
 | Capability | Evidence |
 | --- | --- |
 | Browser-based firmware flashing via Web Serial | [Discord #news / multiple Lines posts in #500s] |
-| Track 1 + Track 4 + USB-C plug-in → 60-second CDC bootloader window | [Lines #556, B_E_N] |
+| Browser-based album upload via Web Serial | [Source: `assets/solderless-2026-05-12/js/storage.js::uploadAlbum`] |
+| Track 1 + Track 4 + USB-C plug-in → CDC bootloader window | [Lines #556, B_E_N] + [Source: `index.html` instructions lines 119–125] |
 | Tested with multiple custom firmwares by TimK | [Discord #hardware, tkt1000, 2026-05-08 14:49–14:51] |
-| **Status as of 2026-05-09:** offline for an update | [Discord #news, tkt1000, 2026-05-09 12:29] |
+| **Live site status as of 2026-05-09:** offline for an update | [Discord #news, tkt1000, 2026-05-09 12:29] |
+| **Local archive available** dated 2026-05-12 | `assets/solderless-2026-05-12.zip` (community backup, obtained 2026-05-13) |
+
+### SP-1 host protocol — byte-level (confirmed from solderless archive 2026-05-13)
+
+| Item | Value / Source |
+| --- | --- |
+| CDC baud rate | 115200 8N1 [`firmware.js` line 51] |
+| Outer frame | COBS-encoded `[0x51 magic, seq, cmd, plen, payload, crc8]` + `0x00` terminator [`protocol.js` lines 91–127] |
+| CRC-8 | 256-entry lookup table (initial value 0); table reproduced in `references/15-bootloader-protocol.md` [`protocol.js` lines 64–81] |
+| State query | `0x52` 'R' → `0x53` 'S' with 5-byte ASCII state string. `"10510"` = upload mode, `"00100"` = boot mode [`storage.js` lines 87–125] |
+| Mode switch (boot → upload) | `0x70 [1]` ('p' + byte 1) → `0x71` 'q'; then `0x50` 'P' (no reply) reboot; reconnect and re-query state [`storage.js` lines 102–117] |
+| Firmware flash erase | `0x46` 'F' → `0x47` 'G' [`firmware.js` lines 106–112] |
+| Firmware flash write chunk (no reply) | `0x45` 'E' with payload `[chunk_seq (LE32) \| flash_addr (LE32) \| data (≤240 bytes)]` [`firmware.js` lines 128–143] |
+| Firmware flash commit | `0x48` 'H' with payload `[last_page (LE32)]` → `0x49` 'I'; then second `0x48` with `[counter (LE32)]` [`firmware.js` lines 150–186] |
+| Album upload start | `0x37` '7' (reset write counter) [`storage.js` line 620] |
+| Album upload chunk (no reply) | `0x39` '9' with **exact 136-byte payload** = `chunk_counter (LE32) \| emmc_byte_offset (LE32) \| 128 bytes data` [`storage.js` lines 638–647] |
+| Album upload end | `0x51` 'Q' (no reply); device reboots/commits [`storage.js` line 712] |
+| Device ID | `0x54` 'T' → `0x55` 'U' (8 bytes) [`storage.js` lines 209–215] |
+| Album title query | `0x58` 'X' → `0x59` 'Y' (ASCII title) [`storage.js` lines 177–187] |
+| Album validity check | `0x66` 'f' → `0x67` 'g' with payload `[isValid (u8), errCode (u8)]` [`storage.js` lines 190–204] |
+| Write counter query | `0x43` 'C' → `0x44` 'D' (LE32 counter) [`storage.js` lines 218–224] |
+| LED set | `0x5A` 'Z' with 8-byte payload (T1, T2, T3, T4, S1, S2, S3, S4 brightness 0–255) [`stemloader.html` lines 67–75] |
+| Fader/battery/ladder/button queries | `0x64`/`0x7A`/`0x74`/`0x5C` — see `references/15-bootloader-protocol.md` |
+
+### Album image format — encoder reference (confirmed from solderless archive 2026-05-13)
+
+| Item | Value / Source |
+| --- | --- |
+| Sector size | 8192 bytes [`protocol.js` line 20] |
+| Frame size | 24 bytes (4 stems × 6) [`protocol.js` line 17] |
+| Frames per sector | 340 [`protocol.js` line 21] |
+| Block order on disk | `[0, 2, 1, 3]` [`protocol.js` line 22] |
+| Block_id formula | `BLOCK_ORDER[frame_in_sector % 4]` [`wav-parser.js::encodeToSP1`] |
+| 6-byte stem layout | `L_mid, L_msb, R_msb, L_lsb, R_lsb, R_mid` [`wav-parser.js::encodeToSP1` lines 115–120] |
+| Per-sector trailer | Bytes 2042..2043 = tempo uint16 LE = `(48000*60)/(24*bpm)`; bytes 2044..2047 = per-stem envelopes (uint8, normalized peak) — at end of block 0 only [`wav-parser.js::encodeToSP1` lines 124–128] |
+| Album header magic | `"ALBUM_PRESENT"` (13 ASCII bytes) at offset 0 of metadata sector AND at last 13 bytes of end-marker sector [`storage.js` lines 575, 691–692] |
+| Album header layout | offset 13: `albumLength` u32 LE; offset 17: `numSongs` u8; offset 18: title (64B null-term, X-padded); offset 82: songs (N × 136B = u32 offset + u32 length + 64B artist + 64B title) [`storage.js` lines 599–618] |
+| Metadata sector fill byte | `0x58` ('X') [`storage.js` line 601] |
+| End-marker sector fill byte | `0x00`; magic at last 13 bytes [`storage.js` lines 690–692] |
+| Validation limits (album_len < 2 short; > 0x7FFFF long; > 60 songs; > 63 title; > 62 artist/song title; > 999999 song_len) | [`sp-1_protocol.js` lines 27–44 ALBUM_ERR comments] |
+| WAV input format required | 8 channel, 24-bit, 48 kHz signed PCM (RIFF/WAVE), audioFormat 1 or 0xFFFE w/ subFormat 1 [`wav-parser.js::wavVerify` lines 34–38] |
 
 ---
 

@@ -21,7 +21,8 @@ This skill provides curated reference material about the **Teenage Engineering S
 **Always read first when working on this skill:**
 
 - `synthesis-log.md` — what's covered through what date; freshness rules
-- `hallucination-watchlist.md` — the 3 explicit tkt1000 callouts + general anti-patterns
+- `update-log.md` — every change since 2026-05-13, with what/why/source per intake batch
+- `hallucination-watchlist.md` — the 3 explicit tkt1000 callouts + protocol-byte anti-patterns from 2026-05-13
 - `corrections.md` — documented reversals (what was once believed wrong)
 - `known-unknowns.md` — what's explicitly unresolved as of synthesis date
 - `working-confirmed.md` — what is confirmed working with citations
@@ -82,7 +83,7 @@ A: **No.** That's a recurring hallucination. In-memory: right-aligned 24-bit in 
 A: Physical disk order of the 4 TE blocks per sector. Enables tape FF/RW by reading less per sector at high speeds. → `references/11-block-interleaving-tape-fx.md`.
 
 **Q: Is `solderless.engineering` online?**
-A: **Offline** as of 2026-05-09 for an update [tkt1000, Discord #news]. Verify current state with the user.
+A: Live site **offline** as of 2026-05-09 for an update [tkt1000, Discord #news]. **A 2026-05-12 static snapshot is archived locally** at `assets/solderless-2026-05-12.zip` (community backup, obtained 2026-05-13); runnable via local web server. The archive's JS is the canonical SP-1 host protocol reference. → `references/27-tools-and-utilities.md`.
 
 **Q: Who's TimK / tkt1000 / timknapen?**
 A: Same person. Lead firmware engineer. Owns `github.com/timknapen/SP-1-dev`. **Not the same person as ericlewis.** → `synthesis-log.md` identity map.
@@ -100,7 +101,7 @@ A: **No.** You solder your own pads. → `references/04-debug-interfaces.md`.
 A: **No.** Write-only. *"you cannot"* [ericlewis, Discord 2026-05-08]. → `references/15-bootloader-protocol.md`.
 
 **Q: What's the album upload speed?**
-A: Currently **~0.75 KB/s** (4.5 days per 311 MB album) via moecal1947's Python tool. **Theoretical max ~4 MB/s** per ericlewis. Proper bulk-endpoint implementation doesn't exist publicly yet. → `references/16-usb-upload-protocol.md`.
+A: Three data points: **moecal1947's Python tool** = ~0.75 KB/s (4.5 days per 311 MB album, USB control transfers); **solderless web tool** = ~10 KB/s (~9 hours per 311 MB album, CDC ACM fire-and-forget at 115200 baud — this is the public best); **ericlewis's theoretical max** = ~4 MB/s (minutes per album, requires unbuilt USB bulk + CMD25 firmware). → `references/16-usb-upload-protocol.md`.
 
 **Q: Are there custom firmwares I can flash today?**
 A: Only `ericlewis/sp1-midi` (USB MIDI controller; does NOT play stems). emvee1968 and virtualflannel_46386 have unreleased ones with audio. TimK has private ones. → `references/20-custom-firmware-state.md`.
@@ -119,7 +120,7 @@ When working on SP-1 topics:
 
 2. **Cite every factual claim.** Use `[Lines #NNN, author, YYYY-MM-DD]` or `[Discord #channel, author, YYYY-MM-DD]` or `[code: path]` or `[GitHub: repo/file]`. No unsourced claims.
 
-3. **Respect the synthesis date.** Material is current through **2026-05-11**. For "current state" questions (is `solderless.engineering` up? did emvee1968 release?), check `synthesis-log.md` and offer to verify with the user.
+3. **Respect the synthesis date.** Material is current through **2026-05-13**. For "current state" questions (is `solderless.engineering` live? did emvee1968 release?), check `synthesis-log.md` + `update-log.md` and offer to verify with the user.
 
 4. **Don't conflate ericlewis with TimK.** Two different people. Different repos. Different areas of expertise.
 
@@ -129,11 +130,11 @@ When working on SP-1 topics:
 
 7. **The user (dotjustin) maintains this skill.** Questions that come up during work get added to `cc-skill/questions-for-timk.md` (in the user's project directory, not in the skill) for later async resolution. Don't add to the skill itself without verifying claims.
 
-8. **The bundled PDFs in `assets/` are the only redistribution.** Don't quote or redistribute community-private material (stock TE firmware binary, Kanye stems, the audiothingies/storagethingies zips).
+8. **The bundled material in `assets/` is the redistributable corpus.** Currently: TE manuals (PDF + DOCX) and the `solderless-2026-05-12/` archive (community-backup snapshot of the public web tool). Don't quote or redistribute community-private material that's NOT bundled: stock TE firmware binary, Kanye stems, `audiothingies.zip` / `storagethingies.zip` (ericlewis's private C++17 reference implementations).
 
 ## Synthesis date and freshness
 
-**This skill is a frozen snapshot synthesized through 2026-05-11.** The Discord is active and things may have changed:
+**This skill is a frozen snapshot synthesized through 2026-05-13.** The Discord is active and things may have changed:
 
 - `solderless.engineering` may be back online (or still offline)
 - emvee1968's custom firmware may have been released

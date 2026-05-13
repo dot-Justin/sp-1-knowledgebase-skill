@@ -29,29 +29,13 @@ For each unresolved area, this file describes:
 
 ## eMMC write path
 
-**Question:** What's the production-quality CDC packet protocol for uploading an album image to the SP-1?
+**~~Question:~~ RESOLVED 2026-05-13.** The full byte-level CDC packet protocol for album upload is now documented in `references/15-bootloader-protocol.md` and `references/16-usb-upload-protocol.md` based on the solderless source archive (ingested 2026-05-13). Key findings:
+- `0x39` payload is 136 bytes: `chunk_counter (LE32) | emmc_byte_offset (LE32) | 128 bytes data`. Not a sector address — a byte offset.
+- Packets are fire-and-forget (no per-chunk ACK). Throughput limited by 115200-baud CDC ACM ≈ 10 KB/s.
+- Mode switch via `0x70 [1]` + `0x50` reboot. No host-visible GPREGRET magic — the `0x1A96` claim was a Discord paraphrase that doesn't appear in the host code.
+- moecal's 0.75 KB/s comes from USB control transfers (high per-transfer overhead). Solderless's ~10 KB/s comes from CDC bulk-like streaming. ericlewis's "~4 MB/s" requires a hypothetical USB MSC / bulk-endpoint implementation with CMD25 multi-block eMMC writes that has not been built publicly.
 
-**Known:**
-- The opcode sequence is documented (see `references/16-usb-upload-protocol.md`):
-  - `0x52` — bootloader version check
-  - `0x70 0x01` — set GPREGRET magic `0x1A96` for parser 2
-  - `0x50` — trigger reboot
-  - `0x52` (again, post-reboot) — confirm parser 2 active
-  - `0x54` — device ID
-  - `0x58` — current album title
-  - `0x37` — stop playback, reset sector pointer
-  - `0x39 × N` — stream stem data, **136-byte packets** = 4-byte header + 4-byte sector address + 128 bytes data, four packets per 512-byte block
-  - `0x43` — read write counter
-  - `0x51` — system reset
-  - `0x58` — verify album title
-  - `0x66` — verify album valid
-  [Discord #general, ericlewis, 2026-05-09 09:45]
-- moecal1947 has a working but very slow (0.75 KB/s = ~4.5 days per 311 MB album) USB control-transfer uploader [Discord #general, moecal1947, 2026-05-09 09:33]
-- Theoretical max is ~4 MB/s [Discord #general, ericlewis, 2026-05-09 09:34]
-
-**Why unresolved:** ericlewis says he probably has the byte-level packet framing for `0x39` but did not publish it [Discord #general, ericlewis, 2026-05-09 09:49 — *"Prob."*]. moecal1947 asked explicitly and did not receive it. The `solderless.engineering` web utility uses it but its source is not public.
-
-**Next move:** Ask ericlewis directly in Discord, or read the `solderless.engineering` JavaScript bundle if it's accessible (the URL was offline as of 2026-05-09; check current state).
+See `update-log.md` 2026-05-13 and `working-confirmed.md` for the full resolution.
 
 ---
 
@@ -197,18 +181,7 @@ For each unresolved area, this file describes:
 
 ## Solderless.engineering source code
 
-**Question:** Is the source for the web-based updater available?
-
-**Known:**
-- The tool was online at `https://solderless.engineering/` and `https://solderless-engineering.pages.dev/` (Cloudflare Pages)
-- As of 2026-05-09 it is **offline** for an update [Discord #news, tkt1000, 2026-05-09 12:29]
-- Source code is **not currently public**
-- Built by the "Solderless" team in collaboration with TimK (mentioned helpers: loksi, tunelight, keebstudios) [Discord #general, tkt1000, 2026-05-06 20:30]
-- virtualflannel_46386 asked if anyone saved the source while it was up [Discord #firmware, 2026-05-10 18:40] — no public confirmation that anyone did
-
-**Why unresolved:** The Solderless team has not chosen to open-source it. tkt1000 indicated it would come back online soon.
-
-**Next move:** Wait for the utility to come back online. If a standalone tool is wanted, write one — moecal1947 is already doing this for upload.
+**~~Question:~~ RESOLVED 2026-05-13 via local archive.** A community backup surfaced of a complete static snapshot of `solderless-engineering.pages.dev` dated 2026-05-12. Archive is at `assets/solderless-2026-05-12.zip`. Source is **not officially open-sourced** by the Solderless team, but the archived static deployment is unobfuscated/un-minified JS and serves as the canonical protocol reference. See `update-log.md` 2026-05-13 and `references/27-tools-and-utilities.md`.
 
 ---
 
@@ -236,29 +209,19 @@ For each unresolved area, this file describes:
 
 ## Full byte ordering of the album header
 
-**Question:** Are integer fields in the album header little-endian or big-endian?
-
-**Known:**
-- TKT wiki [Album-metadata-format, accessed 2026-05-12] documents field offsets and lengths but does not specify endianness.
-- The nRF52840 is little-endian natively, so LE is the strong prior.
-
-**Why unresolved:** the wiki doesn't state it explicitly and we haven't byte-dumped a real album header to confirm.
-
-**Next move:** dump the first 256 bytes of a real album image and check whether the 4-byte "album length sectors" field at offset 13 reads as a plausible number in LE or BE. For a 311 MB album: 311×1024×1024 / 8192 ≈ 39811 sectors ≈ 0x9B83. Bytes will read 83 9B 00 00 (LE) or 00 00 9B 83 (BE).
+**~~Question:~~ RESOLVED 2026-05-13 via solderless source.** All integer fields are **little-endian**. The encoder writes them via `DataView.setUint32(offset, value, true)` (the `true` flag selects LE in the Web API). Confirmed for: album length (offset 13), song offset (per-entry +0), song length (per-entry +4), all `0x39` chunk header fields (chunk_counter at payload[0..4], emmc_byte_offset at payload[4..8]), tempo (bytes 2042..2043 of each sector). See `working-confirmed.md` 2026-05-13.
 
 ---
 
 ## Exact encoding of the 16-bit tempo field
 
-**Question:** What does the 2-byte tempo field (bytes 2–3 of each TE-block's 8-byte trailer) actually encode?
+**~~Question:~~ PARTIALLY RESOLVED 2026-05-13.** The solderless encoder writes the tempo field as **`tempo = (48000 * 60) / (24 * bpm)`** — a uint16 LE value at bytes 2042..2043 of each sector (end of block 0). For 60 BPM = 2000; 80 BPM = 1500; 120 BPM = 1000. This is a samples-per-something derived count.
 
-**Known:**
-- TKT wiki [Audio-format, accessed 2026-05-12] confirms the field exists and is 16 bits per block.
-- Plausible encodings: raw BPM × 1, Q8.8 fixed-point BPM, samples-per-tick, samples-per-beat.
+The encoder writes only **one tempo value per sector** (at the end of block 0), not per-TE-block as the TKT wiki suggests. Per-block tempo (allowing intra-sector tempo variation) isn't used by the encoder.
 
-**Why unresolved:** the wiki names the field but does not describe its encoding, and `storagethingies/DiskManager` packs it into a `uint32_t` alongside the sync counter without naming the components.
+**Still open:** the firmware-side semantic interpretation. The value is "samples per X" for some X derived from `24 × bpm` — possibly samples-per-beat-subdivision-at-24-PPQN, or some related musical-time tick. The encoder produces working playback, so the formula is correct as a *write* spec. The *read* spec (how the firmware uses the value internally) is not documented.
 
-**Next move:** dump tempo bytes from a known-BPM song (e.g., a track from Donda whose BPM is published) and test interpretations. Or ask ericlewis / TimK directly.
+**Next move:** the encoder formula is sufficient for producing playable albums. Firmware-side semantics can be deferred unless a custom firmware author needs to consume this field.
 
 ---
 

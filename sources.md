@@ -33,6 +33,34 @@ The same user guide content, but in editable Word format. ~16 KB.
 
 Source: Lines #1 (post by PedalsandChill, the thread originator). Useful if you need to extract or quote text without OCR.
 
+### `solderless-2026-05-12/` and `solderless-2026-05-12.zip`
+
+**Bundled archive of `solderless-engineering.pages.dev` as of 2026-05-12.** Complete static deployment — HTML, CSS, JS, fonts, images. The JS modules are the **canonical reference implementation** for the SP-1 host-side bootloader + album-upload protocol.
+
+**Provenance:** Obtained as a community backup on 2026-05-13. Archive contents reflect the 2026-05-12 deployed state (the deployed JS/HTML is dated 2026-05-09; README inside the archive is dated 2026-05-12).
+
+**Layout** (flattened from the original nested form):
+
+- `assets/solderless-2026-05-12/README.txt` — included run instructions from the archive
+- `assets/solderless-2026-05-12/index.html` — main UI (firmware flash + album upload + device info)
+- `assets/solderless-2026-05-12/stemloader.html` — TKT's standalone stem-loader UI
+- `assets/solderless-2026-05-12/js/protocol.js` — **canonical** protocol implementation: CRC-8 table, COBS encode/decode, packet framing, serial I/O, all album/flash constants
+- `assets/solderless-2026-05-12/js/firmware.js` — firmware flash sequence (R/F/E/H opcodes)
+- `assets/solderless-2026-05-12/js/storage.js` — album upload sequence (R/0x70/0x50/0x37/0x39/0x51 + metadata/end-marker construction)
+- `assets/solderless-2026-05-12/js/wav-parser.js` — WAV → SP-1 encoder (`encodeToSP1`)
+- `assets/solderless-2026-05-12/stemloader/js/*.js` — same protocol, TKT's earlier UI
+- `assets/solderless-2026-05-12.zip` — original unmodified zip, in case you need the byte-identical archive
+
+**Run it locally:**
+
+```sh
+cd assets/solderless-2026-05-12
+python3 -m http.server 8788
+# Open http://127.0.0.1:8788/ in Chrome or Edge (Safari does not support Web Serial)
+```
+
+**Cite as:** `[Source: assets/solderless-2026-05-12/js/storage.js lines X-Y]`. Treat as canonical reference for SP-1 host-side protocol details.
+
 ---
 
 ## Public GitHub repos (anyone can access)

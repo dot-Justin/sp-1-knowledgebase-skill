@@ -191,6 +191,46 @@ This is a recurring failure mode: the FPC connector (Omron XF3B-1945-31A, 19-pin
 
 ---
 
+## Bootloader / upload protocol byte spec (2026-05-13 from solderless archive)
+
+### Believed: "`0x52` is a bootloader version check"
+**Actual:** `0x52` 'R' is a **state query**. Reply `0x53` 'S' returns a 5-byte ASCII state string: `"10510"` for upload mode, `"00100"` for boot mode. No version information is in the reply. [Source: `assets/solderless-2026-05-12/js/storage.js` lines 87–125.]
+
+**Why the wrong claim circulated:** prior synthesis paraphrased ericlewis's Discord description, which named the opcode without giving the reply structure. The actual reply structure is now confirmed via solderless source.
+
+### Believed: "`0x39` packet has a 4-byte magic/sub-command header + 4-byte sector address"
+**Actual:** `0x39` payload is exactly **136 bytes**: `chunk_counter (LE32) | emmc_byte_offset (LE32) | 128 bytes data`. Both fields are plain LE32. No magic, no sub-command, no checksum-in-header. The second field is a **byte offset**, not a sector address. [Source: `assets/solderless-2026-05-12/js/storage.js` lines 638–647.]
+
+**Why the wrong claim circulated:** ericlewis described the packet as "4-byte header + 4-byte sector address + 128 bytes" in Discord; "header" was over-interpreted as magic/sub-command, and "sector address" as block-addressable when the firmware in fact uses byte offsets internally.
+
+### Believed: "Host needs to set `GPREGRET = 0x1A96` to enter upload mode"
+**Actual:** No `0x1A96` value appears in the solderless host source. Mode switch is `0x70 [1]` ('p' with byte 1) + `0x50` 'P' (reboot). The firmware may use a GPREGRET internally on the device side, but the host doesn't need to know its value. [Source: `assets/solderless-2026-05-12/js/storage.js` lines 102–117.]
+
+**Why the wrong claim circulated:** Discord paraphrase of ericlewis's description of the firmware's *internal* implementation got mixed with the host-side procedure. The host's actual implementation is the two-command sequence with no magic value visible.
+
+### Believed: "`0x39` packets are ACK'd by the device one at a time"
+**Actual:** `0x39` is **fire-and-forget at 115200 baud**. The host uses `sendNoReply` and does not wait for any response per chunk. End-of-upload verification is via `0x43` (chunk counter) and `0x66` (album validity). A dropped chunk silently corrupts the upload. [Source: `assets/solderless-2026-05-12/js/storage.js` line 644.]
+
+### Believed: "Tempo field is encoded as Q8.8 BPM / samples-per-tick / sync counter"
+**Actual:** Encoder writes `tempo = (48000 * 60) / (24 * bpm)` as **uint16 LE at bytes 2042..2043** of each sector (end of block 0). For 60 BPM = 2000; 80 BPM = 1500; 120 BPM = 1000. [Source: `assets/solderless-2026-05-12/js/wav-parser.js::encodeToSP1` lines 96–97, 127–128.]
+
+The firmware-side semantic interpretation isn't named (could be samples-per-some-tick-derivation), but the encoder formula produces working playback so it is the authoritative *write* specification.
+
+### Believed: "Each TE-block has an 8-byte trailer (2 sync + 2 tempo + 4 LED) written by the encoder"
+**Actual:** The solderless encoder writes **only 6 bytes per sector** at the end of block 0: tempo (u16 LE) + 4× envelope (u8). Blocks 1, 2, 3 have no encoder-written side data. The "2 sync + 2 tempo + 4 LED per block × 4 blocks = 32 bytes" layout from TKT wiki describes what stock firmware **can** read; the encoder writes only a 6-byte subset and produces playable albums. [Source: `assets/solderless-2026-05-12/js/wav-parser.js::encodeToSP1` lines 124–128.]
+
+**Why the wrong claim circulated:** TKT wiki documents the read side; previous skill synthesis assumed read spec = write spec. The solderless encoder demonstrates the difference.
+
+### Believed: "A custom encoder must generate per-block sync counter values"
+**Actual:** The solderless encoder writes **no sync counter at all** and produces working albums on stock firmware. Earlier skill pseudocode (`int(sample_position / (30000 / bpm)) % 24489`) was speculative; the canonical encoder doesn't use it. [Source: `assets/solderless-2026-05-12/js/wav-parser.js::encodeToSP1`.]
+
+If a custom firmware author wants to **consume** sync counter info, the firmware-internal logic is presumably either (a) derived from sector position + tempo, or (b) reads optional bytes that an encoder may or may not provide. For producing albums for stock firmware, omit the sync counter.
+
+### Believed: "`solderless.engineering` source code is not public"
+**Actual (as of 2026-05-13):** Officially still not open-sourced by the Solderless team, but a complete static snapshot of the 2026-05-12 deployment is now **archived locally** at `assets/solderless-2026-05-12.zip` (surfaced via community backup on 2026-05-13). The archive is the canonical SP-1 host protocol reference; the skill cites it throughout.
+
+---
+
 ## How to use this file
 
 When Claude is about to make a factual claim about the SP-1 and isn't sure if the claim is from old material or current material:

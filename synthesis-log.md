@@ -4,7 +4,23 @@ This skill is a frozen snapshot of community knowledge as of a specific date. Th
 
 ## Master synthesis date
 
-**2026-05-12.** Last source incorporated through this date.
+**2026-05-13.** Last source incorporated through this date.
+
+### Updates on 2026-05-13 (solderless source archive)
+
+A community backup surfaced of a complete static snapshot of `solderless-engineering.pages.dev` (archive dated 2026-05-12). Ingested 2026-05-13. The full mining and changes are logged in `update-log.md` 2026-05-13.
+
+Major resolutions:
+
+- **Bootloader / upload protocol byte spec is now definitive.** Closed `known-unknowns.md::eMMC write path` and `Solderless.engineering source code` entries.
+- **Album header byte ordering confirmed LE** (encoder uses `setUint32(..., true)`). Closed `Full byte ordering of the album header`.
+- **Tempo field encoding partially resolved:** encoder writes `(48000 * 60) / (24 * bpm)` as uint16 LE; firmware-side semantic interpretation still unnamed. Partial-close on `Exact encoding of the 16-bit tempo field`.
+- **Per-block 8-byte trailer claim revised:** the wiki layout describes the read side; the encoder writes only 6 bytes per sector at end of block 0. New correction entry in `corrections.md`.
+- **`0x1A96` GPREGRET magic** is firmware-internal, not host-visible. Host-side mode switch is `0x70 [1]` + `0x50` reboot. New correction entry.
+
+Files materially updated: `15-bootloader-protocol.md`, `16-usb-upload-protocol.md`, `21-original-firmware-stems.md`, `09-audio-format-spec.md` (small), `10-midi-timing-encoding.md` (clarifying), `11-block-interleaving-tape-fx.md` (citation), `27-tools-and-utilities.md` (local archive entry), `sources.md` (local archive entry), `known-unknowns.md` (4 entries closed/revised), `working-confirmed.md` (large addition), `hallucination-watchlist.md` (8 new entries), `corrections.md` (7 new entries), `SKILL.md` (quick-lookup answers).
+
+Files created: `update-log.md` (this batch is logged in detail there). Files not yet touched: FAQ companions to the above references (TODO: small consistency passes).
 
 ### Updates on 2026-05-12 phase 2 (TKT wiki round-2 + `stemplayer_pins.h` + ericlewis DTS cross-check)
 

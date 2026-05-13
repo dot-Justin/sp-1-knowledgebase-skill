@@ -112,6 +112,46 @@ It is **not encrypted, just formatted strangely** [Discord #hardware, tkt1000, 2
 
 ---
 
+## Protocol-byte hallucinations (added 2026-05-13 from solderless archive)
+
+After the solderless source archive was ingested on 2026-05-13, the following speculative claims were ruled out. **Do not assert any of these.**
+
+### Don't say `0x52` is a "bootloader version check"
+
+`0x52` 'R' is a **state query**. The reply `0x53` 'S' returns a 5-byte ASCII state string — `"10510"` means upload mode, `"00100"` means boot mode. Solderless string-compares this; the bit semantics aren't named in source. There is no "version" anywhere in the response. [Source: solderless archive `js/storage.js` lines 87–125.]
+
+### Don't claim the `0x39` packet has a "4-byte magic / sub-command header"
+
+`0x39` payload is exactly **136 bytes**: `chunk_counter (LE32) | emmc_byte_offset (LE32) | 128 bytes data`. Both header fields are plain little-endian uint32s. No magic, no sub-command byte, no checksum-in-header. [Source: solderless archive `js/storage.js` lines 638–647, identical in `stemloader.js`.]
+
+### Don't claim the second header field is a "sector address"
+
+`emmc_byte_offset` is an **absolute byte offset** in eMMC, not a sector or block address. The host increments it by 128 per chunk. Earlier wording in this skill called it "sector address (32-bit, presumably native 512-byte block addressing)" — that was wrong.
+
+### Don't claim the host sets `GPREGRET = 0x1A96`
+
+The host-side mode switch is plain: `0x70 [1]` ("set mode" with payload byte `0x01`), then `0x50` reboot. The `0x1A96` value was a Discord paraphrase from ericlewis; it doesn't appear in any public host implementation. There may be a magic value inside the firmware that the host can't observe, but the host doesn't need to set or know it.
+
+### Don't claim `0x39` packets are ACK'd one by one
+
+`0x39` is **fire-and-forget at 115200 baud**. The host uses `sendNoReply` for every chunk; no per-chunk ACK or NAK. The only post-upload verification is `0x43` (chunk-counter check) and `0x66` (album validity check). If a chunk is dropped on the wire, the upload silently corrupts. [Source: solderless archive `js/storage.js` line 644 + `stemloader.js` line 834.]
+
+### Don't claim the tempo field is "samples-per-tick" or "Q8.8 BPM"
+
+The encoder writes tempo as `(48000 * 60) / (24 * bpm)`. For 60 BPM = 2000; 80 BPM = 1500; 120 BPM = 1000. Stored as **uint16 LE at bytes 2042..2043** of each sector (end of block 0). The exact firmware-side semantic interpretation isn't documented, but the formula is the canonical encoder-side specification. [Source: solderless archive `js/wav-parser.js::encodeToSP1` lines 96–97, 127–128.]
+
+### Don't claim per-block 8-byte trailers exist in encoder output
+
+The TKT wiki documents a layout of **2 sync + 2 tempo + 4 LED bytes per TE-block × 4 blocks = 32 bytes per sector**. That describes what stock firmware **can read**. The solderless encoder writes **only 6 bytes per sector** — at the end of block 0, comprising `tempo (u16 LE) + 4× envelope (u8)`. **No sync counter, no LED data, nothing in blocks 1–3's trailer space.** Custom albums encoded this way still play correctly with stock firmware effects. [Source: solderless archive `js/wav-parser.js::encodeToSP1` lines 124–128.]
+
+When writing a custom encoder, replicate the solderless 6-byte trailer. Don't fabricate per-block sync counter or LED data; both are optional from the firmware's perspective (or default-zero, indistinguishable behaviorally).
+
+### Don't claim there's a separate "sync counter" being written by encoders
+
+`storage.js::uploadAlbum` and `wav-parser.js::encodeToSP1` write zero sync-counter bytes. Earlier versions of this skill described a `sync_counter_for_block()` pseudocode formula (`int(sample_position / (30000 / bpm)) % 24489`); that was speculative and is not produced by the canonical encoder. Stock firmware may compute sync internally from sector position or tempo, but encoders don't lay it down.
+
+---
+
 ## When in doubt
 
 If a question is going to require Claude to make a factual claim about the SP-1 that is not directly verifiable in this skill, the local corpus, or the public repos, **the correct answer is "I'm not sure — verify with the live Discord or ask TimK / ericlewis."** Hallucinating a specific number, opcode, pin, or behavior is worse than admitting uncertainty.

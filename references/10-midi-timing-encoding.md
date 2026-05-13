@@ -1,8 +1,12 @@
 # MIDI Timing Encoding
 
-**Synthesized through:** Lines #846 (2026-05-06), Discord through 2026-05-11, TKT wiki Audio-format page accessed 2026-05-12. Code-of-record: `storagethingies/DiskManager.hpp` `block_sync_words` field; `audiothingies/AudioEngine.hpp` `current_sync_word()`.
+**Synthesized through:** Lines #846 (2026-05-06), Discord through 2026-05-11, TKT wiki Audio-format page accessed 2026-05-12, and **solderless source archive** ingested 2026-05-13. Code-of-record for stock-firmware-read side: `storagethingies/DiskManager.hpp` `block_sync_words` field; `audiothingies/AudioEngine.hpp` `current_sync_word()`. Code-of-record for encoder-write side: `wav-parser.js::encodeToSP1` in solderless archive. See `update-log.md` 2026-05-13.
 
-The SP-1 embeds **MIDI clock timing data directly into the audio stream** on the eMMC. Each TE-block (4 per sector) carries **4 bytes of musical-timing side data** — split as a 16-bit sync counter and a 16-bit tempo field — that encodes the musical beat position [TKT wiki: Audio-format, accessed 2026-05-12]. This isn't decoration — the device's effects (looping, gate, delay, two of the LPF presets) **depend** on this timing data to sync musically with the audio.
+**Important clarification (2026-05-13):** The TKT wiki and `storagethingies` describe what **stock TE firmware reads** from each sector — up to **8 bytes of side data per TE-block**, split as 2 sync + 2 tempo + 4 LED, × 4 blocks = 32 bytes per sector. But the **solderless encoder writes only 6 bytes per sector**, at the end of block 0: 2 bytes tempo (uint16 LE) + 4 bytes per-stem envelope (uint8). The encoder writes **no sync counter and no LED data**. Custom albums produced by solderless still play correctly with stock firmware effects, which means either (a) most of the wiki-described side data is optional from the firmware's perspective, or (b) stock firmware uses default zero values where data is absent. Treat the wiki layout as a **read spec** (what the firmware understands), not a **write spec** (what the encoder must produce). See `corrections.md` 2026-05-13 and `references/21-original-firmware-stems.md` for the encoder's reduced 6-byte trailer.
+
+The rest of this file describes what's known about the timing-data encoding from the wiki / audiothingies perspective. For custom encoder authoring, see `references/21-original-firmware-stems.md`.
+
+The SP-1 stock firmware embeds **MIDI clock timing data directly into the audio stream** on the eMMC. Each TE-block (4 per sector) can carry **4 bytes of musical-timing side data** — split as a 16-bit sync counter and a 16-bit tempo field — that encodes the musical beat position [TKT wiki: Audio-format, accessed 2026-05-12]. This isn't decoration — the device's effects (looping, gate, delay, two of the LPF presets) **depend** on this timing data to sync musically with the audio.
 
 **Note on terminology:** earlier synthesis described the per-block timing payload as a single "32-bit sync word." The TKT wiki splits this into **2 bytes sync + 2 bytes tempo** per block (followed by 4 bytes of LED data). The `storagethingies/DiskManager.hpp` `block_sync_words[4]` array packs both fields together as a `uint32_t`. See `corrections.md` for the reconciliation.
 
@@ -88,9 +92,10 @@ This supersedes earlier synthesis which described the 4 bytes as a single 32-bit
 The fact that there are **4 separate sync+tempo payloads per sector** (one per TE-block) means timing updates at a granularity of 85 frames ≈ 1.77 ms — fine enough to drive sample-accurate musical effects.
 
 **Still unknown:**
-- The exact unit of the 16-bit tempo field (raw BPM? Q8.8 fixed-point? sample period?)
-- Byte ordering on disk (presumed little-endian; verify)
-- Whether the tempo field carries per-block tempo (allowing intra-song tempo curves) or just per-song tempo replicated across blocks
+- Whether stock firmware actually uses a separate per-block sync counter (since solderless-produced albums omit it and still play with synced effects).
+- The exact unit of the 16-bit tempo field as the *firmware reads* it. **Update 2026-05-13:** the solderless encoder writes tempo as `(48000 * 60) / (24 * bpm)` (a samples-per-something derived count; for 120 BPM = 1000, for 80 BPM = 1500, for 60 BPM = 2000). Whether the firmware interprets this as samples-per-tick, samples-per-bar/N, or a free-form scalar is not stated; the value produces working playback so the formula is reliable for encoders, but the firmware-side semantic isn't named.
+- Byte ordering on disk (confirmed little-endian for the tempo field via the encoder using `bytes[2042] = tempo & 0xFF; bytes[2043] = (tempo >> 8) & 0xFF`).
+- Whether the tempo field carries per-block tempo (allowing intra-song tempo curves) or just per-song tempo replicated across blocks. (Solderless writes the same value at every sector for a song.)
 
 For exact bit-level decoding, the audio engine's `current_sync_word()` consumer in the effects path (see `13-dsp-effects.md`) is the practical reference.
 

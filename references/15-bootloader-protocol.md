@@ -1,182 +1,275 @@
 # Bootloader Protocol
 
-**Synthesized through:** Lines #846 (2026-05-06), Discord through 2026-05-11. Reference URL: `github.com/timknapen/SP-1-dev/wiki/Bootloader` (canonical doc — verify current state).
+**Synthesized through:** Lines #846 (2026-05-06), Discord through 2026-05-11, and the **solderless source archive** (ingested 2026-05-13; archive contents dated 2026-05-12). Primary code-of-record now: `assets/solderless-2026-05-12/js/protocol.js` + `js/firmware.js` + `js/storage.js` + `stemloader/js/sp-1_protocol.js`. See `update-log.md` 2026-05-13 entry.
 
-The SP-1 has a small bootloader in the first 128 KB of nRF52840 flash. **Track 1 + Track 4 + USB-C** triggers it; the device then enumerates as a USB CDC ACM device for **60 seconds** and accepts a small set of single-byte opcodes that allow flashing a new application firmware. The bootloader cannot read existing firmware, only write to the app slot.
+The SP-1 has a small bootloader in the first 128 KB of nRF52840 flash. **Track 1 + Track 4 + USB-C** triggers it; the device then enumerates as a USB CDC ACM device and accepts a small set of single-byte command opcodes wrapped in a COBS-framed packet protocol. The bootloader cannot read existing firmware, only write to the app slot.
 
-This file documents the opcode-level protocol so that anyone can talk to the bootloader without needing `solderless.engineering`.
+This file documents the protocol at the byte level. Anyone with the solderless source can replicate it; this skill copies the constants and structure so Claude can answer questions without you needing to open the JS.
 
 ## Trigger
 
 1. **Hold Track 1 + Track 4** (both buttons pressed simultaneously)
 2. **Plug in USB-C** (data + power)
-3. Release the buttons after enumeration
+3. Wait until the Track 1 LED lights up
+4. Release the buttons
 
-The device:
-- Boots into bootloader mode (not the app)
-- Enumerates as a USB CDC ACM device on the host
-- Stays in bootloader mode for **60 seconds**
-- After 60 seconds with no activity, reboots into the app
+The device then:
 
-The trigger was discovered by **B_E_N** [Lines #556, ~mid-2025]. Original post included a "step 4 — power button" that was removed in an edit [see `corrections.md`].
+- Boots into the bootloader (not the app)
+- Enumerates as a USB CDC ACM device
+- Stays in bootloader mode for approximately **60 seconds** of inactivity before auto-rebooting into the app
 
-**Important:** the analog button matrix decodes Track 1 + Track 4 as a specific threshold combination on ADC channel AIN0. If your hardware is damaged in a way that prevents the SP-1 from reading this combo (e.g., FPC disconnected), the bootloader can't be entered through the buttons. SWD is the alternative — see `04-debug-interfaces.md`.
+The trigger was discovered by **B_E_N** [Lines #556, ~mid-2025]. An earlier post claimed a "step 4 — power button" that was later removed in an edit [see `corrections.md`]. The solderless utility's user-facing instructions confirm the bare two-button + USB-C combo:
 
-## Opcode set
+> 1. make sure SP-1 is turned off (or long press •• to turn it off)
+> 2. hold track 1 and 4 buttons while connecting USB-C
+> 3. keep holding until track 1 LED lights up
+> 4. release all buttons
+> 5. click 'connect' below and select stem player
 
-The protocol uses single-byte opcodes over USB CDC ACM. Opcodes are documented by **ericlewis** in Discord, paraphrased here with TimK's wiki as cross-reference [Discord #general, ericlewis, 2026-05-09 09:45; `github.com/timknapen/SP-1-dev/wiki/Bootloader`].
+[Source: `index.html` lines 119–125, 137–143, 170–176; `stemloader.html` lines 27–29.]
 
-| Opcode | Name | Purpose |
+## Wire format
+
+### Baud rate
+
+**115200 8N1** over USB CDC ACM. The solderless tool opens the port with `port.open({ baudRate: 115200 })` [Source: `firmware.js` line 51, `storage.js` lines 65/279/324, `stemloader.js` line 271]. CDC ACM disregards baud rate in practice (the underlying transport is USB packets), but conformant clients still set it.
+
+### Packet framing (host ↔ device)
+
+Every message in both directions is a **COBS-encoded packet** terminated by a single `0x00` byte. The decoded packet body has the structure:
+
+```
++------+-----+-----+------+----------------+------+
+| 0x51 | seq | cmd | plen | payload (plen) | crc8 |
++------+-----+-----+------+----------------+------+
+   1     1     1     1         plen          1
+```
+
+- **`0x51`** ('Q' ASCII) — fixed start magic. Same byte as the `0x51` command opcode but always present at the start of every command packet body. Don't confuse the magic byte with the opcode — the magic appears in the framing, the opcode is one byte further in.
+- **`seq`** — 1-byte sequence number. The host increments per command; the device echoes the host's seq in its reply. Solderless uses seq 1 to start and increments for each new request.
+- **`cmd`** — 1-byte command opcode (see palette below).
+- **`plen`** — 1-byte payload length.
+- **`payload`** — `plen` bytes of command data.
+- **`crc8`** — CRC-8 over `[0x51, seq, cmd, plen, payload...]` using a fixed 256-entry lookup table (full table reproduced below).
+
+The complete packet body (`0x51 | seq | cmd | plen | payload | crc8`) is then **COBS-encoded** and a single `0x00` byte is appended as the frame delimiter.
+
+[Source: `protocol.js` lines 91–127 (`cobsEncode`, `cobsDecode`, `buildPacket`, `parseResponse`).]
+
+### CRC-8 table
+
+Verbatim from `protocol.js` lines 64–81 (and the identical copy in `sp-1_protocol.js` lines 7–22):
+
+```
+0xea,0xd4,0x96,0xa8,0x12,0x2c,0x6e,0x50,0x7f,0x41,0x03,0x3d,0x87,0xb9,0xfb,0xc5,
+0xa5,0x9b,0xd9,0xe7,0x5d,0x63,0x21,0x1f,0x30,0x0e,0x4c,0x72,0xc8,0xf6,0xb4,0x8a,
+0x74,0x4a,0x08,0x36,0x8c,0xb2,0xf0,0xce,0xe1,0xdf,0x9d,0xa3,0x19,0x27,0x65,0x5b,
+0x3b,0x05,0x47,0x79,0xc3,0xfd,0xbf,0x81,0xae,0x90,0xd2,0xec,0x56,0x68,0x2a,0x14,
+0xb3,0x8d,0xcf,0xf1,0x4b,0x75,0x37,0x09,0x26,0x18,0x5a,0x64,0xde,0xe0,0xa2,0x9c,
+0xfc,0xc2,0x80,0xbe,0x04,0x3a,0x78,0x46,0x69,0x57,0x15,0x2b,0x91,0xaf,0xed,0xd3,
+0x2d,0x13,0x51,0x6f,0xd5,0xeb,0xa9,0x97,0xb8,0x86,0xc4,0xfa,0x40,0x7e,0x3c,0x02,
+0x62,0x5c,0x1e,0x20,0x9a,0xa4,0xe6,0xd8,0xf7,0xc9,0x8b,0xb5,0x0f,0x31,0x73,0x4d,
+0x58,0x66,0x24,0x1a,0xa0,0x9e,0xdc,0xe2,0xcd,0xf3,0xb1,0x8f,0x35,0x0b,0x49,0x77,
+0x17,0x29,0x6b,0x55,0xef,0xd1,0x93,0xad,0x82,0xbc,0xfe,0xc0,0x7a,0x44,0x06,0x38,
+0xc6,0xf8,0xba,0x84,0x3e,0x00,0x42,0x7c,0x53,0x6d,0x2f,0x11,0xab,0x95,0xd7,0xe9,
+0x89,0xb7,0xf5,0xcb,0x71,0x4f,0x0d,0x33,0x1c,0x22,0x60,0x5e,0xe4,0xda,0x98,0xa6,
+0x01,0x3f,0x7d,0x43,0xf9,0xc7,0x85,0xbb,0x94,0xaa,0xe8,0xd6,0x6c,0x52,0x10,0x2e,
+0x4e,0x70,0x32,0x0c,0xb6,0x88,0xca,0xf4,0xdb,0xe5,0xa7,0x99,0x23,0x1d,0x5f,0x61,
+0x9f,0xa1,0xe3,0xdd,0x67,0x59,0x1b,0x25,0x0a,0x34,0x76,0x48,0xf2,0xcc,0x8e,0xb0,
+0xd0,0xee,0xac,0x92,0x28,0x16,0x54,0x6a,0x45,0x7b,0x39,0x07,0xbd,0x83,0xc1,0xff,
+```
+
+CRC initial value: `0`. Update step: `crc = table[crc ^ next_byte]`. (Standard table-lookup CRC.)
+
+### COBS encoding
+
+Standard COBS (Consistent Overhead Byte Stuffing). The end-of-packet delimiter is `0x00`; COBS rewrites the packet body to contain no zero bytes, prefixing each run of non-zero bytes with a length byte. See `protocol.js` lines 91–121 for the canonical encoder/decoder used by the tool.
+
+## Command palette
+
+The opcodes below are observed and named in the solderless source. They split into three groups: bootloader/state-transition, info/query, and bulk transfer.
+
+| Opcode (hex) | ASCII | Direction | Reply opcode | Purpose |
+| --- | --- | --- | --- | --- |
+| `0x52` | `R` | host→dev | `0x53` `S` | **State query.** Returns a 5-byte ASCII state vector (see below). Used to detect mode after connection. |
+| `0x70` | `p` | host→dev | `0x71` `q` | **Set mode.** Payload byte `[1]` selects upload mode. After a `0x50` reboot the device comes back in the selected mode. |
+| `0x50` | `P` | host→dev | (no reply) | **Reboot.** Soft-reset; the device disconnects USB and re-enumerates. |
+| `0x54` | `T` | host→dev | `0x55` `U` | **Device ID.** Returns 8 bytes (presumed FICR `DEVICEID[0..1]` LE concatenation). |
+| `0x58` | `X` | host→dev | `0x59` `Y` | **Album title.** Returns current album title (ASCII, null-terminated within payload). |
+| `0x66` | `f` | host→dev | `0x67` `g` | **Verify album.** Returns `[isValid (u8), errCode (u8)]`. `errCode` values per the `ALBUM_ERR` enum (see `references/09-audio-format-spec.md` / `21-original-firmware-stems.md`). |
+| `0x43` | `C` | host→dev | `0x44` `D` | **Write counter.** Returns LE32 write counter (chunks written this upload session). |
+| `0x7A` | `z` | host→dev | `0x7B` `{` | **Battery status.** Returns 2 bytes (raw; semantics inferred — see `references/05-power-and-battery.md`). |
+| `0x64` | `d` | host→dev | `0x65` `e` | **Fader positions.** Returns 4 bytes — one byte per track fader (T1..T4). |
+| `0x74` | `t` | host→dev | `0x75` `u` | **Ladder values.** Returns 4 bytes = two `uint16` LE — the two button-ladder ADC readings. |
+| `0x5C` | `\` | host→dev | `0x5D` `]` | **Button states.** Returns N bytes representing current pressed/released states across the button matrix. |
+| `0x5A` | `Z` | host→dev | (replies but unused) | **Set LEDs.** Payload is 8 bytes — one byte each for T1, T2, T3, T4, S1, S2, S3, S4 (brightness 0–255). |
+| `0x37` | `7` | host→dev | (no reply) | **Reset write counter / start upload session.** Called once at start of album upload to reset the per-session chunk counter. |
+| `0x39` | `9` | host→dev | (no reply) | **Write album chunk.** Payload is exactly 136 bytes — see "Album upload chunk" section below. |
+| `0x51` | `Q` | host→dev | (no reply) | **End-of-upload / reboot to bootloader.** Sent at end of album upload; device commits and reboots. (Distinct from the framing magic `0x51` at the start of every packet body — same byte, different role.) |
+| `0x46` | `F` | host→dev | `0x47` `G` | **Format / erase app slot.** Used in firmware-flash flow. |
+| `0x45` | `E` | host→dev | (no reply) | **Write firmware chunk.** Payload = `[chunk_seq (LE32) | flash_addr (LE32) | data (≤240 bytes)]`. |
+| `0x48` | `H` | host→dev | `0x49` `I` | **Commit / finalize firmware.** Payload = `[last_page (LE32)]` on first call, `[counter (LE32)]` on second. |
+
+### What state-query (`0x52`) returns
+
+The payload of `0x53 'S'` is a 5-byte ASCII string. Solderless interprets two values:
+
+- **`"10510"`** — device is in upload mode. Ready to accept `0x37` + `0x39` traffic.
+- **`"00100"`** — device is in boot mode. Caller should set upload mode via `0x70 [1]` and reboot via `0x50`.
+
+[Source: `storage.js` lines 87–125, `stemloader.js` lines 336–346.]
+
+Each character represents one state flag (digit ASCII = byte value). The exact bit assignment isn't named in the JS — the tool just string-compares. **Don't claim a richer interpretation than that** unless verified against firmware disassembly.
+
+### Status response (`0x53` payload in firmware-flash mode)
+
+When called early in the firmware-flash flow (`firmware.js` line 100), the same `0x52` command produces a 4-byte payload interpretable as LE32 representing the number of pages written so far. So `0x52` is overloaded: in upload-mode it returns the state string, in flash-mode it returns the page counter. Look at byte length to distinguish.
+
+## Mode switching (bootloader → upload mode)
+
+Procedure as implemented by solderless [Source: `storage.js` lines 87–119]:
+
+```
+1. Connect CDC, send 0x52 (R)
+2. Receive 0x53 (S) with state payload
+3. If payload string == "10510": already in upload mode, proceed
+4. If payload string == "00100": continue:
+   a. Send 0x70 with payload [0x01]  ("set mode" — upload)
+   b. Receive 0x71 (q) confirming mode set
+   c. Send 0x50 (no reply expected) to reboot
+   d. Disconnect; wait for USB re-enumeration (~3 seconds)
+   e. Reconnect, send 0x52 again; expect "10510" now
+```
+
+**No GPREGRET magic value appears in the solderless source.** Earlier versions of this skill stated that GPREGRET = `0x1A96` was the host-visible mode-switch magic; that came from a Discord paraphrase. The host implementation just uses the two-command sequence above. There may be a magic value internally on the device (e.g., the bootloader checks GPREGRET on reset), but it is not exposed to the host and the host does not need to know it.
+
+## Firmware flash sequence
+
+[Source: `firmware.js` lines 85–186 (`flashFirmware`).]
+
+```
+1. 0x52 (R), no payload     → expect 0x53 (S) with LE32 page counter
+2. 0x46 (F), no payload     → expect 0x47 (G); 5-second timeout (erases flash)
+3. For each 4096-byte page (starting at FIRST_PAGE = 0x20):
+   For each chunk (up to FW_CHUNK_SIZE = 240 bytes) of the page:
+     0x45 (E), payload = [chunk_seq (LE32) | flash_addr (LE32) | data]   no reply
+     sleep 5ms (or 100ms at the start of each new page after page 0)
+4. 0x48 (H), payload = [last_page (LE32)]   → expect 0x49 (I) with counter
+5. 0x48 (H), payload = [counter (LE32)]     → expect 0x49 (I) with finalize counter
+6. Device reboots into new firmware
+```
+
+**Flash layout constants** [`protocol.js` lines 8–13]:
+
+| Constant | Value | Meaning |
 | --- | --- | --- |
-| `0x52` | **Bootloader version check** | Sent first thing to confirm you're talking to the bootloader. Device responds with version info. |
-| `0x54` | **Device ID** | Returns the device's unique identifier (presumably from the nRF52840's DEVICEID register). |
-| `0x58` | **Current album title** | Returns the title string of the currently-loaded album on the eMMC. Useful for verification (does the device have the album you think it does?). |
-| `0x70` | **Set GPREGRET magic** | Followed by a payload byte. `0x70 0x01` sets GPREGRET to `0x1A96`, telling the bootloader to enter "parser 2" mode on next reboot. |
-| `0x50` | **Trigger reboot** | Causes the device to reset; the next boot reads GPREGRET and chooses the appropriate parser. |
-| `0x37` | **Stop playback / reset sector pointer** | Halts the audio engine (if running) and resets the read pointer. Used before bulk upload. |
-| `0x39` | **Stream stem data packet** | Sends one 136-byte data packet to be written to the eMMC: 4-byte header + 4-byte sector address + 128 bytes payload data. Four such packets fill one 512-byte native eMMC block. |
-| `0x43` | **Read write counter** | Returns how many bytes have been written so far. Used to verify upload progress. |
-| `0x51` | **System reset** | Hard reset, including USB re-enumeration. Used at end of upload to make the device re-read the album from eMMC. |
-| `0x66` | **Verify album valid** | Checks that the album image on eMMC is well-formed (correct header, etc.). |
+| `FW_PAGE_SIZE` | 4096 | nRF52840 page size |
+| `FW_CHUNK_SIZE` | 240 | bytes of firmware data per `0x45` packet |
+| `FLASH_START` | `0x20000` | first valid app firmware address (128 KB into flash) |
+| `FLASH_END` | `0xFF000` | end of app slot (last writable page) |
+| `FIRST_PAGE` | `0x20` | page index for `FLASH_START` (32 = 0x20000/0x1000) |
+| `LAST_PAGE` | `0xFE` | page index for `FLASH_END` (254 = 0xFE000/0x1000) |
 
-## Two parsers: parser 1 (default) and parser 2 (upload mode)
+So pages 0x00–0x1F (128 KB) are bootloader; pages 0x20–0xFE (~887 KB) are app; page 0xFF is reserved (likely MBR settings). **Don't overwrite the bootloader region** — if your firmware extends below 0x20000 you brick the device and recovery requires SWD.
 
-The bootloader has **two operating modes**, selected via the **GPREGRET** (General Purpose Retained Register) which survives a soft reset:
+**Why 240-byte chunks?** Likely to fit USB Full Speed bulk packets cleanly with overhead: 240 (data) + 8 (chunk_seq + flash_addr) + 5 (packet header + CRC) + COBS overhead = ~256 bytes per packet, which is one nRF52840 USB endpoint buffer.
 
-- **Parser 1** (default, GPREGRET = 0 or any value other than 0x1A96): Standard bootloader. Can flash firmware, verify versions, etc.
-- **Parser 2** (GPREGRET = `0x1A96`): Album upload mode. Can write to the eMMC via the `0x39` stem data packet command.
+## Album upload chunk (`0x39`)
 
-To enter parser 2:
-1. Connect via CDC, confirm bootloader (`0x52`)
-2. Set GPREGRET magic (`0x70 0x01`)
-3. Trigger reboot (`0x50`)
-4. Wait for USB re-enumeration
-5. Confirm parser 2 active (re-send `0x52`, check response)
+[Source: `storage.js` lines 622–704 + `stemloader.js` lines 781–867.]
 
-## Sequence for flashing a new app firmware
-
-The minimum sequence (without album upload) is:
+Each `0x39` packet payload is **exactly 136 bytes**:
 
 ```
-1. Trigger Track1+4+USB-C
-2. Wait for CDC enumeration (~1 second)
-3. 0x52       — Bootloader version check; confirm we're in bootloader
-4. (firmware flash commands — exact protocol details TBD; see below)
-5. 0x51       — System reset
-6. Device reboots into the new app
++----------+------------+------------+
+| u32 LE   | u32 LE     | 128 bytes  |
+| chunk_n  | emmc_offset| data       |
++----------+------------+------------+
+   0..3       4..7        8..135
 ```
 
-The exact firmware-flash commands are not fully documented in the public material. Reading `theunflappable`'s Python implementation (`test_bootloader.py` shared in Discord #firmware 2026-05-08) is the practical reference. The Solderless web tool also implements these commands — viewing its source code (if accessible during a build) is another path.
+- **`chunk_n`** — monotonic counter starting at 0. Increments for each `0x39` packet sent in this session. The firmware tracks this and exposes it via `0x43` for verification.
+- **`emmc_offset`** — absolute byte offset within the eMMC where these 128 bytes should be written. Starts at 0 (the metadata sector) and increments by 128 per chunk.
+- **`data`** — 128 bytes of album image data. Solderless slices the album image into 128-byte chunks and sends them in order; the encoder produces a 128-byte-aligned image so there is never a partial final chunk.
 
-## Sequence for uploading a new album
+This is **not** a sector address. Earlier versions of this skill said byte 4–7 was "sector address (32-bit, presumably native 512-byte block addressing)" — that was speculation. Solderless source uses a plain byte offset, and the firmware presumably has the eMMC abstraction layer that translates byte offsets to native eMMC block writes internally.
 
-[Source: ericlewis, Discord #general, 2026-05-09 09:45]
+### Important: 0x39 is fire-and-forget
 
-```
-1. Trigger Track1+4+USB-C
-2. Wait for CDC enumeration
-3. 0x52       — Bootloader version check
-4. 0x70 0x01  — Set GPREGRET magic 0x1A96
-5. 0x50       — Trigger reboot
-6. Wait for USB re-enumeration into parser 2
-7. 0x52       — Confirm parser 2 active
-8. 0x54       — Device ID
-9. 0x58       — Current album title (verification)
-10. 0x37      — Stop playback, reset sector read pointer
-11. 0x39 × N  — Stream stem data: N packets, each 136 bytes
-                (4-byte header + 4-byte sector addr + 128 bytes data,
-                 four packets per 512-byte native eMMC block)
-12. 0x43      — Read write counter, verify against expected total
-13. 0x51      — System reset; device reboots, re-reads album,
-                comes back in parser 2
-14. 0x58      — Verify album title matches new album
-15. 0x66      — Verify album valid
-```
+The host **does not wait for an ACK** after each `0x39` packet. Solderless uses `sendNoReply` for all album-upload chunks [Source: `storage.js` line 644 + `stemloader.js` line 834]. The protocol is:
 
-A full 311 MB album = 37,993 logical sectors × 16 native blocks per sector × 4 packets per native block = **2,431,552 packets of 136 bytes each**.
+- Send chunk N, do not wait
+- Send chunk N+1, do not wait
+- Send chunk N+2, do not wait
+- ...
 
-At a hypothetical 100 µs per packet (USB CDC roundtrip time), that's ~4 minutes total upload. moecal1947's current Python tool [Discord #general, 2026-05-09 09:33] achieves ~0.75 KB/s = 5.5 packets/second — far below USB's theoretical capacity. The bottleneck is USB control-transfer overhead, not the eMMC.
+At the end of the upload, the host can call `0x43` (read write counter) to verify the device received the expected number of chunks. There is no per-packet retry mechanism in the solderless implementation — if a chunk is dropped, the upload silently corrupts.
 
-## What's known about packet `0x39`
+Throughput at 115200 baud with no per-chunk handshake: each chunk packet is ~145 bytes (1 magic + 1 seq + 1 cmd + 1 plen + 136 payload + 1 CRC + COBS overhead + 1 zero terminator). At 11520 bytes/sec raw, that's ~80 chunks/sec = **~10 KB/s practical eMMC throughput**. A 311 MB album takes ~9 hours.
 
-136-byte frame:
+## Album upload sequence (full)
+
+[Source: `storage.js::uploadAlbum` lines 573–716.]
 
 ```
-Byte 0–3:    Header (purpose unknown — likely a magic / opcode marker / command sub-code)
-Byte 4–7:    Sector address (32-bit, target location)
-Byte 8–135:  128 bytes of payload data
+1. (Already connected and in upload mode "10510" per state query)
+2. 0x37 (7), no payload, no reply expected
+   → resets write counter / starts upload session
+3. Build metadata sector (8192 bytes, see references/21-original-firmware-stems.md)
+4. Send metadata sector as 64 chunks of 128 bytes each, with 0x39
+   chunk_n = 0..63, emmc_offset = 0..8064
+5. For each song:
+   Build SP-1 audio bytes via encodeToSP1 (see references/09-audio-format-spec.md)
+   Send the song's bytes as ceil(song_bytes/128) chunks of 128 bytes each
+   chunk_n and emmc_offset continue monotonically
+6. Build end-marker sector (8192 bytes of 0x00, with magic at last 13 bytes)
+7. Send end-marker sector as 64 chunks of 128 bytes each
+8. 0x51 (Q), no payload, no reply expected
+   → tells device upload is complete; device reboots / commits
 ```
 
-[Discord #general, ericlewis, 2026-05-09 09:45]
-
-**Critical gap:** the exact format of the 4-byte header and the **ACK / response format** for `0x39` packets is **not publicly documented**. moecal1947 asked explicitly for the byte-level framing [Discord #general, 2026-05-09 09:47]; ericlewis acknowledged he probably has it (*"Prob."*) but did not share it. See `known-unknowns.md`.
-
-Inferred plausible header structure (subject to verification):
-
-```
-Byte 0:    Magic / opcode marker (probably 0x39 echoed, or a sub-command byte)
-Byte 1:    Sub-command / flags
-Byte 2-3:  Length or checksum
-```
-
-ACK protocol is presumably "send packet, wait for single ACK byte, retry on NAK." But the exact convention isn't published.
-
-## Why packets are 136 bytes
-
-136 = 8 (header + sector addr) + 128 (data). With 4 packets per 512-byte native eMMC block, this gives:
-
-```
-4 × 128 = 512 bytes of data per native block
-4 × 8   =  32 bytes of overhead per native block
-```
-
-The 32-byte overhead per 512-byte data is ~6% — reasonable. The choice of 128-byte payload likely reflects USB Full Speed packet sizes (64 bytes per packet × 2 = 128) for efficient transport.
-
-## Why GPREGRET-based parser selection
-
-GPREGRET is a hardware register on the nRF52840 that survives a soft reset (preserved through `NVIC_SystemReset()`). The bootloader reads it at boot to choose the parser mode. This gives a way for **the bootloader to call back into itself in a different mode** without needing a dedicated USB command or relying on the host to time a window perfectly.
-
-Sequence: host sets GPREGRET via `0x70 0x01`, triggers reset via `0x50`, the chip resets, reads GPREGRET, sees `0x1A96`, enters parser 2. The host then re-enumerates and continues with album upload.
-
-`0x1A96` is presumably just an arbitrary magic value; nothing in particular about the number except that it's unlikely to occur naturally.
+After step 8, the device disconnects and re-enumerates. The host can then optionally reconnect, query state with `0x52`, verify album with `0x66`, query title with `0x58`.
 
 ## What the bootloader cannot do
 
-- **Read firmware.** No flash-read opcode. *"you cannot"* [Discord #firmware, ericlewis, 2026-05-08 17:13].
-- **Read the eMMC.** Reading is the app firmware's job. Parser 2 writes; the running app reads back to verify.
-- **Run user code.** It's a strict bootloader; only its own command set, no arbitrary code execution exposed.
-- **Bypass APPROTECT.** APPROTECT still applies on next boot if your custom firmware doesn't clear it. (For most custom firmware development you neither care about nor need to touch APPROTECT.)
+- **Read firmware.** No flash-read opcode exists. *"you cannot"* [Discord #firmware, ericlewis, 2026-05-08 17:13].
+- **Read the eMMC.** The bootloader's `0x39` is write-only. To read album contents back, you need running app firmware that exposes a read path (not provided by stock TE firmware or `ericlewis/sp1-midi`).
+- **Run user code.** Strict command set; no arbitrary code execution exposed.
+- **Bypass APPROTECT.** APPROTECT still applies on next boot; your custom firmware inherits whatever protection it sets. For most custom-firmware development you don't care about APPROTECT.
 
 ## Safety considerations
 
-**A bad firmware can brick the device.** If your firmware:
+A bad firmware can brick the device if it:
 
 - Doesn't bring up USB,
 - Doesn't respond to the function-button longpress for shutdown,
-- Disables the audio system entirely without providing another visible state,
+- Disables the audio system entirely without providing another recovery state.
 
-then the only recovery is to re-enter Track 1 + Track 4 + USB-C from a cold start — which works because the bootloader is still in slot 0 unchanged.
-
-If your bad firmware **also corrupts the bootloader** (e.g., your firmware extends into the bootloader region), recovery requires SWD. So **don't overwrite the bootloader region** (`0x00000000`–`0x00020000`) — keep your firmware in slot 0 (`0x00020000`+).
+Recovery: re-enter the Track 1 + Track 4 + USB-C combo from a cold start. The bootloader is in slot 0 (page 0x00–0x1F) and remains intact as long as your custom firmware doesn't extend below `FLASH_START = 0x20000`. **Don't overwrite the bootloader region.** If you do, only SWD (with mass-erase + reflash, see `references/04-debug-interfaces.md`) can recover.
 
 tkt1000's reminder: *"If you load a bad firmware you can brick your device!"* [Discord #general, 2026-05-09 12:15].
 
-## solderless.engineering and standalone tools
+The solderless utility's UI prints this warning verbatim:
 
-`https://solderless.engineering/` and `https://solderless-engineering.pages.dev/` use Web Serial in the browser to talk this protocol. As of 2026-05-09 the tool is **offline for an update** [Discord #news, tkt1000].
+> ⚠️ warning: the binary you upload must be compiled specifically for SP-1 or it might brick your device!
 
-Alternative tools:
+[Source: `index.html` line 128.]
 
-- **`theunflappable`'s `test_bootloader.py`** — Python implementation of the bootloader protocol [Discord #firmware, 2026-05-08]. Does not include album upload. Use this to write your own client.
-- **TimK's wiki page** at `github.com/timknapen/SP-1-dev/wiki/Bootloader` is the canonical reference. Verify it's current; ericlewis trusts it: *"I bet $10k @TKT made a better version of my notes."* [Discord #general, ericlewis, 2026-05-09 09:45]
+## Standalone clients
 
-Standalone client implementations would be useful in addition to the web tool. virtualflannel_46386 asked if anyone saved the source [Discord #firmware, 2026-05-10 18:40] indicating no public archive of solderless's client code exists yet.
+`solderless.engineering` and `solderless-engineering.pages.dev` were the canonical web tool — Web Serial in Chromium-family browsers talking this protocol. The source went offline 2026-05-09 for an update [Discord #news, tkt1000]. **A complete static snapshot of the 2026-05-12 deployment is archived locally** in `assets/solderless-2026-05-12/`. The archive is the canonical reference for this protocol implementation. See `references/27-tools-and-utilities.md` for details.
+
+Other clients:
+
+- **`theunflappable`'s `test_bootloader.py`** [Discord #firmware, 2026-05-08] — Python implementation. Does not include album upload.
+- **TimK's wiki** at `github.com/timknapen/SP-1-dev/wiki/Bootloader` — canonical doc maintained by TimK. Verify current state.
+- **moecal1947's Python uploader** — slow (control-transfer based; 0.75 KB/s); see `references/16-usb-upload-protocol.md`.
 
 ## Where to go next
 
-- For the actual album-upload data path → `16-usb-upload-protocol.md`
-- For physical bootloader-trigger details → `04-debug-interfaces.md`
-- For the eMMC sector layout that uploaded data targets → `08-emmc-storage.md`
-- For the on-disk format of stems → `09-audio-format-spec.md`
-- For known unknowns (packet framing for 0x39) → `known-unknowns.md`
-- For the broader debug interface picture → `04-debug-interfaces.md`
+- For the album-image bytes that get pushed → `references/16-usb-upload-protocol.md`, `references/21-original-firmware-stems.md`
+- For physical bootloader-trigger details → `references/04-debug-interfaces.md`
+- For the eMMC sector layout that uploaded data targets → `references/08-emmc-storage.md`
+- For on-disk frame format → `references/09-audio-format-spec.md`
+- For the local archive of the solderless source → `references/27-tools-and-utilities.md` and `sources.md`

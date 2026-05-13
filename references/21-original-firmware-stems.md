@@ -1,222 +1,292 @@
 # Original-Firmware Custom Stems
 
-**Synthesized through:** Lines #846 (2026-05-06), Discord through 2026-05-11, TKT wiki Album-metadata-format / Audio-format / Data-Structure pages accessed 2026-05-12.
+**Synthesized through:** Lines #846 (2026-05-06), Discord through 2026-05-11, TKT wiki Album-metadata-format / Audio-format / Data-Structure pages accessed 2026-05-12, and the **solderless source archive** (ingested 2026-05-13). The encoder pseudocode below is a direct port of solderless's `encodeToSP1()` and is now the **canonical reference implementation** for the SP-1 audio format. See `update-log.md` 2026-05-13.
 
-**The most useful single finding for end users:** you do **not need custom firmware** to play your own audio on the SP-1. Stock TE firmware plays any correctly-formatted album image. TimK confirmed this in early 2026 [Lines #799–805]:
+**The most useful single finding for end users:** you do **not need custom firmware** to play your own audio on the SP-1. Stock TE firmware plays any correctly-formatted album image. TimK confirmed this [Lines #799–805]:
 
 > Custom stems work with original TE firmware unmodified.
 
-This file describes the path from "I have a song" to "the song plays on my unmodified SP-1." It synthesizes the available format spec, the upload procedure, and the gaps in the canonical workflow.
+This file is the pipeline: how to go from "I have a song" to "the song plays on my unmodified SP-1," with byte-level encoder reference.
 
-## Status: canonical workflow not yet published
+## Status: canonical encoder exists publicly (in solderless source)
 
-As of synthesis date, **no single end-to-end tool exists** that takes a song and produces an album playable on stock TE firmware. The pieces exist:
+As of synthesis date, the pieces are:
 
-- **Stem separation:** HT Demucs, Spleeter, MusicNN, beat_this etc. (well-established external tools)
-- **Format spec:** documented in this skill (`09-audio-format-spec.md`, `11-block-interleaving-tape-fx.md`)
-- **Album image construction:** emvee1968 and virtualflannel_46386 each have internal scripts; not yet released
-- **Upload protocol:** documented as opcode sequence (`16-usb-upload-protocol.md`); a fast public client doesn't exist yet
-- **Web tool:** `solderless.engineering` (when online) accepts album images via the upload protocol
+- **Stem separation:** HT Demucs, Spleeter, MusicNN, beat_this etc. — external tools, well-established.
+- **WAV → SP-1 bytes encoder:** solderless's `encodeToSP1()` is the canonical reference. **Verified working** — solderless produces albums that stock firmware accepts. See "Encoder reference implementation" below.
+- **Album header layout:** documented byte-by-byte from solderless's `uploadAlbum()` metadata-sector construction. **Verified working**.
+- **Upload protocol:** documented opcode-by-opcode in `references/15-bootloader-protocol.md` and `references/16-usb-upload-protocol.md`. The full protocol byte spec is in the local solderless archive.
 
-What you can do *today* with publicly available pieces is build your own pipeline. What you can't do (yet) is `pip install sp1-stems` and have it work.
+What does **not** yet exist publicly:
+
+- A `pip install`-able tool that does the whole pipeline end-to-end. Solderless's encoder is JavaScript embedded in a web tool; nobody has ported it to a CLI/library yet.
+- A faster uploader (solderless does ~10 KB/s, see `references/16-usb-upload-protocol.md`).
+- An album-image extractor (given a `.sp1` blob, recover the original 4 stems as WAVs).
 
 ## The high-level pipeline
 
 ```
 Source song (mp3, wav, anything)
    ↓ (stem separation)
-4 stems: drums, bass, melody, vocals (each stereo, 44.1 / 48 / 96 kHz)
+4 stems: drums, bass, melody, vocals (each stereo)
    ↓ (resample if needed)
-4 stems at 48 kHz, stereo, 24-bit
-   ↓ (frame-pack into TE byte order)
-Frames in the L_mid / L_msb / R_msb / L_lsb / R_lsb / R_mid interleaved layout per stem
-   ↓ (sector-pack with 0/2/1/3 block interleaving)
-8192-byte sectors with 340 frames each in the FF-friendly layout
-   ↓ (generate sync words for each TE-block from BPM)
-Sectors with timing metadata
-   ↓ (assemble album header with song offsets and titles)
+4 stems at 48 kHz, stereo, 24-bit signed PCM
+   ↓ (combine to 8-channel WAV)
+8-channel WAV (channels 0,1 = stem 0 L/R; 2,3 = stem 1; 4,5 = stem 2; 6,7 = stem 3)
+   ↓ (encode via SP-1 encoder)
+SP-1 audio bytes (8192-byte sectors, 340 frames each, 0/2/1/3 interleaving, per-sector tempo+envelope trailer)
+   ↓ (prepend album metadata sector, append end-marker sector)
 Complete album image
-   ↓ (USB upload to SP-1)
+   ↓ (USB upload — references/16-usb-upload-protocol.md)
 Album written to eMMC
-   ↓ (boot SP-1 normally)
+   ↓ (boot SP-1 normally — power cycle by unplug or "long-press function button" depending on firmware state)
 Album plays with full effects
 ```
 
-Each step has documented details in this skill. The challenge is **gluing them into a single tool**.
-
-## Per-step status
+## Step-by-step
 
 ### 1. Stem separation
 
-External tools, well-supported:
-- **HT Demucs FT** (emvee1968 uses this) — high-quality 4-stem separation
-- **Demucs** (Facebook AI Research) — older but still solid
-- **Spleeter** (Deezer) — fast, 4-stem version available
-- **Open-source notebooks** (Colab, Hugging Face Spaces) — for users without GPU
+Use any open-source 4-stem separator. Working choices:
 
-Output: 4 WAV files at the original song's sample rate.
+- **HT Demucs FT** (emvee1968 uses this) — high-quality, slow.
+- **Demucs** — older, also good.
+- **Spleeter** — fast, lower quality.
 
-### 2. Resampling
+Output: 4 WAV files at any sample rate / bit depth.
 
-Use `ffmpeg`, `sox`, or any audio library. Target: 48 kHz, stereo, 24-bit signed.
+### 2. Resample + combine
+
+Each stem must be **48 kHz, stereo, 24-bit signed PCM**. Combine into one 8-channel WAV in stem order: drums, bass, melody, vocals.
 
 ```sh
-ffmpeg -i drums.wav -ar 48000 -ac 2 -sample_fmt s32 drums_48k.wav
+# Resample each stem
+ffmpeg -i drums.wav   -ar 48000 -ac 2 -sample_fmt s32 drums_48k.wav
+ffmpeg -i bass.wav    -ar 48000 -ac 2 -sample_fmt s32 bass_48k.wav
+ffmpeg -i melody.wav  -ar 48000 -ac 2 -sample_fmt s32 melody_48k.wav
+ffmpeg -i vocals.wav  -ar 48000 -ac 2 -sample_fmt s32 vocals_48k.wav
+
+# Combine to 8-channel
+ffmpeg -i drums_48k.wav -i bass_48k.wav -i melody_48k.wav -i vocals_48k.wav \
+  -filter_complex "[0:a][1:a][2:a][3:a]amerge=inputs=4" \
+  -ac 8 -sample_fmt s32 -bits_per_raw_sample 24 \
+  combined.wav
 ```
 
-(Note: ffmpeg's `s32` is 32-bit signed; the 24-bit data sits in bits 23:0. This matches the SP-1's right-aligned in-memory format. Conversion to the on-disk byte layout happens later.)
+(Note: `s32` is ffmpeg's 32-bit signed; 24-bit signed PCM goes into the lower 24 bits with sign-extension. The encoder reads from `int32`-aligned channel arrays.)
 
-### 3. Frame packing — the SP-1's interleaved byte order
+The solderless tools validate the WAV strictly:
 
-For each frame (24 bytes total = 4 stems × 6 bytes), the bytes per stem are:
+- RIFF/WAVE container with `fmt ` and `data` chunks.
+- Audio format = 1 (PCM) or 0xFFFE (WAVE_FORMAT_EXTENSIBLE) with subFormat = 1.
+- `bitsPerSample` = 24.
+- `sampleRate` = 48000.
+- `numChannels` = 8.
 
-```
-Byte offset:   0       1       2       3       4       5
-Carries:       L_mid   L_msb   R_msb   L_lsb   R_lsb   R_mid
-```
+[Source: `wav-parser.js` lines 7–41 in both copies.]
 
-[code: `storagethingies/DiskManager.hpp::decode_te_frame_payload_i32`]
+### 3. Encoder reference implementation (`encodeToSP1`)
 
-In pseudocode for one stem:
+This is the canonical SP-1 audio encoder. Port to your language of choice — it's stateless and deterministic. Source: `wav-parser.js::encodeToSP1` lines 93–132 (main) and 125–177 (TKT stemloader version). Both implementations are byte-identical for normal audio; the TKT version uses `Math.abs()` for envelopes (more correct) and the main version omits the abs (treats negative peaks as below zero) — both produce playable output.
 
 ```python
-def pack_stem_frame(left_i32, right_i32):
-    # left_i32 and right_i32 are 24-bit signed values, sign-extended into int32
-    # Convert to 3 unsigned bytes each, then interleave
-    L_lsb = left_i32 & 0xFF
-    L_mid = (left_i32 >> 8) & 0xFF
-    L_msb = (left_i32 >> 16) & 0xFF
-    R_lsb = right_i32 & 0xFF
-    R_mid = (right_i32 >> 8) & 0xFF
-    R_msb = (right_i32 >> 16) & 0xFF
-    return bytes([L_mid, L_msb, R_msb, L_lsb, R_lsb, R_mid])
+FRAME_SIZE        = 24       # 4 stems × 6 bytes/stem
+STEM_FRAME_SIZE   = 6        # per stem per frame
+BLOCK_SIZE        = 2048
+SECTOR_SIZE       = 8192
+FRAMES_PER_SECTOR = 340
+BLOCK_ORDER       = [0, 2, 1, 3]  # frame % 4 -> block_id
+
+def encode_to_sp1(channels, total_frames, bpm=80):
+    """
+    channels: list of 8 int32 arrays (per-frame samples in 24-bit-in-int32 representation,
+              sign-extended; channels[0] = stem0 L, [1] = stem0 R, [2] = stem1 L, etc.)
+    total_frames: number of frames in the source audio
+    bpm: tempo for this song (used to populate per-sector tempo field)
+    Returns: bytes; length is ceil(total_frames / 340) * 8192
+    """
+    total_sectors = (total_frames + FRAMES_PER_SECTOR - 1) // FRAMES_PER_SECTOR
+    output = bytearray(total_sectors * SECTOR_SIZE)
+
+    if bpm == 0:
+        bpm = 80
+    tempo = (48000 * 60) // (24 * bpm)  # uint16 value stored in sector trailer
+
+    for s in range(total_sectors):
+        sector_base = s * SECTOR_SIZE
+        sector_frame_start = s * FRAMES_PER_SECTOR
+        envelopes = [0, 0, 0, 0]
+
+        for frame in range(FRAMES_PER_SECTOR):
+            global_frame = sector_frame_start + frame
+            if global_frame >= total_frames:
+                break
+
+            block_id    = BLOCK_ORDER[frame % 4]
+            byte_offset = sector_base + BLOCK_SIZE * block_id + FRAME_SIZE * (frame // 4)
+
+            for stem in range(4):
+                L = channels[stem * 2][global_frame]      # int32 with 24-bit value sign-extended
+                R = channels[stem * 2 + 1][global_frame]
+                base = byte_offset + stem * STEM_FRAME_SIZE
+
+                # Envelope = peak absolute value seen this sector, per stem.
+                # (TKT version uses abs(); main solderless uses raw max — TKT is more correct.)
+                envelopes[stem] = max(envelopes[stem], abs(L), abs(R))
+
+                # SP-1 6-byte stem layout: L_mid, L_msb, R_msb, L_lsb, R_lsb, R_mid
+                output[base    ] = (L >> 8 ) & 0xFF   # L_mid
+                output[base + 1] = (L >> 16) & 0xFF   # L_msb
+                output[base + 2] = (R >> 16) & 0xFF   # R_msb
+                output[base + 3] =  L        & 0xFF   # L_lsb
+                output[base + 4] =  R        & 0xFF   # R_lsb
+                output[base + 5] = (R >> 8 ) & 0xFF   # R_mid
+
+        # Per-sector trailer: tempo (uint16 LE) + 4× envelope (uint8) at end of block 0.
+        # Layout: byte 2042..2043 = tempo LE, byte 2044..2047 = envelope[0..3]
+        output[sector_base + 2042] = tempo & 0xFF
+        output[sector_base + 2043] = (tempo >> 8) & 0xFF
+        for i in range(4):
+            output[sector_base + 2044 + i] = (255 * envelopes[i]) // 0x800000
+
+    return bytes(output)
 ```
 
-You write 4 stems sequentially in stem order (0 = drums, 1 = bass, 2 = melody, 3 = vocals) to produce 24 bytes per frame.
+### 4. The 0/2/1/3 block interleaving — what it means
 
-### 4. Sector packing — 0/2/1/3 block interleaving
-
-Each 8192-byte sector has 4 TE-blocks of 2048 bytes (85 frames each). Frames are distributed:
+Each 8192-byte sector splits into 4 TE-blocks of 2048 bytes. Frames in the sector are distributed across blocks via `block_id = BLOCK_ORDER[frame_in_sector % 4]`:
 
 ```
-Block 0 → frames where frame_index_within_sector % 4 == 0   (0, 4, 8, ...)
-Block 1 → frames where frame_index_within_sector % 4 == 2   (2, 6, 10, ...)
-Block 2 → frames where frame_index_within_sector % 4 == 1   (1, 5, 9, ...)
-Block 3 → frames where frame_index_within_sector % 4 == 3   (3, 7, 11, ...)
+frame % 4 == 0 → block 0
+frame % 4 == 1 → block 2
+frame % 4 == 2 → block 1
+frame % 4 == 3 → block 3
 ```
 
-The physical disk order of these blocks is `[Block 0, Block 1, Block 2, Block 3]`. See `11-block-interleaving-tape-fx.md` for details.
+So **physical block 0** (at sector offset 0..2047) holds every-4th frame (0, 4, 8, ...). Physical block 1 (sector offset 2048..4095) holds frame indices 2, 6, 10, ... Block 2 (offset 4096..6143) holds 1, 5, 9, ... Block 3 (offset 6144..8191) holds 3, 7, 11, ...
 
-**Don't skip this step.** Sectors stored in straight frame order play correctly at 1.0x but the FF/RW will be broken (audio sounds like discontinuous chunks instead of fast-forward).
+Each block contains all 4 stems for its frames: 85 frames × 24 bytes = 2040 bytes audio. The remaining 8 bytes per block (block-tail) are unused by the solderless encoder, **except for block 0**, which uses its last 6 bytes for tempo + envelope metadata.
 
-### 5. Per-block side data (sync + tempo + LED)
+Why this layout? Tape FF/RW with no extra CPU work. See `references/11-block-interleaving-tape-fx.md`.
 
-Each TE-block has an **8-byte trailer** appended after its 2040 bytes of audio [TKT wiki: Audio-format, accessed 2026-05-12]:
+### 5. Per-sector tempo + envelope trailer (correction vs. earlier wiki-based synthesis)
 
-```
-Offset within block's 8-byte trailer:
-  0–1   sync counter   (16-bit, presumed little-endian)
-  2–3   tempo          (16-bit; encoding not publicly documented)
-  4–7   LED data       (32-bit)
-```
+**What solderless writes:** only 6 bytes per sector, at the **end of physical block 0**:
 
-× 4 TE-blocks per sector = 32 bytes of side data per sector. Audio occupies 8160 bytes (340 × 24); side data occupies the remaining 32.
+- Bytes 2042..2043 — tempo (uint16 LE) = `(48000 * 60) / (24 * bpm)`. For 80 BPM = 1500. For 120 BPM = 1000. For 60 BPM = 2000.
+- Bytes 2044..2047 — per-stem peak envelope, one byte each, normalized: `(255 * peak_abs_value) / 0x800000`. Roughly 0–255 representing the loudest sample in this sector for that stem (used by the firmware's level meter / LED display, presumably).
 
-For correct tempo-synced effects (`10-midi-timing-encoding.md`):
+**Bytes 2040..2041 are unused.** Bytes 2048+ (blocks 1, 2, 3) have no trailer written by solderless — those blocks are 100% audio for the frames they hold.
 
-```python
-def sync_counter_for_block(sample_position_in_song, song_bpm):
-    # tick rate: 96 ticks per bar at song_bpm BPM
-    # samples per tick: 30000 / song_bpm
-    return int(sample_position_in_song / (30000 / song_bpm)) % 24489
-```
+Earlier versions of this skill (and the TKT wiki) described **8 bytes of trailer per block × 4 = 32 bytes per sector**, split as 2 sync + 2 tempo + 4 LED per block. That layout describes what the **stock firmware can read** if data is present (per the wiki) — but the solderless encoder demonstrates that **only the 6 bytes at end of block 0 are required** to produce playable albums. The "sync counter" field is not written by the encoder; per-block tempo and LED data are not written either.
 
-Generate 4 such counters per sector (one per TE-block; sample positions advance by 85 frames between blocks). Write each as bytes 0–1 of the block's trailer.
+Practical implication: when **producing** an album for stock firmware, write only the 6-byte trailer at end of block 0. When **reading** an existing album, you may encounter additional per-block side data (in TE-produced albums), but a custom encoder doesn't need to generate it. See `corrections.md` 2026-05-13.
 
-**Tempo encoding is not publicly documented.** First-pass options:
-- Leave tempo bytes zero and see whether stock firmware drives the synced effects from the sync counter alone
-- Reverse-engineer by dumping a known-BPM song's tempo bytes from a real album
+### 6. Album metadata sector (sector 0)
 
-For a first-pass encoder, you can leave sync counter zero too — audio will play but effects won't be synchronized.
+The very first 8192-byte sector of the album is the **metadata sector**. Solderless builds it like this [Source: `storage.js::uploadAlbum` lines 599–618 + `stemloader.js::createBinary` lines 749–776]:
 
-### 6. LED words
+1. Allocate 8192 bytes filled with `0x58` ('X').
+2. Write magic string `"ALBUM_PRESENT"` (13 ASCII bytes) at offset 0.
+3. Write `albumLength` as uint32 LE at offset 13. **Value:** sum of all song lengths in sectors + 1 (the +1 is the end-marker sector).
+4. Write `numSongs` as uint8 at offset 17.
+5. Write the album title at offset 18, null-terminated. Max 63 chars + null = 64 bytes. Excess bytes (up to offset 81) remain as 'X'.
+6. For each song, write a 136-byte entry starting at offset 82, then 218, then 354, ...:
+   - Bytes 0..3: song offset (uint32 LE, in sectors). First song starts at sector 1 (right after metadata).
+   - Bytes 4..7: song length (uint32 LE, in sectors).
+   - Bytes 8..71: artist name, null-terminated, padded with 'X', max 62 chars + null = 63 bytes (the encoder leaves byte 72 as 'X' because it writes title there).
+   - Bytes 72..135: song title, same encoding as artist.
 
-Same treatment as sync words. The 4 bytes of each LED word presumably encode brightness levels for the 4 Track LEDs at that block's playback time. Leaving zero gives you "no LED animation"; the LEDs will sit at whatever brightness the firmware defaults to.
-
-For a v1 encoder, leaving LED words zero is acceptable.
-
-### 7. Album header
-
-The first 8192-byte sector of the album is reserved for the album header [TKT wiki: Data-Structure, accessed 2026-05-12]. Audio starts at offset `0x2000` (sector 1).
-
-On-disk layout per `TKT wiki: Album-metadata-format` (accessed 2026-05-12):
+Max songs that fit in a metadata sector: `(8192 - 82) / 136 ≈ 59`. The firmware caps at 60 songs and rejects more (`ALBUM_ERR.TOO_MANY_SONGS`) — see validation limits below.
 
 ```
-Offset  Length      Field
-0       13          Magic bytes 'ALBUM_PRESENT' (ASCII, no terminator)
-13      4           Album length in 0x2000-byte sectors
-17      1           Number of songs
-18      64          Album title (null-terminated, padded with 'X')
-82      N × 136     Song entries
+Offset  Length  Field
+0       13      Magic 'ALBUM_PRESENT' (13 ASCII bytes)
+13      4       Album length in sectors (uint32 LE) — includes metadata + audio + end marker
+17      1       Number of songs (uint8)
+18      64      Album title (null-term, X-padded up to 64 bytes total)
+82      N×136   Song entries
 
-Each song entry (136 bytes):
-0       4           Song start offset in 0x2000-byte sectors
-4       4           Song length in sectors
-8       64          Artist (null-terminated, padded with 'X')
-72      64          Title  (null-terminated, padded with 'X')
+Per song entry (136 bytes):
+  0..3    Song offset in sectors (uint32 LE)
+  4..7    Song length in sectors (uint32 LE)
+  8..71   Artist (null-term, X-padded, 64 bytes)
+  72..135 Title  (null-term, X-padded, 64 bytes)
 ```
 
-**Validity check:** the magic `ALBUM_PRESENT` must appear at offset 0 **and** as the very last bytes of the album image. The trailing magic is required for the album to be considered valid.
+### 7. End-marker sector
 
-This supersedes the earlier reference to the in-memory `AlbumInfo` C struct from `storagethingies/DiskManager.hpp`. The struct's `[65]` name fields include a C null terminator; the on-disk fields are 64 bytes. Match the wiki layout, not the C struct.
+After the last song's audio sectors, the album must end with a special **end-marker sector** of 8192 bytes:
 
-**Endianness:** integer fields are presumed little-endian (nRF52840 native). Not explicitly confirmed in the wiki — verify by inspecting a real album.
+- Filled with `0x00`
+- The 13-byte ASCII magic `"ALBUM_PRESENT"` placed at the **last** 13 bytes (offset `SECTOR_SIZE - 13` = 8179..8191).
 
-### 8. Upload
+Without this trailing magic, the firmware's verifier returns `ALBUM_ERR.MAGIC_NOT_FOUND_AT_END` (`0x66` verify-command response payload[1] == 15).
 
-Once you have an album image, push it via the USB upload protocol — see `16-usb-upload-protocol.md`. Path 1: wait for solderless.engineering. Path 2: write your own client (the bootloader protocol opcodes are documented; the per-packet ACK format is not yet public). Path 3: use moecal1947's slow Python uploader (~4.5 days for a 311 MB album).
+[Source: `storage.js::uploadAlbum` lines 690–703.]
+
+### 8. Validation limits
+
+The firmware enforces these caps. The solderless source documents them in the `ALBUM_ERR` enum comments [Source: `sp-1_protocol.js` lines 27–44, also seen in `protocol.js`]:
+
+| Limit | Value | Error code if exceeded |
+| --- | --- | --- |
+| Album length | `< 2` sectors → `ALBUM_TOO_SHORT` (2); `> 0x7FFFF` (524287) sectors → `ALBUM_TOO_LONG` (3) | 2 / 3 |
+| Number of songs | > 60 | `TOO_MANY_SONGS` (4) |
+| Album title length | > 63 bytes (before null) | `ALBUM_TITLE_TOO_LONG` (5) |
+| Song offset | invalid / out-of-order | `SONG_OFFSET_INVALID` (8) |
+| Song length | > 999,999 sectors | `SONG_LENGTH_TOO_LARGE` (9) |
+| Song extends past album | sum overflows declared `albumLength` | `SONG_EXCEEDS_ALBUM` (10) |
+| Artist name length | > 62 bytes (before null) | `ARTIST_NAME_TOO_LONG` (11) |
+| Song title length | > 62 bytes (before null) | `SONG_TITLE_TOO_LONG` (13) |
+| Magic at end | absent or wrong | `MAGIC_NOT_FOUND_AT_END` (15) |
+
+The solderless UI defaults titles to "untitled" and artists to "unknown" when empty. Names are truncated to 63 characters (= `STRING_LENGTH - 1`) before null termination.
+
+### 9. Upload
+
+Once the album image is built (one big byte buffer: metadata sector + song audio sectors in order + end-marker sector), push it via the USB protocol. See `references/16-usb-upload-protocol.md` for the full procedure. Path A: use the locally archived solderless utility (when you can run a local web server). Path B: write your own client against the documented protocol. Path C: use moecal1947's slow Python uploader.
 
 ## What works on stock firmware vs custom firmware
 
 | Behavior | Stock TE firmware | Custom firmware |
 | --- | --- | --- |
-| Plays 4 stems at 48 kHz | Yes | Depends on the firmware — see `20-custom-firmware-state.md` |
+| Plays 4 stems at 48 kHz | Yes | Depends — see `references/20-custom-firmware-state.md` |
 | Per-stem fader mixing | Yes | Stock-equivalent only via `audiothingies/StockRuntimeMixer` |
 | Track button mute/solo | Yes | Yes |
 | FF/RW at 2.5x, 4x, 8x, 16x | 2.5x verified; higher rates documented in code | Custom firmwares typically max at 2.0x without block-skipping |
 | Tape FX (smooth pause/play bend) | Yes | Yes in `audiothingies/VarispeedResampler`-based firmware |
 | Filter, distortion, gate, echo effects | Yes, all 4 with 4 variations | Varies — emvee has gate; virtualflannel has different custom effects |
-| Tempo-synced effect modulation | Yes (uses sync words) | Not implemented in any public firmware yet |
+| Tempo-synced effect modulation | Yes (uses sync words and/or tempo field) | Not implemented in any public firmware yet |
 | Bluetooth audio output | Yes (presumed, not formally verified) | emvee has pairing working; full audio over BT not yet |
-| LED animations synced to song | Yes (uses LED words on disk) | Likely not in custom firmwares |
+| LED animations synced to song | Yes (uses LED words on disk if present) | Likely not in custom firmwares |
 
-**The path of least resistance:** prepare a custom album image and play it on stock firmware. You get all the effects, the proper tape FX, tempo sync, and LED sync — without writing any firmware. The only thing you give up is the ability to load *your own* effect algorithms.
+**Path of least resistance:** prepare a custom album image and play it on stock firmware. You get all the effects, the proper tape FX, tempo sync, and LED sync — without writing any firmware.
 
-**The path of maximum control:** write custom firmware. You can do anything but you have to implement everything from scratch (or use `audiothingies/storagethingies` as the foundation).
+## On "step 4 nonsense"
 
-## The "step 4 nonsense"
+[Context: tkt1000 called out a fabricated "step 4" in an AI-generated stem-prep workflow as nonsense [Discord #general, 2026-05-10 22:56]]
 
-[Context: tkt1000 called out a fabricated "step 4" in a stem-prep workflow as nonsense [Discord #general, 2026-05-10 22:56]]
+The pipeline above is sourced verbatim from solderless's working implementation. **Steps 1–7 are not fabricated** — they map 1:1 to functions in `wav-parser.js::encodeToSP1` and `storage.js::uploadAlbum`. The skill's prior conservative wording ("there is no canonical numbered workflow") is now superseded by the solderless source.
 
-As of synthesis date there is no canonical numbered workflow that has been blessed by TimK or any other authority figure. Different community members have different pipelines. **Do not present a canonical numbered workflow that has implementation details you can't cite.** The high-level pipeline (separation → resample → encode → upload) is real; specific tool choices and step ordering depend on the pipeline being built.
-
-When the canonical workflow is published (presumably alongside ericlewis's "proper BSP" release), this file should be updated to point at it.
+If a user asks "is there a canonical workflow?", the answer is: yes, solderless's `encodeToSP1` + `uploadAlbum` define it. The skill's encoder pseudocode above is a faithful port.
 
 ## Tools to watch for
 
-The following are **expected to be public soon** (as of synthesis date):
+The following are still **expected to be public soon** (as of synthesis date):
 
 - **virtualflannel_46386's custom OS** — has working stem-prep; awaiting solderless return
 - **emvee1968's HT Demucs pipeline** — awaiting two more units
 - **ericlewis's "proper BSP"** — in development, no public ETA
-- **An updated solderless.engineering** — offline for an update as of 2026-05-09
+- **An updated solderless.engineering** — offline for an update as of 2026-05-09; replaced for now by the locally archived 2026-05-12 snapshot
 - **moecal1947's upload tool** — published or shared in some form, awaiting faster packet framing
 
 ## Where to go next
 
-- For the on-disk format byte-by-byte → `09-audio-format-spec.md`
-- For block interleaving → `11-block-interleaving-tape-fx.md`
-- For sync word / timing details → `10-midi-timing-encoding.md`
-- For the upload protocol → `16-usb-upload-protocol.md`
-- For unreleased custom firmwares with relevant pipelines → `20-custom-firmware-state.md`
-- For open questions (header magic value, side-data layout) → `known-unknowns.md`
+- For the on-disk frame byte order → `references/09-audio-format-spec.md`
+- For block interleaving → `references/11-block-interleaving-tape-fx.md`
+- For the (now mostly historical) wiki view of per-block side data → `references/10-midi-timing-encoding.md`
+- For the upload protocol → `references/16-usb-upload-protocol.md`
+- For unreleased custom firmwares with relevant pipelines → `references/20-custom-firmware-state.md`
+- For corrections vs. earlier synthesis → `corrections.md`
+- For the local archive of the solderless source code → `references/27-tools-and-utilities.md` and `sources.md`
