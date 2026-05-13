@@ -355,3 +355,60 @@ Nothing identifying. Safe to push public.
 ### Citation form note
 
 Both archives keep their original zip alongside the flat extracted form. Inside the skill, citations should use the extracted form (`assets/audiothingies-2026-05-09/AudioEngine.cpp`); the zip is preserved for byte-identical reference if someone needs to verify the archive wasn't modified post-extraction.
+
+---
+
+## 2026-05-13 — Intake batch #3: Lines thread archive (agent subset) bundled
+
+### Source ingested
+
+**Files:** Selected subset of `~/Projects/sp-1/cc-skill/resources/TE-SP-1-lines-thread-archive/`
+**Provenance:** dotjustin's own public mirror of the Lines forum thread at `github.com/dot-Justin/TE-SP-1-lines-thread-archive`. Web frontend at `sp-1.dotjust.in`. Original thread: `llllllll.co/t/te-stem-player/66795` (846 posts, 2024-04-09 through 2026-05-06, closed by moderators).
+
+### What was bundled vs skipped
+
+The full archive on disk is ~213 MB across 4 top-level directories. Bundling the entire thing in a skill repo would be excessive (and most of that 213 MB is the rendered website source, which is irrelevant for agent use).
+
+Bundled (~1.6 MB, 866 files):
+- `assets/lines-thread-archive/agent/AGENT-GUIDE.md` (7 KB)
+- `assets/lines-thread-archive/agent/thread.md` (4 KB — top-level narrative)
+- `assets/lines-thread-archive/agent/summaries/chunk-NNN-MMM.md` (per-100-posts summaries, 9 files, 54 KB)
+- `assets/lines-thread-archive/agent/indexes/*.json` (post-index, topic-index, reply-chain-index, participant-index, attachment-index — 200 KB total)
+- `assets/lines-thread-archive/agent/posts/NNN.md` (all 846 posts as individual markdown with YAML frontmatter — 1.4 MB)
+- `assets/lines-thread-archive/metadata/{participants,stats,upload_manifest}.json` (210 KB)
+- `assets/lines-thread-archive/README.md` (skill-specific orientation + attribution, written 2026-05-13)
+
+Skipped:
+- `raw/api/posts/NNN.json` (4.4 MB) — original Discourse API responses, redundant with `agent/posts/`
+- `raw/posts/` (3.8 MB) — alternate format of the same content
+- `raw/assets/uploads/` (90 MB) — 813 binary attachments (images, PDFs, docs). Agents can resolve upload tokens via `metadata/upload_manifest.json` and fetch from the source repo or `sp-1.dotjust.in` when binary content is needed.
+- `site-src/` (106 MB) — static web frontend source. Irrelevant for skill use.
+- `assets/banner.png` — repo banner image.
+
+### Why this layout
+
+The `agent/` directory was purpose-built by dotjustin for AI consumption — pre-built indexes, narrative summaries, and per-post markdown files. It's the right path for skill use. The `raw/` content is for verification and full-fidelity access, which an agent can fetch on demand from the source repo if needed.
+
+The bundled `assets/lines-thread-archive/README.md` orients agents to the bundled subset, explains what's NOT included, and points at the source repo for binary attachments.
+
+### Why no social risk this batch
+
+This is dotjustin's own publicly-licensed mirror. Bundling their own work in their own skill repo is fully self-attributed (`Source: github.com/dot-Justin/TE-SP-1-lines-thread-archive` callouts throughout).
+
+The original Lines posts were public on `llllllll.co` since 2024-04-09. The participant handles (e.g., `charbot@gmail`) are how those users self-identified on the forum — already public.
+
+### Changes landed
+
+- ✅ `assets/lines-thread-archive/agent/` (4 dirs, 859 files, 1.4 MB)
+- ✅ `assets/lines-thread-archive/metadata/` (3 files, 210 KB)
+- ✅ `assets/lines-thread-archive/README.md` (skill-specific orientation + attribution)
+- ✅ `sources.md` — added "Bundled assets > lines-thread-archive/" entry with full layout, citation form, attribution. Updated existing GitHub-repo entry to point at the bundled subset as primary, source repo as fallback. Updated "Local corpus" entry to defer to bundled subset.
+- ✅ `references/27-tools-and-utilities.md` — added "Bundled subset" note to the `TE-SP-1-lines-thread-archive` repo entry.
+
+### PII scan
+
+- Email/credentials pattern: only `charbot@gmail` (a Lines forum handle — public, self-chosen).
+- No private filesystem paths.
+- No author/copyright tags beyond what's already public in the forum content.
+
+The forum posts contain user opinions, real names where the users chose to share them, and email-like handles (some users picked email-style usernames). All of this is content the users themselves posted publicly to `llllllll.co` — not a privacy issue to mirror.

@@ -53,14 +53,16 @@ For the broader custom-firmware ecosystem see `20-custom-firmware-state.md`. For
 **Status:** Public.
 **Contents:** Mirror of the Lines forum thread. Includes:
 - Original posts (markdown)
-- Images and attachments
+- Images and attachments (90 MB of binary uploads — images, PDFs, docs)
 - Reply threading
 - Search functionality
-- Agent-friendly directory with summaries, post indexes, and AI instructions
+- Agent-friendly directory (`agent/`) with summaries, post indexes, and AI instructions
 
 **Use this for:** Reading the original thread without needing a Lines account. Cite specific posts by number (e.g., `Lines #556`). The agent-friendly summaries make targeted searches efficient.
 
 **Web frontend:** `https://sp-1.dotjust.in`
+
+**Bundled subset in this skill:** `assets/lines-thread-archive/` contains everything in `agent/` plus thread-level metadata (~1.6 MB total). Binary attachments are NOT bundled (90 MB total); use the source repo or web frontend for those.
 
 ### Web-based tools
 

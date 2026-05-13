@@ -77,6 +77,32 @@ python3 -m http.server 8788
 
 **Cite as:** `[Source: assets/audiothingies-2026-05-09/AudioEngine.cpp lines X-Y]` or `[code: assets/audiothingies-2026-05-09/effects/BiquadFilter.hpp]`.
 
+### `lines-thread-archive/`
+
+**Bundled subset of the SP-1 Lines forum thread archive.** Includes all 846 posts as agent-friendly markdown, narrative summaries, JSON indexes, and thread metadata. Excludes 90 MB of binary attachments (images, PDFs, docs from posts) which remain in the source repo only.
+
+**Source:** [`github.com/dot-Justin/TE-SP-1-lines-thread-archive`](https://github.com/dot-Justin/TE-SP-1-lines-thread-archive) (dotjustin, public). Web frontend: [`sp-1.dotjust.in`](https://sp-1.dotjust.in/).
+
+**Original thread:** [`llllllll.co/t/te-stem-player/66795`](https://llllllll.co/t/te-stem-player/66795) — posts 1–846, 2024-04-09 through 2026-05-06, closed by moderators.
+
+**Layout:**
+
+- `assets/lines-thread-archive/README.md` — what's included, what's not, citation guidance
+- `assets/lines-thread-archive/agent/AGENT-GUIDE.md` — folder navigation + search strategies
+- `assets/lines-thread-archive/agent/thread.md` — top-level narrative summary
+- `assets/lines-thread-archive/agent/summaries/chunk-NNN-MMM.md` — per-100-posts narrative summaries (9 chunks)
+- `assets/lines-thread-archive/agent/indexes/post-index.json` — all 846 posts with metadata + excerpt
+- `assets/lines-thread-archive/agent/indexes/topic-index.json` — posts grouped by topic (hardware, audio, bootloader, ...)
+- `assets/lines-thread-archive/agent/indexes/reply-chain-index.json` — parent → replies mapping
+- `assets/lines-thread-archive/agent/indexes/participant-index.json` — participant metadata
+- `assets/lines-thread-archive/agent/indexes/attachment-index.json` — upload tokens with original filenames
+- `assets/lines-thread-archive/agent/posts/NNN.md` — individual posts (001 through 846)
+- `assets/lines-thread-archive/metadata/{participants,stats,upload_manifest}.json` — thread-level metadata
+
+**Cite as:** `[Lines #NNN, <author>, <YYYY-MM-DD>]` (same form as elsewhere in the skill — the post number resolves against `post-index.json`).
+
+**For attachments** (images, PDFs, docs from forum posts): not bundled here due to size. Use `upload_manifest.json` to map a Discourse upload token to its original filename, then fetch from the source repo's `raw/assets/uploads/` or browse the web frontend.
+
 ### `storagethingies-2026-05-09/` and `storagethingies-2026-05-09.zip`
 
 **Bundled archive of ericlewis's C++17 reference implementation of the eMMC driver and DiskManager.** Originally shared as a Discord file attachment in #firmware on 2026-05-09 00:21:46 UTC. The flat extracted tree + the original zip are both present in `assets/`.
@@ -149,7 +175,7 @@ Raw page markdown can be fetched at `https://raw.githubusercontent.com/wiki/timk
 
 **Public web frontend:** `https://sp-1.dotjust.in`
 
-**Use this for:** When a user references a specific Lines post by number (e.g., "what did Galapagoose say in post 68?"), Claude can fetch `https://sp-1.dotjust.in/posts/68` or read the markdown if available locally.
+**Use this for:** When a user references a specific Lines post by number (e.g., "what did Galapagoose say in post 68?"), the **bundled subset is the first stop** (`assets/lines-thread-archive/agent/posts/068.md` — see the "Bundled assets" section above). For binary attachments not in the bundled subset, fetch from this repo or `sp-1.dotjust.in/posts/68`.
 
 ---
 
@@ -159,9 +185,9 @@ If the user is running this skill from their own SP-1 project directory, they ma
 
 ### `TE-SP-1-lines-thread-archive/`
 
-Local clone of the Lines archive (same content as `github.com/dot-Justin/TE-SP-1-lines-thread-archive`).
+Local clone of the Lines archive (same content as `github.com/dot-Justin/TE-SP-1-lines-thread-archive`). **A bundled subset is now shipped inside the skill at `assets/lines-thread-archive/`** — see the "Bundled assets" section above. Use the bundled subset by default; consult the local full clone only when you need the 90 MB of binary attachments (`raw/assets/uploads/`) or the raw Discourse API JSON (`raw/api/`).
 
-**Key sub-paths if present:**
+**Key sub-paths if the user has the full local clone:**
 - `agent/AGENT-GUIDE.md` — instructions for navigating the archive
 - `agent/summaries/thread-summary.md` — narrative summary
 - `agent/summaries/chunk-001-100.md` through `chunk-801-846.md` — per-chunk summaries
