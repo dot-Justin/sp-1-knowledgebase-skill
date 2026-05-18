@@ -1,0 +1,223 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'Arial', sans-serif;
+  font-weight: 200;
+  background: #fff;
+  color: #1a1a1a;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+body {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 20px;
+}
+
+.card {
+  width: 100%;
+  max-width: 1200px;
+  height: calc(100vh - 40px);
+  background: #f5f5f5;
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 24px 32px 0;
+}
+
+.header .title {
+  font-size: 1.35rem;
+  font-weight: 300;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+
+.header .logo {
+  opacity: 0.85;
+}
+
+.content {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  padding: 24px 32px 32px;
+  gap: 64px;
+  overflow: hidden;
+  align-items: center;
+  justify-content: center;
+}
+
+.info-col {
+  flex: 0 1 auto;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  max-height: 100%;
+}
+
+.live-col {
+  flex: 0 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.status {
+  font-size: 0.78rem;
+  font-weight: 300;
+  color: #999;
+  margin-bottom: 20px;
+}
+
+.status.ok { color: #2a7a2a; }
+.status.err { color: #d32f2f; }
+
+.info-grid {
+  flex: 1;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 9px 0;
+  border-bottom: 1px solid #e8e8e6;
+}
+
+.info-label {
+  font-size: 0.72rem;
+  font-weight: 400;
+  color: #888;
+  flex-shrink: 0;
+  margin-right: 16px;
+}
+
+.info-value {
+  font-size: 0.78rem;
+  font-weight: 300;
+  color: #1a1a1a;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  word-break: break-all;
+}
+
+.info-value.dim { color: #ccc; }
+
+.actions {
+  padding-top: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.btn {
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 400;
+  padding: 10px 32px;
+  border: 1.5px solid #1a1a1a;
+  border-radius: 8px;
+  background: #f0f0ee;
+  color: #1a1a1a;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.btn:hover:not(:disabled) {
+  background: #1a1a1a;
+  color: #f0f0ee;
+}
+
+.btn:disabled {
+  border-color: #ccc;
+  color: #ccc;
+  cursor: default;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.btn.loading {
+  position: relative;
+  color: transparent;
+}
+
+.btn.loading::after {
+  content: '';
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border: 2px solid #999;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  left: 50%;
+  top: 50%;
+  margin: -7px 0 0 -7px;
+}
+
+/* ─── Live monitor ─────────────────────────────────────── */
+
+.live-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.live-header {
+  margin-bottom: 12px;
+}
+
+.live-title {
+  font-size: 0.72rem;
+  font-weight: 400;
+  color: #888;
+}
+
+.live-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.live-device {
+  width: 100%;
+  max-width: 380px;
+}
+
+.sp1-live-svg {
+  width: 100%;
+  height: auto;
+}
+
+.live-readout {
+  display: flex;
+  gap: 20px;
+}
+
+.ladder-val {
+  font-size: 0.72rem;
+  font-weight: 300;
+  color: #666;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 600px) {
+  body { padding: 10px; }
+  .card { width: 100%; height: calc(100vh - 20px); border-radius: 14px; }
+  .header, .content { padding-left: 20px; padding-right: 20px; }
+}

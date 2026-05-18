@@ -1,5 +1,8 @@
 # FAQ — USB Upload Protocol
 
+**Q: What do I do if a stem transfer is interrupted?**
+A: Quoting Tim Knapen's official user FAQ verbatim [`assets/solderless-2026-05-18/stemloader/help/help.md`]: *"SP-1 can seem unresponsive after a transfer was interrupted by unplugging the USB cable or closing the stem loader tab. This can look worrying but is normal: SP-1 is still in transfer mode and can't play audio. This can simply be resolved by long pressing the function button to restart SP-1. Data can become corrupted when a transfer is interrupted, so make sure to re-transfer any unfinished songs afterwards."* Stem loader tracks per-song state (missing / todo / done / new); on retry, songs marked `done` are skipped. Moving a song's position in the album requires re-uploading downstream songs because sector offsets shift.
+
 **Q: How do I upload a custom album?**
 A: Trigger the bootloader, switch to parser 2 (via GPREGRET = `0x1A96`), send the album as 136-byte `0x39` packets (one per quarter of a native eMMC block), then reset. See `16-usb-upload-protocol.md`.
 

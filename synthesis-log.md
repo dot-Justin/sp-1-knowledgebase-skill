@@ -4,7 +4,22 @@ This skill is a frozen snapshot of community knowledge as of a specific date. Th
 
 ## Master synthesis date
 
-**2026-05-13.** Last source incorporated through this date.
+**2026-05-18.** Last source incorporated through this date.
+
+### Updates on 2026-05-18 (solderless re-snapshot — multi-app launcher)
+
+`solderless.engineering` came back online with a complete rewrite: multi-app launcher (parent `index.html` + 4 sandboxed iframes) instead of a single-page upload tool. Fresh mirror scraped 2026-05-18; bundled at `assets/solderless-2026-05-18/`. The 2026-05-12 community snapshot is retained at `assets/solderless-2026-05-12/` for citation stability of earlier references. Detailed log in `update-log.md` 2026-05-18.
+
+Major findings:
+
+- **encoder now writes a MIDI sync counter.** The 2026-05-12 encoder wrote 6 bytes per sector (tempo + envelopes); the 2026-05-18 encoder writes 8 bytes per sector (clock at offset 2040, tempo at 2042, envelopes at 2044). Empty sectors write sentinel `clock=0xFFFF / tempo=0x0000`. First tick hardcoded to `clock=1`. This **changes** an earlier 2026-05-13 claim — see `corrections.md`, `hallucination-watchlist.md` entry #22 annotation.
+- **firmware-flash protocol is now a public, single-purpose app** (`utility/`) separate from the album-upload tool. Same byte-level protocol as already documented; new code is cleaner reference.
+- **device-info opcode set is now exercised in a live-poll app** (`deviceinfo/`) at ~10 Hz, validating that `T`, `f`, `X`, `C`, `z`, `d`, `\\`, `t` all work in transfer mode with the existing framing.
+- **iframe + `serial-shim.js` postMessage proxy** is now the canonical host-tooling pattern for SP-1 web apps. This is a *host-side* pattern, not on-device behavior — clarified in `hallucination-watchlist.md`.
+- **First official Tim-Knapen user FAQ** at `assets/solderless-2026-05-18/stemloader/help/help.md`. Quotable for transfer-time ratio ("1 min audio = 10 min transfer"), channel mapping, and the "long-press function button to unstick" recovery procedure.
+- WAV encoder now accepts 1-N channels (was: required exactly 8); WAVEFORMATEXTENSIBLE subFormat offset bug fixed (+28 → +32).
+
+Files materially updated: `SKILL.md`, `update-log.md`, `synthesis-log.md` (this file), `sources.md`, `corrections.md`, `hallucination-watchlist.md`, `working-confirmed.md`, `known-unknowns.md`, `references/10-midi-timing-encoding.md`, `references/15-bootloader-protocol.md`, `references/16-usb-upload-protocol.md`, `references/20-custom-firmware-state.md`, `references/21-original-firmware-stems.md`, `references/27-tools-and-utilities.md`, plus FAQ companions to those refs.
 
 ### Updates on 2026-05-13 (solderless source archive)
 
@@ -78,12 +93,12 @@ Fetched and incorporated content from `github.com/timknapen/SP-1-dev/wiki` pages
 ## Freshness rules
 
 1. When the Discord has been updated since the synthesis date, prefer the user's live observation over the synthesized claim.
-2. Solderless.engineering was offline as of 2026-05-09 for an update. Status may have changed.
+2. Solderless.engineering is online as of 2026-05-18 (4-app launcher; mirror at `assets/solderless-2026-05-18/`). Live site may have shipped further changes since.
 3. Two custom firmwares were announced but unreleased as of synthesis date:
    - **emvee1968** (Claude Code Opus 4.7, basic playback + gate effect + working Bluetooth pairing) — awaiting 2 more units before release
    - **virtualflannel_46386** (custom OS with FX page: beat repeat, bit crusher, send delay, filter, pitch ±12 cents, mixer with mutes/solo) — awaiting solderless utility return
    - If these have been released since synthesis, references to them in this skill are stale.
-4. The USB upload protocol opcodes (see `references/16-usb-upload-protocol.md`) were partially documented by ericlewis on 2026-05-09 but the exact CDC packet framing for opcode `0x39` was never publicly shared. Either get it from the live Discord, ask ericlewis, or read the working updater code.
+4. The USB upload protocol opcodes (see `references/16-usb-upload-protocol.md`) are documented in `assets/solderless-2026-05-12/js/storage.js` and `assets/solderless-2026-05-18/stemloader/js/stemloader.js`. CDC packet framing for opcode `0x39` is reproduced byte-for-byte in `references/16-usb-upload-protocol.md`.
 
 ## Identity map
 

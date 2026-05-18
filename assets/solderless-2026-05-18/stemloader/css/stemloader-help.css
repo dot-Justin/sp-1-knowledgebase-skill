@@ -1,0 +1,91 @@
+/* HELP for using the SP-1 stem loader */
+html,
+body {
+  background-color: #ddd;
+  background-image: url(../img/noise.png);
+  background-size: 256px;
+}
+
+a,
+a:link,
+a:visited {
+  color: #000;
+  text-decoration: underline;
+}
+
+#help-page {
+  margin: 2em;
+  background-color: #fafafa;
+  padding: 1em 3em 3em;
+  border-radius: .3em;
+  max-width: 1000px;
+  color: #333;
+}
+
+.beta-flag {
+  background-color: #ff4a4a;
+  padding: .2em 1em;
+  border-radius: .2em;
+  color: #fff;
+  position: absolute;
+  top: 1em;
+  left: 1em;
+  letter-spacing: .1em;
+}
+
+#help-page em {
+  color: #000;
+}
+
+#help-page strong {
+  color: #000;
+}
+
+blockquote {
+  margin: 1em 0;
+  padding: .3em 1em;
+  border-radius: .3em;
+  background-color: #eee;
+}
+
+
+p,
+li,
+blockquote {
+  max-width: 50em;
+}
+
+pre {
+  background-color: #eee;
+  color: #666;
+  padding: .5em 1em;
+  border-radius: .3em;
+}
+
+code {
+  background-color: #eee;
+  color: #666;
+  padding: .2em .5em;
+  border-radius: .3em;
+}
+
+pre code {
+  padding: 0;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: normal;
+  margin-top: 2em;
+  color: #000;
+}
+
+h2 {
+  /* border-top: 1px solid #ccc; */
+  padding-top: 1em;
+  margin-top: 4em;
+}

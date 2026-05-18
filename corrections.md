@@ -8,6 +8,36 @@ Format per entry: **What was believed → What turned out to be true → Why →
 
 ---
 
+## Solderless encoder evolution (2026-05-18)
+
+### Believed (post-2026-05-13): "The solderless encoder writes no MIDI sync counter to the sector trailer"
+**Actual (since the 2026-05-18 rewrite):** The 2026-05-18 `wav-converter.js` encoder **does** write a sync counter — 2 bytes (LE16) at sector offset 2040, alongside the tempo bytes at 2042 and the LED envelopes at 2044. So the encoder now writes an **8-byte sector trailer** (clock + tempo + envelopes) at the end of block 0, where the 2026-05-12 encoder wrote only **6 bytes** (tempo + envelopes, no clock).
+
+On sectors with no MIDI tick, the encoder writes sentinel values: `clock = 0xFFFF`, `tempo = 0x0000`. The first tick of a song is hardcoded to `clock = 1`. The clock value wraps modulo `CLOCK_MAX = 49152` (= 512 bars × 96 ticks/bar; 96 ticks/bar = 4 quarters × 24 PPQN).
+
+**Why the 2026-05-13 synthesis got it wrong:** the 2026-05-12 community static snapshot really did omit the clock field. The 2026-05-13 batch was a faithful read of that older code. The 2026-05-18 rewrite added the clock-write block.
+
+**Implications:**
+- the warning in `hallucination-watchlist.md` entry #22 ("don't claim encoder writes per-block sync counter") has been narrowed: per-sector at block-0 offset 2040 — yes; per-block — still no.
+- `references/10-midi-timing-encoding.md` "Important clarification (2026-05-13)" block has a 2026-05-18 update appended.
+- A 2026-05-12-encoded album may behave differently from a 2026-05-18-encoded album under the gate/delay/loop effects that depend on the sync counter — worth flagging if the user is hand-encoding albums via the old code.
+
+**Citations:**
+- Truth: [code: `assets/solderless-2026-05-18/stemloader/js/wav-converter.js::encodeToSP1`, MIDI clock block — `OFFSET_CLOCK = 2040`, `OFFSET_TEMPO = 2042`, `OFFSET_LEDS = 2044`, `CLOCK_MAX = 49152`, `CLOCK_INCR = 512`, `TICKS_PER_BAR = 96`]
+- Earlier (now historical) view: [code: `assets/solderless-2026-05-12/js/wav-parser.js::encodeToSP1`]
+- Full detail: `references/10-midi-timing-encoding.md`
+
+### Believed (pre-2026-05-18): "`solderless.engineering` is offline for an update"
+**Actual (since 2026-05-18):** The site is **online again** as a complete rewrite — multi-app launcher with 4 apps (stem loader, firmware utility, device info, spoom1) in sandboxed iframes. The host-side architecture is now built around a single Web Serial port owned by the parent, proxied into iframes via `js/serial-shim.js` postMessage messages. Local canonical mirror at `assets/solderless-2026-05-18/`.
+
+**Why the 2026-05-09 offline claim circulates:** tkt1000 announced the offline-for-update status in Discord #news on 2026-05-09. The site stayed offline through the 2026-05-13 synthesis (community backed up the last live deployment). The site came back on 2026-05-18 with the rewrite. Any reference to "offline as of 2026-05-09" in older skill text should be read as historical.
+
+**Citations:**
+- Truth: HTTP 200 from `solderless.engineering` on 2026-05-18; mirror at `assets/solderless-2026-05-18/`
+- Earlier (now historical) view: [Discord #news, tkt1000, 2026-05-09]
+
+---
+
 ## Audio format and PCM representation
 
 ### Believed: "24-bit PCM, little-endian"

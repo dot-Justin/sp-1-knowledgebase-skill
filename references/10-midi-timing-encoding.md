@@ -1,8 +1,37 @@
 # MIDI Timing Encoding
 
-**Synthesized through:** Lines #846 (2026-05-06), Discord through 2026-05-11, TKT wiki Audio-format page accessed 2026-05-12, and **solderless source archive** ingested 2026-05-13. Code-of-record for stock-firmware-read side: `assets/storagethingies-2026-05-09/DiskManager.hpp` `block_sync_words` field; `assets/audiothingies-2026-05-09/AudioEngine.hpp` `current_sync_word()`. Code-of-record for encoder-write side: `wav-parser.js::encodeToSP1` in solderless archive. See `update-log.md` 2026-05-13.
+**Synthesized through:** Lines #846 (2026-05-06), Discord through 2026-05-11, TKT wiki Audio-format page accessed 2026-05-12, **solderless source archive** ingested 2026-05-13, and **solderless re-snapshot** (multi-app launcher rewrite) ingested 2026-05-18. Code-of-record for stock-firmware-read side: `assets/storagethingies-2026-05-09/DiskManager.hpp` `block_sync_words` field; `assets/audiothingies-2026-05-09/AudioEngine.hpp` `current_sync_word()`. Code-of-record for encoder-write side: `assets/solderless-2026-05-18/stemloader/js/wav-converter.js::encodeToSP1` (current canonical) and `assets/solderless-2026-05-12/js/wav-parser.js::encodeToSP1` (historical, no clock field). See `update-log.md` 2026-05-18.
 
-**Important clarification (2026-05-13):** The TKT wiki and `storagethingies` describe what **stock TE firmware reads** from each sector — up to **8 bytes of side data per TE-block**, split as 2 sync + 2 tempo + 4 LED, × 4 blocks = 32 bytes per sector. But the **solderless encoder writes only 6 bytes per sector**, at the end of block 0: 2 bytes tempo (uint16 LE) + 4 bytes per-stem envelope (uint8). The encoder writes **no sync counter and no LED data**. Custom albums produced by solderless still play correctly with stock firmware effects, which means either (a) most of the wiki-described side data is optional from the firmware's perspective, or (b) stock firmware uses default zero values where data is absent. Treat the wiki layout as a **read spec** (what the firmware understands), not a **write spec** (what the encoder must produce). See `corrections.md` 2026-05-13 and `references/21-original-firmware-stems.md` for the encoder's reduced 6-byte trailer.
+**Important clarification (2026-05-13):** The TKT wiki and `storagethingies` describe what **stock TE firmware reads** from each sector — up to **8 bytes of side data per TE-block**, split as 2 sync + 2 tempo + 4 LED, × 4 blocks = 32 bytes per sector. But the **solderless encoder writes only 6 bytes per sector**, at the end of block 0: 2 bytes tempo (uint16 LE) + 4 bytes per-stem envelope (uint8). The encoder writes **no sync counter and no LED data**. Custom albums produced by solderless still play correctly with stock firmware effects, which means either (a) most of the wiki-described side data is optional from the firmware's perspective, or (b) stock firmware uses default zero values where data is absent. Treat the wiki layout as a **read spec** (what the firmware understands), not a **write spec** (what the encoder must produce). See `corrections.md` and `references/21-original-firmware-stems.md` for the encoder's reduced 6-byte trailer.
+
+**Update (2026-05-18 re-snapshot): the encoder now writes 8 bytes per sector, including a sync counter.** The 2026-05-18 solderless rewrite changed `wav-parser.js → wav-converter.js` and the encoder now writes:
+
+```
+sector_base + 2040 .. 2041   clock (u16 LE)      ← NEW in 2026-05-18; absent in 2026-05-12
+sector_base + 2042 .. 2043   tempo (u16 LE)      ← unchanged
+sector_base + 2044 .. 2047   per-stem envelopes  ← unchanged (4× u8, normalized peak)
+```
+
+This is **8 bytes at the end of block 0** (per-sector — still **not** per-block; blocks 1, 2, 3 have nothing in their trailer space).
+
+**Sentinel values** on sectors with no MIDI tick: `clock = 0xFFFF`, `tempo = 0x0000`.
+
+**First tick** of a song is hardcoded to `clock = 1`.
+
+**Cycled range** of the clock counter, per the encoder: `clock = (clock + increment) % CLOCK_MAX` where:
+
+| Constant | Value | Meaning |
+| --- | --- | --- |
+| `CLOCK_MAX` | `49152` | counter wraps here; = 512 bars × 96 ticks/bar |
+| `CLOCK_INCR` | `512` | added to `clock` per tick, alongside `samplesPerTick - elapsedSamples` |
+| `TICKS_PER_BAR` | `96` | = 4 quarters × 24 PPQN (standard MIDI clock resolution) |
+| `samplesPerTick` | `(48000 * 60) / (24 * bpm)` | float; 1000 at 120 BPM, 1500 at 80 BPM |
+
+There is a publicly-unresolved discrepancy between this `49152` encoder modulo and Galapagoose's older Lines reading of the counter range as `0 to 24,489`. Note that `24,489 ≠ 49152 / 2 = 24,576`. The two may be describing different fields (encoder writes one per-sector slot at offset 2040; the wiki documents 4 per-block trailer slots). Logged as a still-open known-unknown in `known-unknowns.md`.
+
+[Source: `assets/solderless-2026-05-18/stemloader/js/wav-converter.js::encodeToSP1` constants block + MIDI clock branch.]
+
+The 2026-05-12 encoder's behavior (no clock write) is preserved for historical reference, and any tooling that produced an album with the 2026-05-12 encoder is still a valid album that stock firmware accepts — the new clock field is *additive*, not corrective, for playback. Effects that depend on the embedded clock (looping, gate, delay, some LPF presets) may behave differently between 2026-05-12-encoded and 2026-05-18-encoded albums.
 
 The rest of this file describes what's known about the timing-data encoding from the wiki / audiothingies perspective. For custom encoder authoring, see `references/21-original-firmware-stems.md`.
 
@@ -92,10 +121,11 @@ This supersedes earlier synthesis which described the 4 bytes as a single 32-bit
 The fact that there are **4 separate sync+tempo payloads per sector** (one per TE-block) means timing updates at a granularity of 85 frames ≈ 1.77 ms — fine enough to drive sample-accurate musical effects.
 
 **Still unknown:**
-- Whether stock firmware actually uses a separate per-block sync counter (since solderless-produced albums omit it and still play with synced effects).
+- Whether stock firmware actually uses a separate per-block sync counter (since solderless-produced albums omit per-block trailers and still play with synced effects). **Update 2026-05-18:** the new encoder *does* now write a per-sector clock at offset 2040; this resolves the "encoder writes nothing for sync" gap but does not resolve whether stock firmware reads the per-block trailers documented in the wiki.
 - The exact unit of the 16-bit tempo field as the *firmware reads* it. **Update 2026-05-13:** the solderless encoder writes tempo as `(48000 * 60) / (24 * bpm)` (a samples-per-something derived count; for 120 BPM = 1000, for 80 BPM = 1500, for 60 BPM = 2000). Whether the firmware interprets this as samples-per-tick, samples-per-bar/N, or a free-form scalar is not stated; the value produces working playback so the formula is reliable for encoders, but the firmware-side semantic isn't named.
 - Byte ordering on disk (confirmed little-endian for the tempo field via the encoder using `bytes[2042] = tempo & 0xFF; bytes[2043] = (tempo >> 8) & 0xFF`).
 - Whether the tempo field carries per-block tempo (allowing intra-song tempo curves) or just per-song tempo replicated across blocks. (Solderless writes the same value at every sector for a song.)
+- **Reconciliation between Galapagoose's `0 to 24,489` counter range** (Lines #739) **and the 2026-05-18 encoder's `CLOCK_MAX = 49152`**. These don't match by a clean factor — `24,489 ≈ 24,576 = 256 × 96` while `49152 = 512 × 96`. May be different fields, may be Galapagoose mis-counting by a few ticks, may be a `% 24489` modulo applied downstream of the encoder's `% 49152`. See `known-unknowns.md` for the full open-question writeup.
 
 For exact bit-level decoding, the audio engine's `current_sync_word()` consumer in the effects path (see `13-dsp-effects.md`) is the practical reference.
 

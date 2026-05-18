@@ -1,6 +1,29 @@
 # USB Upload Protocol
 
-**Synthesized through:** Lines #846 (2026-05-06), Discord through 2026-05-11, and the **solderless source archive** (ingested 2026-05-13). Primary code-of-record: `assets/solderless-2026-05-12/js/storage.js` (main implementation) + `stemloader/js/stemloader.js` (TKT alternate UI; same protocol). See `update-log.md` 2026-05-13.
+**Synthesized through:** Lines #846 (2026-05-06), Discord through 2026-05-11, the **solderless source archive** (ingested 2026-05-13), and the **solderless 2026-05-18 re-snapshot** (multi-app launcher rewrite). Primary code-of-record: `assets/solderless-2026-05-12/js/storage.js` (main implementation) + `stemloader/js/stemloader.js` (TKT alternate UI; same protocol). The 2026-05-18 re-snapshot's `assets/solderless-2026-05-18/stemloader/js/stemloader.js` implements the same byte-level chunk protocol but with a polished UI (drag-reorder, per-song state badges, in-app help, localStorage persistence) and renames `wav-parser.js → wav-converter.js` (merging WAV parser + SP-1 encoder into one file). See `update-log.md` 2026-05-18.
+
+### Tim Knapen's official user FAQ (2026-05-18)
+
+The 2026-05-18 re-snapshot bundles the **first official user-facing FAQ** for the stem loader, authored by Tim Knapen: `assets/solderless-2026-05-18/stemloader/help/help.md`. Notable quotable items not previously in this skill:
+
+- **Transfer-time ratio:** *"1 minute of audio takes about 10 minutes to transfer!"* — corroborates the ~10 KB/s figure derived below.
+- **Channel mapping** (verbatim from help.md):
+  ```
+  CHANNEL   STEM
+  1         1, left
+  2         1, right
+  3         2, left
+  4         2, right
+  5         3, left
+  6         3, right
+  7         4, left
+  8         4, right
+  ```
+  Channels beyond 8 are ignored. Channels below 8 (since 2026-05-18, the encoder accepts 1-N channel WAV) result in silent stems.
+- **Interrupted-transfer recovery procedure:** *"SP-1 can seem unresponsive after a transfer was interrupted by unplugging the USB cable or closing the stem loader tab. This can look worrying but is normal: SP-1 is still in transfer mode and can't play audio. This can simply be resolved by long pressing the function button to restart SP-1. Data can become corrupted when a transfer is interrupted, so make sure to re-transfer any unfinished songs afterwards."* — this is the **canonical recovery** for the "my SP-1 is stuck after an interrupted upload" symptom.
+- **Aborted transfers are resumable:** the new UI tracks per-song state (missing / todo / done / new); on retry, songs already marked done are skipped. Tim's note: *"If you change the order of tracks in an album, parts of the album index will be invalidated... certain songs will need to be transferred."* — moving a song's position requires re-uploading downstream songs because their sector offsets shift.
+
+[Source: `assets/solderless-2026-05-18/stemloader/help/help.md`.]
 
 This file covers the album upload path specifically — pushing a freshly encoded album image (~311 MB for a typical Donda-length album) from a host PC into the SP-1's eMMC over USB CDC ACM. The bootloader command framing, the CRC-8 table, and the COBS encoding live in `references/15-bootloader-protocol.md`; this file is the album-specific subset: which commands, in what order, with which payloads, at what speeds.
 

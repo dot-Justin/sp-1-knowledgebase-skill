@@ -1,10 +1,34 @@
 # Bootloader Protocol
 
-**Synthesized through:** Lines #846 (2026-05-06), Discord through 2026-05-11, and the **solderless source archive** (ingested 2026-05-13; archive contents dated 2026-05-12). Primary code-of-record now: `assets/solderless-2026-05-12/js/protocol.js` + `js/firmware.js` + `js/storage.js` + `stemloader/js/sp-1_protocol.js`. See `update-log.md` 2026-05-13 entry.
+**Synthesized through:** Lines #846 (2026-05-06), Discord through 2026-05-11, the **solderless source archive** (ingested 2026-05-13; archive contents dated 2026-05-12), and the **solderless 2026-05-18 re-snapshot** (multi-app launcher rewrite). Primary code-of-record now: `assets/solderless-2026-05-12/js/protocol.js` + `js/firmware.js` + `js/storage.js` + `stemloader/js/sp-1_protocol.js` for line-stable existing citations; `assets/solderless-2026-05-18/utility/js/firmware.js` + `assets/solderless-2026-05-18/utility/js/protocol.js` for the cleanest standalone reference to the firmware-flash flow (the new `utility/` app is flash-only, no album mixed in). See `update-log.md` 2026-05-18 entry.
 
 The SP-1 has a small bootloader in the first 128 KB of nRF52840 flash. **Track 1 + Track 4 + USB-C** triggers it; the device then enumerates as a USB CDC ACM device and accepts a small set of single-byte command opcodes wrapped in a COBS-framed packet protocol. The bootloader cannot read existing firmware, only write to the app slot.
 
 This file documents the protocol at the byte level. Anyone with the solderless source can replicate it; this skill copies the constants and structure so Claude can answer questions without you needing to open the JS.
+
+## USB device identifiers
+
+Empirically observed on a factory Unit A 2026-05-14:
+
+- **VID `2367`** (Teenage Engineering's registered USB Vendor ID)
+- **PID `1701`** (factory bootloader)
+- Manufacturer string: `teenage engineering`
+- Product string: `stem player`
+- Serial number: device-unique 12-hex-digit string (e.g. `C89F52B373D9`)
+- Enumerates as USB CDC ACM (`/dev/ttyACMx` on Linux; `/dev/serial/by-id/usb-teenage_engineering_stem_player_<serial>-if00`)
+
+**These are different from the IDs used by custom firmware.** `ericlewis/sp1-midi`'s `app/main.cpp` uses `0x1209/0x0001` (PID.codes test pair). The dumper project (this skill's hallucination-watchlist subject) uses `0x1209/0x0003`. The factory bootloader is the only context where you'll see `2367/1701`.
+
+Discovery filters in host tools should match BOTH factory and custom IDs:
+
+```js
+const SP1_BOOTLOADER_FILTERS = [
+  { vid: '2367', pids: ['1701'] },  // factory bootloader
+  { vid: '1209', pids: ['0001'] },  // ericlewis/sp1-midi default
+]
+```
+
+[Source: empirical, host: dotj-ct-dev-01, Unit A in T1+T4+USB-C bootloader mode, 2026-05-14.]
 
 ## Trigger
 
@@ -113,18 +137,22 @@ The opcodes below are observed and named in the solderless source. They split in
 
 ### What state-query (`0x52`) returns
 
-The payload of `0x53 'S'` is a 5-byte ASCII string. Solderless interprets two values:
+The payload of `0x53 'S'` is **5 raw integer bytes (each a small int 0-9), NOT 5 ASCII characters**. Solderless and `gate-fix-testing` stringify via `Array.from(payload).join('')` — exploiting `Number.prototype.toString()` so byte value 0 → `"0"`, byte value 1 → `"1"`, etc. The two documented values:
 
-- **`"10510"`** — device is in upload mode. Ready to accept `0x37` + `0x39` traffic.
-- **`"00100"`** — device is in boot mode. Caller should set upload mode via `0x70 [1]` and reboot via `0x50`.
+- Bytes `[1, 0, 5, 1, 0]` → string `"10510"` — device is in **upload mode**, ready for `0x37`+`0x39` album-upload traffic.
+- Bytes `[0, 0, 1, 0, 0]` → string `"00100"` — device is in **boot mode** (fresh bootloader entry, no pages written). Caller should set upload mode via `0x70 [1]` and reboot via `0x50` *if doing album upload*. For firmware-flash, boot mode IS the flash-ready state and you can go straight to `0x46`.
 
-[Source: `storage.js` lines 87–125, `stemloader.js` lines 336–346.]
+[Source: `storage.js` lines 87–125, `stemloader.js` lines 336–346, `gate-fix-testing/src/upload/protocol.mjs::decodeStateReply`.]
 
-Each character represents one state flag (digit ASCII = byte value). The exact bit assignment isn't named in the JS — the tool just string-compares. **Don't claim a richer interpretation than that** unless verified against firmware disassembly.
+⚠ **Common AI bug** (added 2026-05-14 after the same mistake bit the dumper project): do NOT stringify these 5 bytes with `String.fromCharCode(b)`. The bootloader does not send ASCII characters; it sends raw integer bytes. Using `fromCharCode` will produce `    ` (5 control characters) instead of `"00100"`, and the boot-mode check will silently fail against real hardware. The phrase "5-byte ASCII string" in earlier versions of this skill was misleading.
+
+Each character of the joined string represents one state flag. The exact bit assignment isn't named in the JS — the tool just string-compares. **Don't claim a richer interpretation than that** unless verified against firmware disassembly.
 
 ### Status response (`0x53` payload in firmware-flash mode)
 
-When called early in the firmware-flash flow (`firmware.js` line 100), the same `0x52` command produces a 4-byte payload interpretable as LE32 representing the number of pages written so far. So `0x52` is overloaded: in upload-mode it returns the state string, in flash-mode it returns the page counter. Look at byte length to distinguish.
+When the device has already received its first `0x45` (i.e., mid-flash session), `0x52` returns a **4-byte payload** interpretable as LE32 — the number of pages written so far. So `0x52` is overloaded by byte length: 4 bytes → flash-in-progress page counter, 5 bytes → state-flag string. Use byte length to distinguish.
+
+Crucially, **the firmware-flash flow does NOT require the device to already be in "flash mode"** — solderless's `firmware.js::flashFirmware` (`flashFirmware` lines 85–186) sends `0x52` once, accepts any valid `0x53` reply (including 5-byte boot-mode `"00100"`), and proceeds directly to `0x46`. Boot mode is a flash-ready state; no `0x70`/`0x50` dance is needed before flashing firmware.
 
 ## Mode switching (bootloader → upload mode)
 
@@ -171,7 +199,7 @@ Procedure as implemented by solderless [Source: `storage.js` lines 87–119]:
 | `FIRST_PAGE` | `0x20` | page index for `FLASH_START` (32 = 0x20000/0x1000) |
 | `LAST_PAGE` | `0xFE` | page index for `FLASH_END` (254 = 0xFE000/0x1000) |
 
-So pages 0x00–0x1F (128 KB) are bootloader; pages 0x20–0xFE (~887 KB) are app; page 0xFF is reserved (likely MBR settings). **Don't overwrite the bootloader region** — if your firmware extends below 0x20000 you brick the device and recovery requires SWD.
+So pages 0x00–0x1F (128 KB) are bootloader; pages 0x20–0xFE (223 pages × 4096 B = 913,408 B ≈ **892 KB**) are app; page 0xFF is reserved (likely MBR settings). **Don't overwrite the bootloader region** — if your firmware extends below 0x20000 you brick the device and recovery requires SWD.
 
 **Why 240-byte chunks?** Likely to fit USB Full Speed bulk packets cleanly with overhead: 240 (data) + 8 (chunk_seq + flash_addr) + 5 (packet header + CRC) + COBS overhead = ~256 bytes per packet, which is one nRF52840 USB endpoint buffer.
 
@@ -258,7 +286,12 @@ The solderless utility's UI prints this warning verbatim:
 
 ## Standalone clients
 
-`solderless.engineering` and `solderless-engineering.pages.dev` were the canonical web tool — Web Serial in Chromium-family browsers talking this protocol. The source went offline 2026-05-09 for an update [Discord #news, tkt1000]. **A complete static snapshot of the 2026-05-12 deployment is archived locally** in `assets/solderless-2026-05-12/`. The archive is the canonical reference for this protocol implementation. See `references/27-tools-and-utilities.md` for details.
+`solderless.engineering` and `solderless-engineering.pages.dev` are the canonical web tool — Web Serial in Chromium-family browsers talking this protocol. The site went offline 2026-05-09 for an update [Discord #news, tkt1000] and **came back online 2026-05-18 as a complete rewrite**: a multi-app launcher with 4 sandboxed iframes (stem loader, firmware utility, device info, spoom1). The new dedicated **firmware utility** app at `assets/solderless-2026-05-18/utility/` is the cleanest public reference for the firmware-flash flow alone (no album upload mixed in). Both bundles are kept locally:
+
+- `assets/solderless-2026-05-12/` — earlier static snapshot, preserved for citation stability of references written during the 2026-05-13 synthesis batch
+- `assets/solderless-2026-05-18/` — current canonical mirror of the multi-app launcher
+
+See `references/27-tools-and-utilities.md` for the full new-app inventory and the host-side iframe + postMessage architecture.
 
 Other clients:
 

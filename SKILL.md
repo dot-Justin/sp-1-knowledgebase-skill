@@ -7,6 +7,8 @@ description: This skill should be used when the user asks about the Teenage Engi
 
 This skill provides curated reference material about the **Teenage Engineering SP-1 stem player** — an unreleased Kanye West / TE prototype based on the nRF52840 SoC. The community has reverse-engineered it over 3+ years (2024-04 to 2026-05+). This skill synthesizes that work into accurate, cited reference files so Claude can answer technical questions without making things up.
 
+> **For state of dot-Justin's actual hardware** — Unit A (`Y4KNGJBE`) and Unit B (`Y4KNGJJ0`) — read the `sp-1-units` skill instead. That's the live log of what's flashed on each device and what's safe to do next. This skill is for community / protocol knowledge.
+
 **The single most important rule for this skill:** the SP-1 community has publicly called out AI hallucinations about this device. Before asserting any technical claim, read `hallucination-watchlist.md` and verify against the cited source.
 
 ## Quick facts
@@ -14,7 +16,7 @@ This skill provides curated reference material about the **Teenage Engineering S
 - **What it is:** A 4-stem audio player. nRF52840 SoC. 4 GB Toshiba eMMC. Cirrus CS42L42 headphone codec + TI TAS2505 speaker amp. Cypress CYBT-353027-02 Bluetooth module. TI BQ24232 charger. 8 LEDs, 4 faders, 4 track buttons, transport rocker, function button, USB-C.
 - **What it does (stock):** Plays 4 stereo stems at 24-bit / 48 kHz with effects (filter, distortion, gate, chorus/delay/echo) and tape FF/RW. Original units shipped with Donda or Jesus Is King album stems.
 - **Why it's hackable:** The community bypassed APPROTECT in Jan 2025 (murray, voltage glitch). Track 1 + Track 4 + USB-C triggers a 60-second bootloader. `solderless.engineering` makes flashing easy. Custom stems work on stock firmware if formatted correctly.
-- **Current state (synthesis date 2026-05-11):** Lines forum thread closed (copyright/spam); community moved to Discord. `solderless.engineering` offline for an update. Multiple custom firmwares in development (emvee1968, virtualflannel_46386, TimK). Only public buildable BSP: `ericlewis/sp1-midi` (MIDI controller, not stem player).
+- **Current state (synthesis date 2026-05-18):** Lines forum thread closed (copyright/spam); community moved to Discord. `solderless.engineering` is **back online** (since 2026-05-18) as a multi-app launcher with 4 apps: stem loader, firmware utility, device info, and spoom1. Multiple custom firmwares in development (emvee1968, virtualflannel_46386, TimK). Only public buildable BSP: `ericlewis/sp1-midi` (MIDI controller, not stem player). Custom-firmware web flashing is now publicly available via solderless's firmware utility.
 
 ## Navigation — which file for which question
 
@@ -84,7 +86,7 @@ A: **No.** That's a recurring hallucination. In-memory: right-aligned 24-bit in 
 A: Physical disk order of the 4 TE blocks per sector. Enables tape FF/RW by reading less per sector at high speeds. → `references/11-block-interleaving-tape-fx.md`.
 
 **Q: Is `solderless.engineering` online?**
-A: Live site **offline** as of 2026-05-09 for an update [tkt1000, Discord #news]. **A 2026-05-12 static snapshot is archived locally** at `assets/solderless-2026-05-12.zip` (community backup, obtained 2026-05-13); runnable via local web server. The archive's JS is the canonical SP-1 host protocol reference. → `references/27-tools-and-utilities.md`.
+A: **Yes, back online as of 2026-05-18** after a complete rewrite. The site is now a multi-app launcher with 4 apps in sandboxed iframes (stem loader, firmware utility, device info, spoom1). Local mirror at `assets/solderless-2026-05-18/` (canonical for new claims). The earlier 2026-05-12 community snapshot is preserved at `assets/solderless-2026-05-12/` for citation stability. → `references/27-tools-and-utilities.md`.
 
 **Q: Who's TimK / tkt1000 / timknapen?**
 A: Same person. Lead firmware engineer. Owns `github.com/timknapen/SP-1-dev`. **Not the same person as ericlewis.** → `synthesis-log.md` identity map.
@@ -102,7 +104,7 @@ A: **No.** You solder your own pads. → `references/04-debug-interfaces.md`.
 A: **No.** Write-only. *"you cannot"* [ericlewis, Discord 2026-05-08]. → `references/15-bootloader-protocol.md`.
 
 **Q: What's the album upload speed?**
-A: Three data points: **moecal1947's Python tool** = ~0.75 KB/s (4.5 days per 311 MB album, USB control transfers); **solderless web tool** = ~10 KB/s (~9 hours per 311 MB album, CDC ACM fire-and-forget at 115200 baud — this is the public best); **ericlewis's theoretical max** = ~4 MB/s (minutes per album, requires unbuilt USB bulk + CMD25 firmware). → `references/16-usb-upload-protocol.md`.
+A: Three data points: **moecal1947's Python tool** = ~0.75 KB/s (4.5 days per 311 MB album, USB control transfers); **solderless web tool** = ~10 KB/s (~9 hours per 311 MB album, CDC ACM fire-and-forget at 115200 baud — this is the public best; Tim Knapen's official help text states "1 minute of audio takes about 10 minutes to transfer" [code: `assets/solderless-2026-05-18/stemloader/help/help.md`]); **ericlewis's theoretical max** = ~4 MB/s (minutes per album, requires unbuilt USB bulk + CMD25 firmware). → `references/16-usb-upload-protocol.md`.
 
 **Q: Are there custom firmwares I can flash today?**
 A: Only `ericlewis/sp1-midi` (USB MIDI controller; does NOT play stems). emvee1968 and virtualflannel_46386 have unreleased ones with audio. TimK has private ones. → `references/20-custom-firmware-state.md`.
@@ -121,7 +123,7 @@ When working on SP-1 topics:
 
 2. **Cite every factual claim.** Use `[Lines #NNN, author, YYYY-MM-DD]` or `[Discord #channel, author, YYYY-MM-DD]` or `[code: path]` or `[GitHub: repo/file]`. No unsourced claims.
 
-3. **Respect the synthesis date.** Material is current through **2026-05-13**. For "current state" questions (is `solderless.engineering` live? did emvee1968 release?), check `synthesis-log.md` + `update-log.md` and offer to verify with the user.
+3. **Respect the synthesis date.** Material is current through **2026-05-18**. For "current state" questions (is `solderless.engineering` live? did emvee1968 release?), check `synthesis-log.md` + `update-log.md` and offer to verify with the user.
 
 4. **Don't conflate ericlewis with TimK.** Two different people. Different repos. Different areas of expertise.
 
@@ -133,7 +135,8 @@ When working on SP-1 topics:
 
 8. **The bundled material in `assets/` is the redistributable corpus.** Currently:
    - TE manuals (PDF + DOCX)
-   - `solderless-2026-05-12/` — snapshot of the public web tool
+   - `solderless-2026-05-12/` — earlier community static snapshot of the public web tool (preserved for citation stability of older references)
+   - `solderless-2026-05-18/` — current canonical mirror of the public web tool, multi-app launcher (stem loader, firmware utility, device info, spoom1)
    - `audiothingies-2026-05-09/` + `storagethingies-2026-05-09/` — ericlewis's C++17 reference implementations (originally Discord attachments 2026-05-09)
    - `lines-thread-archive/` — agent-friendly subset of the 846-post forum mirror (full archive at `github.com/dot-Justin/TE-SP-1-lines-thread-archive`)
    - `SP-1-dev-2026-05-13/` — TimK's MIT-licensed repo (`stemplayer_pins.h` + 14 wiki pages)
@@ -143,9 +146,9 @@ When working on SP-1 topics:
 
 ## Synthesis date and freshness
 
-**This skill is a frozen snapshot synthesized through 2026-05-13.** The Discord is active and things may have changed:
+**This skill is a frozen snapshot synthesized through 2026-05-18.** The Discord is active and things may have changed:
 
-- `solderless.engineering` may be back online (or still offline)
+- `solderless.engineering` may have shipped further app changes since 2026-05-18 (the 2026-05-18 mirror is at `assets/solderless-2026-05-18/`; live site may differ)
 - emvee1968's custom firmware may have been released
 - virtualflannel_46386's custom OS may have been released
 - ericlewis's "proper BSP" may have been released
@@ -209,8 +212,10 @@ sp-1/
     ├── TE-Stem-User-Guide.docx           ← TE official, 16 KB
     ├── TE-Stem-User-Guide.pdf            ← TE official, 59 KB
     ├── TE-Stem-Player-manual.pdf         ← TE official, 509 KB
-    ├── solderless-2026-05-12/            ← host-protocol JS source archive
+    ├── solderless-2026-05-12/            ← earlier static snapshot (preserved for citation stability)
     ├── solderless-2026-05-12.zip
+    ├── solderless-2026-05-18/            ← current canonical mirror, multi-app launcher
+    ├── solderless-2026-05-18.zip
     ├── SP-1-dev-2026-05-13/              ← TimK's docs repo + wiki snapshot
     ├── sp1-midi-2026-05-13/              ← ericlewis's Zephyr BSP snapshot
     ├── audiothingies-2026-05-09/         ← ericlewis's audio engine reference

@@ -37,7 +37,10 @@ A: Three options: 1) wait for `solderless.engineering` to come back online; 2) e
 A: solderless is a JavaScript Web Serial frontend to this same protocol. Same commands, just packaged in a browser UI.
 
 **Q: Why is solderless offline?**
-A: tkt1000 announced on 2026-05-09: *"PSA: The update utility is temporarily offline, in preparation for a lil' update."* No ETA. See `working-confirmed.md`.
+A: **It's not offline anymore.** As of 2026-05-18 solderless.engineering came back online with a multi-app launcher rewrite — 4 apps (stem loader, firmware utility, device info, spoom1). The pre-rewrite offline period was 2026-05-09 through ~2026-05-17. Local mirror at `assets/solderless-2026-05-18/`. See `27-tools-and-utilities.md` for the new architecture.
+
+**Q: Is there a browser-based firmware flasher?**
+A: **Yes** — solderless.engineering's "firmware utility" tab. Workflow: T1+T4-boot the device, click connect, switch to firmware utility tab, drag your `.bin`, click flash. Local archive at `assets/solderless-2026-05-18/utility/`. The dedicated app cleanly separates flash from album upload, making `utility/js/firmware.js` the cleanest reference for the flash flow alone.
 
 **Q: Can I flash a partial firmware (e.g., just the data section)?**
 A: Probably not without writing your own bootloader client that supports partial-flash commands. The published protocol covers full-app-image flash.

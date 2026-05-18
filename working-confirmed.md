@@ -32,8 +32,8 @@ For features still in development, see `known-unknowns.md`. For features that we
 | Browser-based album upload via Web Serial | [Source: `assets/solderless-2026-05-12/js/storage.js::uploadAlbum`] |
 | Track 1 + Track 4 + USB-C plug-in → CDC bootloader window | [Lines #556, B_E_N] + [Source: `index.html` instructions lines 119–125] |
 | Tested with multiple custom firmwares by TimK | [Discord #hardware, tkt1000, 2026-05-08 14:49–14:51] |
-| **Live site status as of 2026-05-09:** offline for an update | [Discord #news, tkt1000, 2026-05-09 12:29] |
-| **Local archive available** dated 2026-05-12 | `assets/solderless-2026-05-12.zip` (community backup, obtained 2026-05-13) |
+| **Live site status as of 2026-05-18:** online again, multi-app launcher (stem loader + firmware utility + device info + spoom1) | HTTP 200 from `solderless.engineering` on 2026-05-18; mirror at `assets/solderless-2026-05-18/` |
+| **Two local archives available** | `assets/solderless-2026-05-12/` (earlier single-page tool, preserved for citation stability) + `assets/solderless-2026-05-18/` (current canonical multi-app mirror) |
 
 ### SP-1 host protocol — byte-level (confirmed from solderless archive 2026-05-13)
 
@@ -42,7 +42,7 @@ For features still in development, see `known-unknowns.md`. For features that we
 | CDC baud rate | 115200 8N1 [`firmware.js` line 51] |
 | Outer frame | COBS-encoded `[0x51 magic, seq, cmd, plen, payload, crc8]` + `0x00` terminator [`protocol.js` lines 91–127] |
 | CRC-8 | 256-entry lookup table (initial value 0); table reproduced in `references/15-bootloader-protocol.md` [`protocol.js` lines 64–81] |
-| State query | `0x52` 'R' → `0x53` 'S' with 5-byte ASCII state string. `"10510"` = upload mode, `"00100"` = boot mode [`storage.js` lines 87–125] |
+| State query | `0x52` 'R' → `0x53` 'S' with **5 raw integer bytes** (each 0-9). Bytes `[1,0,5,1,0]` → string `"10510"` = upload mode; bytes `[0,0,1,0,0]` → `"00100"` = boot mode. **Not ASCII characters** — stringify via `Array.from(bytes).join('')`, never `String.fromCharCode`. [`storage.js` lines 87–125, `gate-fix-testing` protocol.mjs, **empirically verified on Unit A 2026-05-14** as part of the dumper project's HW-02 smoke test] |
 | Mode switch (boot → upload) | `0x70 [1]` ('p' + byte 1) → `0x71` 'q'; then `0x50` 'P' (no reply) reboot; reconnect and re-query state [`storage.js` lines 102–117] |
 | Firmware flash erase | `0x46` 'F' → `0x47` 'G' [`firmware.js` lines 106–112] |
 | Firmware flash write chunk (no reply) | `0x45` 'E' with payload `[chunk_seq (LE32) \| flash_addr (LE32) \| data (≤240 bytes)]` [`firmware.js` lines 128–143] |
@@ -74,6 +74,26 @@ For features still in development, see `known-unknowns.md`. For features that we
 | End-marker sector fill byte | `0x00`; magic at last 13 bytes [`storage.js` lines 690–692] |
 | Validation limits (album_len < 2 short; > 0x7FFFF long; > 60 songs; > 63 title; > 62 artist/song title; > 999999 song_len) | [`sp-1_protocol.js` lines 27–44 ALBUM_ERR comments] |
 | WAV input format required | 8 channel, 24-bit, 48 kHz signed PCM (RIFF/WAVE), audioFormat 1 or 0xFFFE w/ subFormat 1 [`wav-parser.js::wavVerify` lines 34–38] |
+
+### Updates from solderless 2026-05-18 re-snapshot (4-app launcher rewrite)
+
+These rows extend the table above with what the 2026-05-18 re-snapshot newly confirms or changes. Citations point at `assets/solderless-2026-05-18/...`.
+
+| Item | Value / Source |
+| --- | --- |
+| **Encoder writes 8-byte per-sector trailer** (NEW vs 2026-05-12's 6-byte trailer) | bytes 2040..2041 = clock u16 LE; 2042..2043 = tempo u16 LE; 2044..2047 = per-stem envelopes u8 — at end of block 0 only. Cite: `stemloader/js/wav-converter.js::encodeToSP1` MIDI clock block |
+| Empty-sector sentinel values | `clock = 0xFFFF`, `tempo = 0x0000` written when no MIDI tick falls in this sector. Cite: same file, "no clock tick" branch |
+| First-tick hardcoded to clock=1 | `if (firstTick) { clock = 1; firstTick = false; }`. Cite: same file |
+| Clock-modulo constant | `CLOCK_MAX = 49152` = 512 bars × 96 ticks/bar. `TICKS_PER_BAR = 96` (4 quarters × 24 PPQN). `CLOCK_INCR = 512` (added per tick alongside `samplesPerTick - elapsedSamples`). Cite: `stemloader/js/wav-converter.js` constants block |
+| Max album size | `MAX_SECTORS = 0x76000` = 483,328 sectors = 3,959,422,976 B (~3.69 GiB). At 48 kHz / 340 frames-per-sector = ~141.18 sectors/sec → max album ≈ 57 min full-stem audio. Cite: same constants block |
+| Encoder accepts 1-N channel WAV (was: required 8) | Missing stems play silent; channels beyond 8 are ignored. Cite: `stemloader/js/wav-converter.js::parseWAV` |
+| WAVEFORMATEXTENSIBLE subFormat offset bug fix | The 2026-05-12 parser read `subFormat` at `offset+28` (wrong by the WAV spec); 2026-05-18 reads it at `+32`. Old encoder may have misclassified files emitted by tools using the extensible format. Cite: `stemloader/js/wav-converter.js::wavVerify` |
+| `wav-parser.js → wav-converter.js` rename + merge of parser & encoder | Cite: `stemloader/js/wav-converter.js` (was `js/wav-parser.js`) |
+| Firmware-flash protocol re-confirmed via the dedicated `utility/` app | Same R/F/E/H byte protocol as documented; new app cleanly separates flash from album upload. Cite: `utility/js/firmware.js::flashFirmware`, `utility/js/protocol.js` (flash constants block) |
+| Device-info opcode set exercised in a live-poll app | `T` (device ID), `f` (album verify), `X` (album title), `C` (write counter), `z` (battery), `d` (faders), `\\` (buttons), `t` (ladders) all confirmed working in transfer mode at 10 Hz polling on real hardware. Cite: `deviceinfo/js/deviceinfo.js` |
+| WebSerial round-trip latency at usable polling rates | `deviceinfo` polls faders+buttons+ladders every 100 ms (10 Hz); `doom` polls faders+buttons every 60 ms (~16 Hz). Both observed working in browser. Cite: `deviceinfo/js/deviceinfo.js`, `doom/js/doom.js` `pollLoop()` |
+| Host-side architecture: iframe + postMessage Web Serial proxy | Parent owns one `navigator.serial` port; iframes use `js/serial-shim.js` to call `navigator.serial` transparently; parent routes RX to active iframe and rejects TX from inactive iframes. Cite: `index.html` lines 130-349, `js/serial-shim.js` |
+| Tim Knapen's official user FAQ | First public TE-authored user help document for stem upload. Quotable: "1 minute of audio takes about 10 minutes to transfer"; channel mapping (1L/1R → stem 1, etc.); recovery procedure "long-press function button" after interrupted transfer. Cite: `stemloader/help/help.md` |
 
 ---
 
@@ -154,6 +174,18 @@ These have been **demoed on real hardware** but not yet open-sourced. Listed her
 | **theunflappable's `test_bootloader.py`** | Python implementation of the bootloader protocol (cannot read/dump firmware) | [Discord #firmware, theunflappable, 2026-05-08 00:49] |
 | **dotjustin's `sp-1.dotjust.in` static archive of Lines thread** | Mirror with search, image preservation, agent-friendly indexes | [Discord #general, dotjustin, 2026-05-10 22:37] |
 | **Belt clip / case / etc. (3D printed)** | Released on Thingiverse and shared in Discord | [Lines #640–700 + Discord #hardware, walkerauga 2026-05-09 01:00, isacvr67_nolife 2026-05-10 20:31] |
+
+---
+
+## Empirically verified on physical SP-1 hardware (2026-05-14, dotjustin)
+
+| Item | Observation | Citation |
+| --- | --- | --- |
+| Factory bootloader USB IDs | VID `2367`, PID `1701`, manufacturer `teenage engineering`, product `stem player`, serial-per-device. Enumerates as `/dev/ttyACM*` (Linux). | dotjustin Unit A, T1+T4+USB-C combo, lsusb + serialport.list() output |
+| Track 1 + Track 4 + USB-C → bootloader CDC enumerates | CDC ACM appears on host within ~200 ms of cable insertion (HW-01 smoke: 195 ms). T1 LED solid while in bootloader. | dotjustin Unit A 2026-05-14, sp-1-emmc-dumper project `HW-01` smoke test |
+| `0x52` STATE_QUERY returns 5 raw integer bytes in boot mode | Payload bytes `[0x00, 0x00, 0x01, 0x00, 0x00]` (joined as digits → string `"00100"`). CRC-8 over body verified. ~4 ms round-trip. | dotjustin Unit A 2026-05-14, sp-1-emmc-dumper project `HW-02` smoke test |
+
+These items appeared in earlier sections under "documented" but had no real-hardware citation until this run. They're now load-bearing for the dumper project and any other host code that opens the device.
 
 ---
 

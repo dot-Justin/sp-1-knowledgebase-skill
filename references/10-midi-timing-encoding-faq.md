@@ -1,5 +1,8 @@
 # FAQ — MIDI Timing Encoding
 
+**Q: Does the solderless encoder write a sync counter?**
+A: **Yes, as of 2026-05-18.** The 2026-05-12 encoder did **not** (it wrote only 6 bytes per sector: tempo + envelopes). The 2026-05-18 encoder writes 8 bytes per sector: clock (LE16 at offset 2040) + tempo (LE16 at 2042) + 4 envelopes (uint8 at 2044). Empty sectors get `clock = 0xFFFF / tempo = 0x0000`. First tick of a song is hardcoded to `clock = 1`. See `corrections.md` 2026-05-18 entry and `10-midi-timing-encoding.md`'s "Update (2026-05-18)" paragraph. [Source: `assets/solderless-2026-05-18/stemloader/js/wav-converter.js::encodeToSP1`.]
+
 **Q: Does the SP-1 emit MIDI clock?**
 A: Yes — stock TE firmware emits `0xF8` MIDI clock pulses at 31,250 baud, 128 µs pulse width, derived from on-disk timing data. The public `sp1-midi` BSP uses USB MIDI 2.0 + its own free-running clock; it doesn't emit on-disk-derived clock. See `10-midi-timing-encoding.md`.
 

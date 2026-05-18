@@ -15,6 +15,79 @@ Format per batch:
 
 ---
 
+## 2026-05-18 — Intake batch #1: solderless.engineering re-snapshot + skill corrections
+
+### Source ingested
+
+**Files:** `assets/solderless-2026-05-18/` + `assets/solderless-2026-05-18.zip`
+**Provenance:** Fresh scrape of the live `solderless.engineering` site on 2026-05-18 via `wget --mirror`. Site is online again (HTTP 200) after going offline 2026-05-09 for an update. 44 files including this skill-added README; ~601 KB extracted.
+**Contents:** A complete architectural rewrite. The 2026-05-12 site was a single-page upload tool; the 2026-05-18 site is a **multi-app launcher** with 4 sandboxed iframes:
+
+- `index.html` — parent launcher; owns one Web Serial port; tab switching + welcome screen + connect button
+- `js/serial-shim.js` — postMessage Web Serial proxy injected into iframes (active-iframe-only TX gating, 60-second connect timeout)
+- `stemloader/` — evolved stem loader (drag-reorder via `Sortable.js`, per-song state badges, in-app help via `marked.umd.js`, BPM-from-filename, localStorage persistence). The encoder was renamed `wav-parser.js` → `wav-converter.js` and the WAV parser was merged with the SP-1 encoder. **Now writes an 8-byte sector trailer** (clock at offset 2040, tempo at 2042, envelopes at 2044) where the 2026-05-12 encoder wrote only 6 bytes (no clock).
+- `utility/` — **new** browser-based custom-firmware flasher. Same R/F/E/H byte-level protocol as already documented; cleaner reference (flash-only, no album mixed in)
+- `deviceinfo/` — **new** live runtime-state viewer. Polls faders/buttons/ladders every 100 ms; queries device ID, album title, write counter, battery state, mode on connect. SVG mirror of the device updates in real time.
+- `doom/` — **new** "spoom1": Doom in the browser, controlled by the SP-1 as a USB-HID-like controller. Polls SP-1 at ~16 Hz.
+- `stemloader/help/help.md` — **first official Tim Knapen user FAQ.** Quotable: 1 min audio = ~10 min transfer, channel mapping (1L,1R → stem 1), "long-press function button to unstick after interrupted transfer".
+
+### Why this matters
+
+Beyond the architectural rewrite, the re-snapshot **corrects one specific factual claim** in the 2026-05-13 synthesis:
+
+- the 2026-05-13 synthesis said the solderless encoder "writes no sync counter and no LED data" and that the sector trailer is "only 6 bytes per sector, at the end of block 0: 2 bytes tempo + 4 bytes per-stem envelope."
+- the 2026-05-18 encoder **writes 8 bytes** at the end of block 0: 2 bytes clock (LE16) + 2 bytes tempo (LE16) + 4 bytes envelopes. Empty sectors get sentinel `clock=0xFFFF / tempo=0x0000`. First tick is hardcoded to `clock=1`.
+
+This invalidates a literal statement in `references/10-midi-timing-encoding.md` and the warning in `hallucination-watchlist.md` entry #22 ("don't claim encoder writes per-block sync counter"). The per-block claim is *still wrong* (the encoder writes per-sector at block-0 offset 2040, not per-block); but the *encoder-writes-no-sync-counter* claim is now historical and applies only to the 2026-05-12 bundle.
+
+The new bundle also makes several previously partial pieces of the host protocol more concretely cite-able:
+
+- the iframe + serial-shim postMessage pattern (host-side architecture, not on-device — added to watchlist)
+- the live polling rates (10 Hz for `deviceinfo`, ~16 Hz for `doom`) — empirical evidence of WebSerial throughput
+- a public, dedicated firmware-flash app (`utility/`) — anyone can now flash a custom .bin from a browser
+- the WAV parser **bug fix** (`subFormat` field offset corrected from +28 to +32 inside `WAVEFORMATEXTENSIBLE`) and **channel flexibility** (accepts 1-N channels; missing stems are silent — was: required exactly 8)
+- a Tim-Knapen-authored user FAQ document — first canonical recovery procedure for an interrupted transfer ("long-press function button")
+
+### Changes landed
+
+- ✅ `assets/solderless-2026-05-18/` — full 44-file mirror added
+- ✅ `assets/solderless-2026-05-18.zip` — byte-fidelity zip created (348 KB compressed)
+- ✅ `assets/solderless-2026-05-18/README.txt` — skill-added run instructions, in the style of the 2026-05-12 README
+- ✅ `SKILL.md` — synthesis date bumped to 2026-05-18; assets inventory updated; Q6 ("is solderless online?") flipped to yes; Q12 (upload speed) co-cite added; assets bullet list updated; freshness section refreshed
+- ✅ `synthesis-log.md` — master synthesis date bumped to 2026-05-18; new 2026-05-18 batch section; freshness rule 2 updated; freshness rule 4 updated (`0x39` framing is now in `references/16-usb-upload-protocol.md`, not "still unknown")
+- ✅ `sources.md` — `solderless-2026-05-12` entry retitled "earlier snapshot, preserved for citation stability"; new `solderless-2026-05-18` entry added with full layout + cite-as guidance; `https://solderless.engineering/` URL note updated
+- ✅ `corrections.md` — two new entries: encoder-now-writes-clock; solderless-online-with-multi-app
+- ✅ `hallucination-watchlist.md` — entry #21 annotated (8-byte sector trailer, not 4× 8-byte block trailers); entry #22 annotated (per-sector yes, per-block still no); new entry added about iframe/serial-shim being host-pattern not on-device
+- ✅ `working-confirmed.md` — added safe-claims for 8-byte trailer, sentinel values, first-tick=1, MAX_SECTORS, CLOCK_MAX, bootloader-flash re-confirm, device-info opcodes, WAV channel flexibility
+- ✅ `known-unknowns.md` — resolved encoder-writes-clock and solderless-online; added new entries for ladder semantics, PING semantics, FREQ_SWEEP params, 24489↔49152 reconciliation
+- ✅ `references/10-midi-timing-encoding.md` — added 2026-05-18 update paragraph documenting 8-byte trailer + sentinels + new constants
+- ✅ `references/15-bootloader-protocol.md` — synthesized-through header updated; standalone-clients section updated to "online again with multi-app launcher"; utility app cited
+- ✅ `references/16-usb-upload-protocol.md` — synthesized-through header updated; Tim Knapen help.md paragraph added (10:1 ratio, function-button recovery, channel mapping); `wav-parser.js → wav-converter.js` rename noted
+- ✅ `references/20-custom-firmware-state.md` — web flasher availability noted; 892 KB ceiling note added
+- ✅ `references/21-original-firmware-stems.md` — Tim Knapen canonical-workflow subsection added; WAV channel flexibility + subFormat bug fix noted
+- ✅ `references/27-tools-and-utilities.md` — status flip; 4-app inventory; iframe+serial-shim pattern documented; bundle inventory updated
+- ✅ FAQ companions to refs 10/15/16/20/21/27 — added new Q&As per plan
+
+### Verification snapshot
+
+- `grep -rn "/Projects/" ~/.claude/skills/sp-1/` → no hits (public-skill assertion)
+- `grep -rn "/home/justin" ~/.claude/skills/sp-1/` → no hits
+- `grep -rn "solderless-research" ~/.claude/skills/sp-1/` → no hits
+- `grep -n "writes no sync counter" ~/.claude/skills/sp-1/references/10-midi-timing-encoding.md` → only qualified appearances (e.g. "the 2026-05-12 encoder…")
+- `grep -n "0xFFFF" ~/.claude/skills/sp-1/references/10-midi-timing-encoding.md` → empty-sector sentinel documented
+- `grep -n "firmware utility" ~/.claude/skills/sp-1/references/27-tools-and-utilities.md` → new app described
+- existing 2026-05-12 citations still resolve to existing files (no mass-rewrite happened)
+
+### Deferred
+
+- **Reconciliation of `24489` (Galapagoose, Lines #739) vs `CLOCK_MAX = 49152` (2026-05-18 encoder).** These may be different fields, or the same field measured two different ways. Logged as a still-open unknown in `known-unknowns.md`. Resolution requires either dumping a real album's bytes from a working device or asking TimK / Galapagoose directly.
+- **Meaning of the `t` opcode's "ladder" uint16 values** (labeled L1/L2 in deviceinfo). Probably button-matrix R-divider ADC voltages, but not confirmed. Logged in `known-unknowns.md`.
+- **Response semantics of `b` (PING)** and parameter format of `V` (FREQ_SWEEP)** — solderless sends them but defines no response handlers. Logged in `known-unknowns.md`.
+- **The wasm-doom binary** (`doom/wasm/doom.wasm`) was not present at the scrape's URL space — the doom app may load it from a CDN at runtime. Not bundled; the doom.js source is sufficient for documenting the input-mapping aspect.
+- **Bulk-rewriting existing 2026-05-12 citations** in references to point at 2026-05-18 — intentionally skipped. Old citations remain line-stable and the byte-level protocol is unchanged; rewriting them would be churn with no information gain.
+
+---
+
 ## 2026-05-13 — Intake batch #1: solderless source archive
 
 ### Source ingested
@@ -475,3 +548,43 @@ The TKT wiki lives at `assets/SP-1-dev-2026-05-13/wiki/` (combined with TimK's r
 - lines-thread-archive/ (846-post forum mirror, agent subset)
 - SP-1-dev-2026-05-13/ (TimK's repo + wiki)
 - sp1-midi-2026-05-13/ (ericlewis's Zephyr BSP)
+
+---
+
+## 2026-05-14 — Empirical batch #1: Unit A bootloader observed
+
+### Source ingested
+
+**Type:** Live USB observation, not a file. Captured against a factory Unit A in T1+T4+USB-C bootloader mode on host `dotj-ct-dev-01` (Debian 12) and the user's laptop (Arch), 2026-05-14.
+
+**Specific evidence collected:**
+
+- `lsusb`: `Bus 003 Device 013: ID 2367:1701 Teenage Engineering stem player`
+- `/dev/serial/by-id/usb-teenage_engineering_stem_player_<SERIAL>-if00 -> /dev/ttyACM1`
+- `serialport.list()` JSON: `{ vendorId: "2367", productId: "1701", manufacturer: "teenage engineering", serialNumber: "<12-hex>" }`
+- `0x52` reply payload over CDC: **5 raw integer bytes `[0x00, 0x00, 0x01, 0x00, 0x00]`** (NOT ASCII `"00100"` = `[0x30, 0x30, 0x31, 0x30, 0x30]`)
+
+### Why it matters
+
+Two skill gaps that had been silently wrong:
+
+1. **USB VID/PID for the factory bootloader was undocumented.** The skill talked about ericlewis's `1209/0001` (PID.codes test pair) but never the factory's actual IDs. Anyone writing host code that filters by USB VID/PID would either not find the factory device or have to "use the chooser" UX. Now the IDs are first-class in `references/15-bootloader-protocol.md`.
+
+2. **State-query payload was described as "5-byte ASCII string."** Misleading enough that an AI implementation (the dumper project) coded `String.fromCharCode(b)` and got `    ` instead of `"00100"`, causing a silent boot-mode-check failure against real hardware. The bytes are raw integers, stringification is `Array.from(b).join('')`. The reference implementations (`gate-fix-testing/src/upload/protocol.mjs::decodeStateReply`, `sp-1-stem-tool/src/sp1/protocol.ts`) both do it correctly with the comment "Bootloader emits 5 BINARY bytes, one digit per byte. Join via Array.join('')."
+
+### Changes landed
+
+- ✅ `references/15-bootloader-protocol.md` — added **USB device identifiers** section with VID `2367` / PID `1701`, sample discovery filter array showing both factory and ericlewis-custom IDs. Rewrote the "What state-query returns" section to explicitly say "5 raw integer bytes, NOT 5 ASCII characters" with the literal byte values. Added a "Common AI bug" callout about `String.fromCharCode` and dropped the misleading "5-byte ASCII string" framing. Clarified that boot mode is firmware-flash-ready (no mode transition needed before `0x46`).
+- ✅ `hallucination-watchlist.md` — updated the existing "Don't say `0x52` is a bootloader version check" entry with the raw-bytes detail; added **"Don't claim state-query bytes are ASCII characters of digits"** entry pinning the AI bug with citation to the dumper project's 2026-05-14 incident; added **"Don't claim firmware-flash requires flash mode before `0x46`"** entry.
+- (Implicit) The dumper project's `host/src/cdc/bootloader.mjs::queryFlashState` now uses the correct `Array.from(payload).join('')` and a unit test (`tests/unit/queryFlashState.test.mjs`) captures the regression so it can't re-occur.
+
+### Verification snapshot
+
+- Re-ran HW-01 + HW-02 against Unit A: HW-01 PASS (270ms), HW-02 PASS (boot mode recognized).
+- Diff'd `15-bootloader-protocol.md` against the dumper project's `discover.mjs` filter arrays — same VIDs/PIDs.
+- 77 + 4 = 81 host unit tests in the dumper project still pass.
+
+### Deferred
+
+- The exact PID for ericlewis/sp1-midi was `0x0001` based on `app/main.cpp`, but I have no evidence the factory firmware uses anything else than `2367/1701`. If a future user reports a different PID (a different SP-1 unit cohort, or a recent firmware revision), append it to `SP1_BOOTLOADER_FILTERS`.
+- The `2367:1701` was observed on Unit A which has the user's gate-trials custom album written to eMMC. The PID for the factory bootloader is the *firmware* PID, not affected by what's on the eMMC. So the same IDs should be valid for Unit B (sealed, factory state).

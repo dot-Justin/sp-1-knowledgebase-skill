@@ -1,5 +1,8 @@
 # FAQ — Original-Firmware Custom Stems
 
+**Q: Can I upload a WAV with fewer than 8 channels?**
+A: **Yes, since 2026-05-18.** The 2026-05-12 encoder rejected anything other than exactly 8 channels. The 2026-05-18 encoder (`assets/solderless-2026-05-18/stemloader/js/wav-converter.js::parseWAV`) accepts 1-N channels. Channels beyond your file's count play silent stems. Channels beyond 8 are ignored. Note that Tim Knapen's official help.md still recommends 8 channels because that's the canonical full-stem layout.
+
 **Q: Can I play my own audio on a stock SP-1 without flashing custom firmware?**
 A: **Yes.** TimK confirmed in 2026: custom stems play on stock TE firmware if formatted correctly. The firmware doesn't validate content. See `21-original-firmware-stems.md` and `corrections.md`.
 

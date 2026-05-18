@@ -1,5 +1,8 @@
 # FAQ — Custom Firmware State
 
+**Q: How do I flash a custom firmware today, without writing my own flasher?**
+A: Browser + USB-C cable. As of 2026-05-18 solderless.engineering's "firmware utility" tab is a public, browser-based custom-firmware flasher. T1+T4-boot the device, click connect in the launcher, switch to the firmware utility tab, drag your `.bin` file, click flash. No Python toolchain, no DFU utility, no SWD probe needed. Local archive at `assets/solderless-2026-05-18/utility/`. Practical size ceiling: **892 KB** (the app slot between `FLASH_START = 0x20000` and `FLASH_END = 0xFF000`).
+
 **Q: What public custom firmware exists today?**
 A: Only **`ericlewis/sp1-midi`** (a MIDI controller, not a stem player). TimK, emvee1968, and virtualflannel have unreleased work. See `20-custom-firmware-state.md`.
 
@@ -7,7 +10,7 @@ A: Only **`ericlewis/sp1-midi`** (a MIDI controller, not a stem player). TimK, e
 A: emvee said: *"awaiting 2 more sp-1s to dev with which I should get next week"* on 2026-05-08. So week of 2026-05-12 or later. Awaiting confirmation.
 
 **Q: When will virtualflannel's custom OS be released?**
-A: When `solderless.engineering` is back online — virtualflannel doesn't want to release without users being able to flash easily.
+A: When `solderless.engineering` is back online — virtualflannel doesn't want to release without users being able to flash easily. **Update 2026-05-18:** solderless.engineering is back online with a dedicated firmware utility app, so this blocker is now removed; awaiting virtualflannel's release.
 
 **Q: When will ericlewis's "proper BSP" with audio be released?**
 A: No public ETA. ericlewis said: *"im in the middle of a proper bsp for zephyr for everyone but quite busy"* [Discord #firmware, 2026-05-09 00:20].

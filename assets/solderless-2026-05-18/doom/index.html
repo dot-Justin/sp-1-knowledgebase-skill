@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="SP-1 controlled spoom1">
+<title>SP-1 spoom1</title>
+<link href="css/doom.css" type="text/css" rel="stylesheet">
+<link rel="icon" href="../img/favicon.svg" type="image/svg+xml">
+</head>
+<body>
+
+<div class="card">
+  <div class="header">
+    <div class="title">spoom1</div>
+  </div>
+
+  <div class="content">
+    <div class="game-section">
+      <div class="status" id="status">waiting for connection...</div>
+      <div id="canvasWrap">
+        <div class="canvas-ratio">
+          <canvas id="doomCanvas" width="640" height="400"></canvas>
+        </div>
+      </div>
+      <div class="controls-bar">
+        <div class="fader-display" id="faderDisplay">
+          <span>T1:—</span><span>T2:—</span><span>T3:—</span><span>T4:—</span>
+        </div>
+        <div class="btn-display" id="btnDisplay">buttons: —</div>
+      </div>
+    </div>
+    <div class="mapping">
+      <img src="img/SP-1-manual-functions.svg" alt="SP-1" class="sp1-img">
+    </div>
+  </div>
+</div>
+
+<script src="../js/serial-shim.js"></script>
+<script src="js/protocol.js"></script>
+<script src="js/doom.js"></script>
+</body>
+</html>

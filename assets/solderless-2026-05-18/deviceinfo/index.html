@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="SP-1 device info">
+<title>SP-1 device info</title>
+<link href="css/deviceinfo.css" type="text/css" rel="stylesheet">
+<link rel="icon" href="../img/favicon.svg" type="image/svg+xml">
+</head>
+<body>
+
+<div class="card">
+  <div class="header">
+    <div class="title">device info</div>
+  </div>
+
+  <div class="content">
+    <div class="info-col">
+      <div class="status" id="status">waiting for connection...</div>
+
+      <div class="info-grid" id="infoGrid">
+        <div class="info-row">
+          <span class="info-label">device id</span>
+          <span class="info-value" id="valDeviceId">—</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">device mode</span>
+          <span class="info-value" id="valMode">—</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">album title</span>
+          <span class="info-value" id="valAlbum">—</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">album data</span>
+          <span class="info-value" id="valAlbumData">—</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">write counter</span>
+          <span class="info-value" id="valWriteCounter">—</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">temperature</span>
+          <span class="info-value" id="valTemp">—</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">charging</span>
+          <span class="info-value" id="valCharging">—</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">power</span>
+          <span class="info-value" id="valPower">—</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">faders</span>
+          <span class="info-value" id="valFaders">—</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">buttons</span>
+          <span class="info-value" id="valButtons">—</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">ladders</span>
+          <span class="info-value" id="valLadders">—</span>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn" id="btnRefresh" disabled>refresh</button>
+        <button class="btn" id="btnTransfer" disabled>transfer mode</button>
+        <button class="btn" id="btnReboot" disabled>reboot</button>
+      </div>
+    </div>
+
+    <div class="live-col">
+      <div class="live-section" id="liveSection">
+      <div class="live-header">
+        <span class="live-title">live monitor</span>
+      </div>
+      <div class="live-panel" id="livePanel">
+        <div class="live-device">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="580 380 1540 2000" class="sp1-live-svg">
+            <!-- Device body -->
+            <path d="M1979.0193,2299.9309H903.7163V419.4938h1075.303c24.369,0,44.3246,19.7639,44.3246,44.3245v1791.788c0,24.3689-19.7638,44.3246-44.3246,44.3246Z" fill="none" stroke="#ddd" stroke-miterlimit="10" stroke-width="5"/>
+            <path d="M723.5397,2299.9309h180.1766V419.4938h-180.1766c-24.3688,0-44.3245,19.7639-44.3245,44.3245v1791.788c0,24.3689,19.7639,44.3246,44.3245,44.3246Z" fill="none" stroke="#ddd" stroke-miterlimit="10" stroke-width="5"/>
+            <!-- Right side rocker (FWD/RWD) -->
+            <path id="btnFwd" d="M2054.0449,1959.3h-30.701v-86.9h30.701c12.28,0,22.258,9.978,22.258,22.258v42.384c0,12.28-9.978,22.258-22.258,22.258Z" fill="none" stroke="#ccc" stroke-width="4"/>
+            <path id="btnRwd" d="M2054.0449,2046.2637h-30.701v-86.9h30.701c12.28,0,22.258,9.978,22.258,22.258v42.384c0,12.28-9.978,22.258-22.258,22.258Z" fill="none" stroke="#ccc" stroke-width="4"/>
+            <!-- Left side brackets (Function / Play) -->
+            <rect id="btnFunc" x="605.3409" y="602.1647" width="73.874" height="328.8847" fill="none" stroke="#ccc" stroke-width="4"/>
+            <rect id="btnPlay" x="605.3409" y="1802.5744" width="73.874" height="328.8846" fill="none" stroke="#ccc" stroke-width="4"/>
+            <!-- Volume (bottom-right tabs) -->
+            <rect id="btnVolUp" x="1757.5882" y="2299.9311" width="135.4682" height="38.3762" fill="none" stroke="#ccc" stroke-width="4"/>
+            <rect id="btnVolDown" x="1525.9875" y="2299.9311" width="135.4682" height="38.3762" fill="none" stroke="#ccc" stroke-width="4"/>
+            <!-- Decorative -->
+            <circle cx="785.3255" cy="737.633" r="18.6125" fill="#ddd" stroke="none"/>
+            <circle cx="785.3255" cy="795.3893" r="18.6125" fill="#ddd" stroke="none"/>
+            <polygon points="745.0304 1926.7217 825.6206 1926.7217 785.3255 2003.6661 745.0304 1926.7217" fill="#ddd" stroke="none"/>
+
+            <!-- Fader tracks -->
+            <rect x="1025.9447" y="1174.355" width="67.7341" height="371.6741" rx="33.77" ry="33.77" fill="none" stroke="#e0e0e0" stroke-width="4"/>
+            <rect x="1293.6192" y="1174.355" width="67.7341" height="371.6741" rx="33.77" ry="33.77" fill="none" stroke="#e0e0e0" stroke-width="4"/>
+            <rect x="1561.2937" y="1174.355" width="67.7341" height="371.6741" rx="33.77" ry="33.77" fill="none" stroke="#e0e0e0" stroke-width="4"/>
+            <rect x="1828.9681" y="1174.355" width="67.7341" height="371.6741" rx="33.77" ry="33.77" fill="none" stroke="#e0e0e0" stroke-width="4"/>
+
+            <!-- Fader knobs -->
+            <circle id="knob0" cx="1059.7158" cy="1360.192" r="29.3578" fill="#1a1a1a"/>
+            <circle id="knob1" cx="1327.3903" cy="1360.192" r="29.3578" fill="#1a1a1a"/>
+            <circle id="knob2" cx="1595.0647" cy="1360.192" r="29.3578" fill="#1a1a1a"/>
+            <circle id="knob3" cx="1862.7392" cy="1360.192" r="29.3578" fill="#1a1a1a"/>
+
+            <!-- LEDs -->
+            <circle id="led0" cx="1059.7158" cy="1005.3075" r="16.8855" fill="none" stroke="#ddd" stroke-width="5"/>
+            <circle id="led1" cx="1327.3903" cy="1005.3075" r="16.8855" fill="none" stroke="#ddd" stroke-width="5"/>
+            <circle id="led2" cx="1595.0647" cy="1005.3075" r="16.8855" fill="none" stroke="#ddd" stroke-width="5"/>
+            <circle id="led3" cx="1862.7392" cy="1005.3075" r="16.8855" fill="none" stroke="#ddd" stroke-width="5"/>
+
+            <!-- Track buttons -->
+            <rect id="btnT1" x="1020.1883" y="652.6296" width="79.0551" height="183.4385" rx="8.63" ry="8.63" fill="none" stroke="#ccc" stroke-width="5"/>
+            <rect id="btnT2" x="1287.8628" y="652.6296" width="79.0551" height="183.4385" rx="8.63" ry="8.63" fill="none" stroke="#ccc" stroke-width="5"/>
+            <rect id="btnT3" x="1555.5372" y="652.6296" width="79.0551" height="183.4385" rx="8.63" ry="8.63" fill="none" stroke="#ccc" stroke-width="5"/>
+            <rect id="btnT4" x="1823.2116" y="652.6296" width="79.0551" height="183.4385" rx="8.63" ry="8.63" fill="none" stroke="#ccc" stroke-width="5"/>
+          </svg>
+        </div>
+        <div class="live-readout">
+          <span class="ladder-val" id="ladder0">L1: —</span>
+          <span class="ladder-val" id="ladder1">L2: —</span>
+        </div>
+        <div class="live-readout">
+          <span class="ladder-val" id="btnRaw">buttons: —</span>
+        </div>
+      </div>
+    </div>
+    </div>
+  </div>
+</div>
+
+<script src="../js/serial-shim.js"></script>
+<script src="js/protocol.js"></script>
+<script src="js/deviceinfo.js"></script>
+</body>
+</html>

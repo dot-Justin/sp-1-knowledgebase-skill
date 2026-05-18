@@ -1,0 +1,219 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'Arial', sans-serif;
+  font-weight: 200;
+  background: #fff;
+  color: #1a1a1a;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+body {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 20px;
+}
+
+.card {
+  width: 100%;
+  max-width: 1200px;
+  height: calc(100vh - 40px);
+  background: #f5f5f5;
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 12px 20px 0;
+  flex-shrink: 0;
+}
+
+.header .title {
+  font-size: 1.2rem;
+  font-weight: 300;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+
+.header .logo { opacity: 0.85; }
+
+/* ── Main content: game left, mapping right ── */
+
+.content {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  gap: 20px;
+  padding: 8px 20px 12px;
+  min-height: 0;
+}
+
+/* ── Game section (left) ── */
+
+.game-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.status {
+  font-size: 0.72rem;
+  font-weight: 300;
+  color: #999;
+  margin-bottom: 6px;
+  flex-shrink: 0;
+}
+.status.ok { color: #2a7a2a; }
+.status.err { color: #d32f2f; }
+
+#canvasWrap {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.canvas-ratio {
+  position: relative;
+  width: 100%;
+  max-height: 100%;
+  aspect-ratio: 8 / 5;
+}
+
+#doomCanvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+}
+
+.controls-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-top: 6px;
+  flex-shrink: 0;
+}
+
+.controls-bar .fader-display {
+  display: flex;
+  gap: 8px;
+  font-size: 0.65rem;
+  font-variant-numeric: tabular-nums;
+  color: #888;
+}
+
+.controls-bar .fader-display span {
+  display: inline-block;
+  min-width: 42px;
+}
+
+.controls-bar .btn-display {
+  font-size: 0.65rem;
+  color: #888;
+  margin-left: auto;
+}
+
+/* ── Mapping section (right) ── */
+
+.mapping {
+  width: 400px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.sp1-img {
+  width: 100%;
+  height: auto;
+  opacity: 0.6;
+}
+
+.mapping-legend {
+  display: flex;
+  flex-direction: row;
+  gap: 24px;
+  justify-content: center;
+}
+
+.legend-group {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.legend-title {
+  font-size: 0.65rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #999;
+  margin-bottom: 2px;
+}
+
+.legend-row {
+  font-size: 0.75rem;
+  font-weight: 300;
+  color: #555;
+  line-height: 1.6;
+}
+
+.legend-key {
+  display: inline-block;
+  min-width: 26px;
+  font-weight: 500;
+  color: #333;
+}
+
+/* ── Buttons (unused but kept) ── */
+
+.btn {
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 400;
+  padding: 10px 32px;
+  border: 1.5px solid #1a1a1a;
+  border-radius: 8px;
+  background: #f0f0ee;
+  color: #1a1a1a;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.btn:hover:not(:disabled) { background: #1a1a1a; color: #f0f0ee; }
+.btn:disabled { border-color: #ccc; color: #ccc; cursor: default; }
+
+/* ── Responsive: stack vertically on narrow screens ── */
+
+@media (max-width: 700px) {
+  .content {
+    flex-direction: column;
+    gap: 10px;
+  }
+  .mapping {
+    width: 100%;
+    flex-direction: row;
+    align-items: center;
+    gap: 16px;
+  }
+  .sp1-img { width: 80px; }
+  .mapping-legend { flex-direction: row; gap: 20px; }
+}

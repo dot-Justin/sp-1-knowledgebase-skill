@@ -1,8 +1,18 @@
 # Custom Firmware State
 
-**Synthesized through:** Lines #846 (2026-05-06), Discord through 2026-05-11.
+**Synthesized through:** Lines #846 (2026-05-06), Discord through 2026-05-11, and the **solderless 2026-05-18 re-snapshot** (multi-app launcher rewrite).
 
-This file enumerates the **custom firmwares** known to exist for the SP-1, their status (released / unreleased), what they do, and who's building them. Last updated 2026-05-11; the Discord is active and this list may need refreshing.
+This file enumerates the **custom firmwares** known to exist for the SP-1, their status (released / unreleased), what they do, and who's building them. Last updated 2026-05-18; the Discord is active and this list may need refreshing.
+
+## Tooling status (2026-05-18): web flasher now publicly available
+
+Since 2026-05-18, `solderless.engineering` exposes a dedicated **firmware utility** app — a browser-based custom-firmware flasher using the bootloader-flash protocol documented in `references/15-bootloader-protocol.md`. **This is the first publicly-released browser-based custom-firmware flasher for the SP-1.** Workflow: hold T1+T4 + plug in USB-C, click "connect" in the launcher, switch to the firmware utility tab, drag your `.bin` file, click flash. No Python toolchain or DFU utility required.
+
+Local mirror at `assets/solderless-2026-05-18/utility/`. The clean separation of flash flow from album upload (the 2026-05-12 version had both mixed in `js/firmware.js`) makes `assets/solderless-2026-05-18/utility/js/firmware.js` the cleanest reference for any custom-firmware author replicating the flash flow.
+
+**Practical size ceiling for custom firmware:** the app slot is **892 KB** (`FLASH_END - FLASH_START = 0xFF000 - 0x20000 = 0xDF000`; pages 0x20–0xFE, 223 × 4096 B). Bootloader region (0x00000–0x1FFFF, 128 KB) is reserved. Page 0xFF (last 4 KB) is reserved (presumably MBR settings). See `references/15-bootloader-protocol.md` "Flash layout constants."
+
+This ceiling matters for feasibility of richer payloads: `sp1-midi` is ~168 KB FLASH (~19% of 892 KB), leaving ~720 KB for additions. A full audio engine + DSP + UI layer + Bluetooth stack must fit within this budget.
 
 ## tl;dr
 

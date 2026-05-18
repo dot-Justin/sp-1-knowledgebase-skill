@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="SP-1 stem loader help">
+  <link href="../fonts/fonts.css" type="text/css" rel="stylesheet" />
+  <link href="../css/stemloader.css" type="text/css" rel="stylesheet" />
+  <link href="../css/stemloader-help.css" type="text/css" rel="stylesheet" />
+  <script src="../js/marked.umd.js"></script>
+  <title>Stem loader help</title>
+  <link rel="icon" href="../img/favicon.svg" type="image/svg+xml">
+</head>
+
+<body>
+
+  <div id="help-page">
+    <h1>SP-1 stem loader help</h1>
+    <p>
+      Loading...
+    </p>
+  </div>
+  <div id="solderless">
+    <a href="https://solderless.io/">
+      <img src="../img/solderless_sparks.svg" width="60px" /><br>
+      SOLDERLESS
+    </a>
+  </div>
+  <script>
+    let url = "./help.md";
+    fetch(url)
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error: ${response.status}`);
+        }
+        return response.text();
+      })
+      .then((text) => {
+        parseAndDisplay(text);
+      })
+      .catch((error) => {
+        console.log(`Error loading help: ${error}`);
+      });
+
+    function parseAndDisplay(mdStr) {
+      let helpPage = document.getElementById('help-page');
+      helpPage.innerHTML = marked.parse(mdStr);
+    }
+  </script>
+</body>
+
+</html>

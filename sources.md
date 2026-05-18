@@ -35,7 +35,7 @@ Source: Lines #1 (post by PedalsandChill, the thread originator). Useful if you 
 
 ### `solderless-2026-05-12/` and `solderless-2026-05-12.zip`
 
-**Bundled archive of `solderless-engineering.pages.dev` as of 2026-05-12.** Complete static deployment — HTML, CSS, JS, fonts, images. The JS modules are the **canonical reference implementation** for the SP-1 host-side bootloader + album-upload protocol.
+**Bundled earlier static snapshot of `solderless-engineering.pages.dev` as of 2026-05-12.** This is the single-page-tool version of the site. Preserved for citation stability of references written during the 2026-05-13 synthesis batch — many `references/*.md` files point at line numbers in this snapshot. **For new claims, prefer the 2026-05-18 bundle below; this one is historical.**
 
 **Provenance:** Obtained as a community backup on 2026-05-13. Archive contents reflect the 2026-05-12 deployed state (the deployed JS/HTML is dated 2026-05-09; README inside the archive is dated 2026-05-12).
 
@@ -44,10 +44,10 @@ Source: Lines #1 (post by PedalsandChill, the thread originator). Useful if you 
 - `assets/solderless-2026-05-12/README.txt` — included run instructions from the archive
 - `assets/solderless-2026-05-12/index.html` — main UI (firmware flash + album upload + device info)
 - `assets/solderless-2026-05-12/stemloader.html` — TKT's standalone stem-loader UI
-- `assets/solderless-2026-05-12/js/protocol.js` — **canonical** protocol implementation: CRC-8 table, COBS encode/decode, packet framing, serial I/O, all album/flash constants
+- `assets/solderless-2026-05-12/js/protocol.js` — protocol implementation: CRC-8 table, COBS encode/decode, packet framing, serial I/O, all album/flash constants
 - `assets/solderless-2026-05-12/js/firmware.js` — firmware flash sequence (R/F/E/H opcodes)
 - `assets/solderless-2026-05-12/js/storage.js` — album upload sequence (R/0x70/0x50/0x37/0x39/0x51 + metadata/end-marker construction)
-- `assets/solderless-2026-05-12/js/wav-parser.js` — WAV → SP-1 encoder (`encodeToSP1`)
+- `assets/solderless-2026-05-12/js/wav-parser.js` — WAV → SP-1 encoder (`encodeToSP1`) — note: this version wrote a **6-byte** sector trailer (tempo + envelopes). The 2026-05-18 encoder writes an **8-byte** trailer (clock + tempo + envelopes). See `corrections.md`.
 - `assets/solderless-2026-05-12/stemloader/js/*.js` — same protocol, TKT's earlier UI
 - `assets/solderless-2026-05-12.zip` — original unmodified zip, in case you need the byte-identical archive
 
@@ -59,7 +59,44 @@ python3 -m http.server 8788
 # Open http://127.0.0.1:8788/ in Chrome or Edge (Safari does not support Web Serial)
 ```
 
-**Cite as:** `[Source: assets/solderless-2026-05-12/js/storage.js lines X-Y]`. Treat as canonical reference for SP-1 host-side protocol details.
+**Cite as:** `[Source: assets/solderless-2026-05-12/js/storage.js lines X-Y]`. Use for line-number-stable citations in references written before 2026-05-18.
+
+### `solderless-2026-05-18/` and `solderless-2026-05-18.zip`
+
+**Bundled current mirror of `solderless.engineering` as of 2026-05-18.** The site relaunched as a multi-app launcher: parent `index.html` hosts four sandboxed iframes (stem loader, firmware utility, device info, spoom1) communicating with the parent via `js/serial-shim.js`'s postMessage Web Serial proxy. **This is the canonical reference for new claims about the SP-1 host protocol, the public flash-tool flow, and the encoder.**
+
+**Provenance:** Fresh scrape of the live site on 2026-05-18 via `wget --mirror`. 44 files total (including this skill-added README); ~601 KB extracted.
+
+**Layout:**
+
+- `assets/solderless-2026-05-18/README.txt` — skill-added run instructions (the live site has no README; this file is a convention from the 2026-05-12 bundle)
+- `assets/solderless-2026-05-18/index.html` — parent launcher; owns one Web Serial port; postMessage-proxies to active iframe (lines 130-349)
+- `assets/solderless-2026-05-18/js/serial-shim.js` — postMessage-based `navigator.serial` proxy injected into iframes
+- `assets/solderless-2026-05-18/stemloader/` — evolved stem loader (drag-reorder via `Sortable.js`, per-song state badges, in-app help via `marked.umd.js`, BPM from filename, localStorage persistence)
+- `assets/solderless-2026-05-18/stemloader/js/sp-1_protocol.js` — protocol primitives (CRC-8, COBS, packet framing)
+- `assets/solderless-2026-05-18/stemloader/js/wav-converter.js` — **canonical encoder.** Renamed from `wav-parser.js`; merged WAV parser + SP-1 encoder. **Writes 8-byte sector trailer (clock@2040, tempo@2042, envelopes@2044).** Empty sectors get sentinel `clock=0xFFFF / tempo=0x0000`. Accepts 1-N channel WAV (was: required 8 in the 2026-05-12 version).
+- `assets/solderless-2026-05-18/stemloader/js/stemloader.js` — album upload state machine, `CMD` enum, chunked write loop, song-state UI
+- `assets/solderless-2026-05-18/stemloader/help/help.md` — **first official Tim Knapen user FAQ.** Quotable for: channel mapping (1L,1R→stem1; 3L,3R→stem2; etc.), "1 minute of audio = ~10 minutes to transfer", "long-press function button to unstick after interrupted transfer".
+- `assets/solderless-2026-05-18/utility/` — **new firmware-flash app** (browser-based custom-firmware flasher)
+- `assets/solderless-2026-05-18/utility/js/protocol.js` — protocol primitives (matching shape to stemloader; also contains all firmware-flash constants)
+- `assets/solderless-2026-05-18/utility/js/firmware.js` — clean R/F/E/H flash flow (no album-upload mixed in, unlike 2026-05-12's `firmware.js`)
+- `assets/solderless-2026-05-18/deviceinfo/` — **new live runtime-state viewer.** Polls `d`/`\\`/`t` every 100 ms; queries `T`/`f`/`X`/`C`/`z` on connect. SVG mirror of the device updates in real time.
+- `assets/solderless-2026-05-18/deviceinfo/js/deviceinfo.js` — concrete usage example for every transfer-mode query opcode.
+- `assets/solderless-2026-05-18/doom/` — **spoom1: Doom in the browser, SP-1 as input controller.** Empirical proof that SP-1 polling at ~16 Hz over WebSerial is smooth.
+- `assets/solderless-2026-05-18/doom/js/doom.js` — fader/button → Doom keycode mapping; ~60ms poll loop
+- `assets/solderless-2026-05-18.zip` — byte-identical zip, for verification
+
+**Run it locally:**
+
+```sh
+cd assets/solderless-2026-05-18
+python3 -m http.server 8788
+# Open http://127.0.0.1:8788/ in Chrome or Edge (Safari does not support Web Serial)
+```
+
+**Cite as:** `[Source: assets/solderless-2026-05-18/<path/to/file.ext> lines X-Y]`. Treat as the **current** canonical reference for SP-1 host-side protocol and tooling. For older claims that cite the 2026-05-12 bundle, do not rewrite — those line numbers are stable and the byte-level protocol is unchanged.
+
+**Live site status:** online as of 2026-05-18; live site is `solderless.engineering`. Canonical local archive is `assets/solderless-2026-05-18/`; the 2026-05-12 snapshot is retained at `assets/solderless-2026-05-12/` for citation stability.
 
 ### `SP-1-dev-2026-05-13/` (TimK's repo: canonical pin map + wiki)
 
@@ -284,11 +321,11 @@ Some authoritative resources live at URLs:
 
 ### `https://solderless.engineering/`
 
-Browser-based firmware flasher. **As of 2026-05-09: offline for an update** [Discord #news, tkt1000]. Claude should not assume this is online when answering — verify with the user or note the synthesis-date status.
+Browser-based SP-1 app launcher. **Online as of 2026-05-18** with 4 apps (stem loader, firmware utility, device info, spoom1). Local canonical mirror at `assets/solderless-2026-05-18/`. The live site may have shipped further changes since 2026-05-18.
 
 ### `https://solderless-engineering.pages.dev/`
 
-Cloudflare Pages mirror of the above. Same status.
+Cloudflare Pages mirror of the above. Same content.
 
 ### `https://sp-1.dotjust.in`
 

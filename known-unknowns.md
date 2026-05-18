@@ -278,7 +278,7 @@ See `update-log.md` 2026-05-13 and `working-confirmed.md` for the full resolutio
 
 ## Solderless.engineering source code
 
-**~~Question:~~ RESOLVED 2026-05-13 via local archive.** A community backup surfaced of a complete static snapshot of `solderless-engineering.pages.dev` dated 2026-05-12. Archive is at `assets/solderless-2026-05-12.zip`. Source is **not officially open-sourced** by the Solderless team, but the archived static deployment is unobfuscated/un-minified JS and serves as the canonical protocol reference. See `update-log.md` 2026-05-13 and `references/27-tools-and-utilities.md`.
+**~~Question:~~ RESOLVED 2026-05-13, RE-CONFIRMED 2026-05-18 via re-snapshot.** A community backup surfaced of a complete static snapshot of `solderless-engineering.pages.dev` dated 2026-05-12 and was bundled at `assets/solderless-2026-05-12.zip`. On 2026-05-18 a fresh scrape of the live site (now a multi-app launcher) was bundled at `assets/solderless-2026-05-18.zip`. Source is **still not officially open-sourced** by the Solderless team, but the archived static deployments are unobfuscated/un-minified JS and serve as the canonical protocol reference. See `update-log.md` 2026-05-18 and `references/27-tools-and-utilities.md`.
 
 ---
 
@@ -319,6 +319,76 @@ The encoder writes only **one tempo value per sector** (at the end of block 0), 
 **Still open:** the firmware-side semantic interpretation. The value is "samples per X" for some X derived from `24 × bpm` — possibly samples-per-beat-subdivision-at-24-PPQN, or some related musical-time tick. The encoder produces working playback, so the formula is correct as a *write* spec. The *read* spec (how the firmware uses the value internally) is not documented.
 
 **Next move:** the encoder formula is sufficient for producing playable albums. Firmware-side semantics can be deferred unless a custom firmware author needs to consume this field.
+
+---
+
+## "Ladder" ADC values (`t` opcode response)
+
+**Question:** What do the two uint16 values returned by `0x74 't'` represent?
+
+**Known:**
+- The opcode returns 4 bytes interpreted as 2× `uint16` LE [code: `assets/solderless-2026-05-18/deviceinfo/js/deviceinfo.js::queryAll` "Ladders" block]
+- The deviceinfo app labels them `L1` and `L2` and displays them as live values; it does **not** decode them into named buttons [same file, `pollLive` block]
+- The SP-1 hardware uses two "button ladders" — resistor-divider networks where multiple buttons connect through different-value resistors to a single ADC input. The ladder voltage tells the firmware which button is pressed (or which combination, depending on the network topology) [TKT wiki context, plus SP-1's general button-matrix design referenced in `stem_player.dts` `io-channels`]
+- `ericlewis/sp1-midi`'s ADC config (`app.overlay`) reads ADC channels 5 and 6 for the two ladders, separate from channels 1–4 used for the faders
+
+**Why unresolved:** the public host code uses the raw ADC values directly and never decodes "which button is pressed by this voltage." The decoding table (voltage threshold → button identity) lives in the stock firmware's input event dispatcher, which has not been disassembled/documented in public artifacts.
+
+**Why it matters (mild):** for a host tool that wants to display "which button is pressed" instead of "which ADC voltage was read," the raw ladder readings aren't directly meaningful. The `0x5C '\\'` button-state opcode already returns decoded button state and is the right opcode for "which buttons are pressed."
+
+**Next move:** for most host tooling, prefer the `\\` opcode and ignore the ladders. For someone reverse-engineering the input layer for a custom firmware, either Ghidra-dive the stock firmware's input dispatcher or measure ladder voltages on real hardware while pressing each button individually. Or ask TimK / ericlewis directly.
+
+---
+
+## Response semantics of `0x62 'b'` (PING)
+
+**Question:** What does the `b` opcode do and what does it return?
+
+**Known:**
+- The opcode is defined in the `CMD` enum [code: `assets/solderless-2026-05-18/stemloader/js/stemloader.js` `CMD.PING = 0x62`]
+- It is **never called** by any solderless app code; no response handler is registered for it
+- Following the `request_char + 1 = response_char` pattern (R→S, T→U, X→Y…), the expected response would be `0x63 'c'` — but this is unverified
+
+**Why unresolved:** the opcode exists in the host's command catalog but is unused, so no observed behavior is documented. The firmware-side handler may or may not exist.
+
+**Next move:** if a use case for PING comes up, send the opcode to a real device in transfer mode and see what comes back. Otherwise this opcode can be ignored.
+
+---
+
+## Response semantics of `0x56 'V'` (FREQ_SWEEP)
+
+**Question:** What payload format does `V` accept, and what is the audio behavior of the sweep?
+
+**Known:**
+- The opcode is defined as `CMD.FREQ_SWEEP = 0x56` [code: `assets/solderless-2026-05-18/stemloader/js/stemloader.js`]
+- The reply handler treats response cmd `0x57 'W'` as "test tone generated" (string-only log message); no other observable side effect [same file, switch case `'W'`]
+- The payload format is not in the JS — solderless does not actually call FREQ_SWEEP with a meaningful payload in any code path
+- The opcode's name suggests it triggers an internal frequency sweep through the audio output (presumably for hardware self-test or codec verification)
+
+**Why unresolved:** the host code declares the opcode but never invokes it with parameters. Firmware-side semantics — sweep range, duration, output stem(s), payload format — are not documented in public artifacts.
+
+**Next move:** if a need arises (e.g., a custom-firmware author wants to use this for self-test), reverse-engineer the firmware's handler in Ghidra, or measure audio output while sending the opcode with various payloads.
+
+---
+
+## Reconciliation: Galapagoose's `0-24,489` vs encoder `CLOCK_MAX = 49152`
+
+**Question:** What is the *true* range of the per-sector clock counter?
+
+**Known:**
+- **Galapagoose** [Lines #739] described the on-disk timing counter range as "0 to 24,489."
+- **The 2026-05-18 solderless encoder** uses `CLOCK_MAX = 49152` as the modulo for its clock accumulator: `clock = (clock + increment) % CLOCK_MAX` [code: `assets/solderless-2026-05-18/stemloader/js/wav-converter.js::encodeToSP1`]
+- `49152 = 512 × 96 = 512 bars × 96 ticks/bar`. `24,489 ≈ 24,576 = 256 × 96 = 256 bars × 96 ticks/bar` — but the numbers don't match exactly; `24,489` is **not** half of `49152`.
+- Both numbers might be describing different fields entirely: Galapagoose may have measured a stock-firmware **read-side** state variable (one of the 4 per-block sync words in the trailer the wiki documents), while the encoder writes a single **per-sector** clock value at offset 2040.
+
+**Why unresolved:** Galapagoose's source for `24,489` was a Lines post analyzing a real album image; the encoder source is the only known *write* spec. The two haven't been reconciled by anyone publicly. It's possible:
+- the stock firmware uses a different counter format for its 4 per-block sync words than solderless writes at the per-sector slot, OR
+- Galapagoose mis-counted by a few ticks, OR
+- the encoder's `% 49152` modulo represents some other invariant (e.g., a beats-per-album rollover) and the actually-cycled counter is `% 24489` somewhere downstream
+
+**Why it matters (mild):** the encoder produces playable albums on stock firmware, so the formula is correct as a *write* spec regardless of how Galapagoose's reading reconciles. For custom-firmware authors implementing the *read* side (e.g., to drive musically-synced effects), the actual cycled range is what matters.
+
+**Next move:** dump the per-sector clock bytes from a known album image at multiple sectors and chart their values; or ask TimK / Galapagoose directly; or read more of the audio engine in `assets/audiothingies-2026-05-09/AudioEngine.hpp::current_sync_word()` to see what range stock firmware expects.
 
 ---
 

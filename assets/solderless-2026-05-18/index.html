@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#ffffff">
+<meta name="description" content="solderless apps for stem player">
+<title>apps - solderless.engineering</title>
+<link href="css/landing.css" type="text/css" rel="stylesheet">
+<link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- Left panel (grey) -->
+  <aside class="left-panel">
+    <div class="left-header">
+      <a class="brand" href="index.html">solderless<br>engineering</a>
+      <img src="img/solderless_i.svg" width="48" class="nav-logo" alt="solderless">
+    </div>
+    <div class="left-label">apps available for your unreleased teenage engineering x kanye west sp-1 device</div>
+
+    <div class="connect-section">
+      <button class="connect-btn" id="btnConnect">
+        <span class="connect-dot" id="connectDot"></span>
+        <span id="connectLabel">connect</span>
+      </button>
+    </div>
+
+    <nav class="icon-grid">
+      <a class="icon-tile active disabled" href="index.html#stem-loader" data-target="stem-loader">
+        <div class="icon-box">
+          <img src="img/stemloader.svg" alt="stem loader">
+        </div>
+        <div class="icon-label">stem loader</div>
+      </a>
+      <a class="icon-tile disabled" href="index.html#update-utility" data-target="update-utility">
+        <div class="icon-box">
+          <img src="img/updateutility.svg" alt="firmware utility">
+        </div>
+        <div class="icon-label">firmware utility</div>
+      </a>
+      <a class="icon-tile disabled" href="index.html#device-info" data-target="device-info">
+        <div class="icon-box">
+          <img src="img/deviceinfo.svg" alt="device info">
+        </div>
+        <div class="icon-label">device info</div>
+      </a>
+      <a class="icon-tile disabled" href="index.html#doom" data-target="doom">
+        <div class="icon-box">
+          <img src="img/doom.svg" alt="spoom1">
+        </div>
+        <div class="icon-label">spoom1</div>
+      </a>
+    </nav>
+    <div class="left-footer">
+      <a class="credit" href="https://solderless.io" target="_blank">carefully crafted by solderless</a>
+    </div>
+  </aside>
+
+  <!-- Right panel -->
+  <main class="right-panel">
+    <div class="welcome-screen" id="welcomeScreen">
+      <div class="welcome-content">
+        <div class="welcome-title">connect your SP-1</div>
+        <div class="welcome-diagram">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="940 800 840 1100" class="sp1-welcome-svg">
+            <g>
+              <!-- Device body -->
+              <path d="M1010.475,840.9693h560.4v980h-560.4c-12.7,0-23.1-10.3-23.1-23.1v-933.8c0-12.7,10.3-23.1,23.1-23.1Z" fill="none" stroke="#bbb" stroke-miterlimit="10" stroke-width="5"/>
+              <path d="M1570.875,1820.9693h93.9c12.7,0,23.1-10.3,23.1-23.1v-933.8c0-12.7-10.3-23.1-23.1-23.1h-93.9" fill="none" stroke="#bbb" stroke-miterlimit="10" stroke-width="5"/>
+              <!-- Sliders (dimmed) -->
+              <rect x="1053.375" y="1233.8693" width="35.3" height="193.7" rx="17.6" ry="17.6" fill="none" stroke="#ccc" stroke-width="4"/>
+              <rect x="1192.875" y="1233.8693" width="35.3" height="193.7" rx="17.6" ry="17.6" fill="none" stroke="#ccc" stroke-width="4"/>
+              <rect x="1332.375" y="1233.8693" width="35.3" height="193.7" rx="17.6" ry="17.6" fill="none" stroke="#ccc" stroke-width="4"/>
+              <rect x="1471.875" y="1233.8693" width="35.3" height="193.7" rx="17.6" ry="17.6" fill="none" stroke="#ccc" stroke-width="4"/>
+              <!-- Slider knobs (dimmed) -->
+              <circle cx="1071.075" cy="1330.9693" r="15.3" fill="#e0e0e0"/>
+              <circle cx="1210.575" cy="1330.9693" r="15.3" fill="#e0e0e0"/>
+              <circle cx="1350.075" cy="1330.9693" r="15.3" fill="#e0e0e0"/>
+              <circle cx="1489.575" cy="1330.9693" r="15.3" fill="#e0e0e0"/>
+              <!-- Track LEDs (T1 blinks green, rest dimmed) -->
+              <circle cx="1071.075" cy="1515.6693" r="8.8" class="led-blink" fill="#5ec45e" stroke="#5ec45e" stroke-width="4"/>
+              <circle cx="1210.575" cy="1515.6693" r="8.8" fill="none" stroke="#ccc" stroke-width="4"/>
+              <circle cx="1350.075" cy="1515.6693" r="8.8" fill="none" stroke="#ccc" stroke-width="4"/>
+              <circle cx="1489.575" cy="1515.6693" r="8.8" fill="none" stroke="#ccc" stroke-width="4"/>
+              <!-- Track buttons: 1 and 4 highlighted + blinking, 2 and 3 dimmed -->
+              <rect x="1050.475" y="1603.8693" width="41.2" height="95.6" rx="4.5" ry="4.5" class="btn-blink" fill="#1a1a1a" stroke="#1a1a1a" stroke-width="5"/>
+              <rect x="1189.975" y="1603.8693" width="41.2" height="95.6" rx="4.5" ry="4.5" fill="none" stroke="#ccc" stroke-width="4"/>
+              <rect x="1329.475" y="1603.8693" width="41.2" height="95.6" rx="4.5" ry="4.5" fill="none" stroke="#ccc" stroke-width="4"/>
+              <rect x="1468.975" y="1603.8693" width="41.2" height="95.6" rx="4.5" ry="4.5" class="btn-blink" fill="#1a1a1a" stroke="#1a1a1a" stroke-width="5"/>
+              <!-- Side brackets -->
+              <polyline points="1687.875 928.7693 1726.375 928.7693 1726.375 1100.1693 1687.875 1100.1693" fill="none" stroke="#ccc" stroke-width="4"/>
+              <polyline points="1687.875 1554.3693 1726.375 1554.3693 1726.375 1725.7693 1687.875 1725.7693" fill="none" stroke="#ccc" stroke-width="4"/>
+              <!-- Side dots & triangle -->
+              <circle cx="1632.575" cy="1625.0692" r="9.7" fill="#ccc"/>
+              <circle cx="1632.575" cy="1655.1693" r="9.7" fill="#ccc"/>
+              <polygon points="1653.575 1035.4693 1611.575 1035.4693 1632.575 995.3693 1653.575 1035.4693" fill="#ccc"/>
+              <!-- Labels under highlighted buttons -->
+              <text x="1071" y="1740" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="40" font-weight="500" fill="#1a1a1a">hold</text>
+              <text x="1490" y="1740" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="40" font-weight="500" fill="#1a1a1a">hold</text>
+              <!-- LED label -->
+              <text x="1071" y="1490" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="30" font-weight="300" fill="#2a7a2a">wait for LED</text>
+            </g>
+          </svg>
+        </div>
+        <div class="welcome-steps">
+          <div>1. make sure SP-1 is turned off</div>
+          <div>2. hold track 1 + 4 buttons while connecting USB-C</div>
+          <div>3. keep holding until track 1 LED lights up</div>
+          <div>4. release all buttons</div>
+          <div>5. click 'connect' in the sidebar</div>
+        </div>
+        <div class="welcome-info">
+          <span class="welcome-info-icon">!</span>
+          web serial must be enabled for this app to work.
+          <a href="https://developer.chrome.com/docs/capabilities/serial" target="_blank">read more</a>
+        </div>
+      </div>
+    </div>
+    <iframe class="app-frame" id="stem-loader" src="stemloader/index.html"></iframe>
+    <iframe class="app-frame" id="update-utility" src="utility/index.html"></iframe>
+    <iframe class="app-frame" id="device-info" src="deviceinfo/index.html"></iframe>
+    <iframe class="app-frame" id="doom" src="doom/index.html"></iframe>
+  </main>
+
+</div>
+
+<script>
+(function() {
+  // ─── Tab switching ──────────────────────────────────────
+  var iconTiles = document.querySelectorAll('.icon-tile[data-target]');
+  iconTiles.forEach(function(tile) {
+    tile.addEventListener('click', function(e) {
+      e.preventDefault();
+      if (this.classList.contains('disabled')) return;
+      var target = this.getAttribute('data-target');
+      iconTiles.forEach(function(t) { t.classList.remove('active'); });
+      this.classList.add('active');
+      var oldFrame = document.querySelector('.app-frame.active');
+      if (oldFrame) {
+        try { oldFrame.contentWindow.postMessage({ type: 'tab-deactivated' }, '*'); } catch(ex) {}
+        oldFrame.classList.remove('active');
+      }
+      var newFrame = document.getElementById(target);
+      newFrame.classList.add('active');
+      try { newFrame.contentWindow.postMessage({ type: 'tab-activated' }, '*'); } catch(ex) {}
+    });
+  });
+
+  function setTilesDisabled(disabled) {
+    iconTiles.forEach(function(t) {
+      if (disabled) t.classList.add('disabled');
+      else t.classList.remove('disabled');
+    });
+  }
+
+  // ─── Welcome screen ────────────────────────────────────
+  var welcomeScreen = document.getElementById('welcomeScreen');
+
+  function hideWelcome() {
+    if (welcomeScreen) {
+      welcomeScreen.style.display = 'none';
+      var active = document.querySelector('.icon-tile.active');
+      if (active) {
+        var target = active.getAttribute('data-target');
+        if (target) {
+          var frame = document.getElementById(target);
+          frame.classList.add('active');
+          try { frame.contentWindow.postMessage({ type: 'tab-activated' }, '*'); } catch(ex) {}
+        }
+      }
+    }
+  }
+
+  function showWelcome() {
+    if (welcomeScreen) {
+      var oldFrame = document.querySelector('.app-frame.active');
+      if (oldFrame) {
+        try { oldFrame.contentWindow.postMessage({ type: 'tab-deactivated' }, '*'); } catch(ex) {}
+        oldFrame.classList.remove('active');
+      }
+      welcomeScreen.style.display = 'flex';
+    }
+  }
+
+  // ─── Serial proxy ──────────────────────────────────────
+  var port = null, reader = null, writer = null;
+  var connected = false;
+
+  var btnConnect = document.getElementById('btnConnect');
+  var connectDot = document.getElementById('connectDot');
+  var connectLabel = document.getElementById('connectLabel');
+
+  function getActiveFrame() {
+    return document.querySelector('.app-frame.active');
+  }
+
+  function setConnectUI(state) {
+    if (state === 'connected') {
+      connectDot.className = 'connect-dot green';
+      connectLabel.textContent = 'connected';
+      btnConnect.className = 'connect-btn connected';
+    } else if (state === 'connecting') {
+      connectDot.className = 'connect-dot orange';
+      connectLabel.textContent = 'connecting...';
+      btnConnect.className = 'connect-btn connecting';
+    } else {
+      connectDot.className = 'connect-dot';
+      connectLabel.textContent = 'connect';
+      btnConnect.className = 'connect-btn';
+    }
+  }
+
+  function broadcastToAllIframes(msg) {
+    var frames = document.querySelectorAll('.app-frame');
+    for (var i = 0; i < frames.length; i++) {
+      try { frames[i].contentWindow.postMessage(msg, '*'); } catch(e) {}
+    }
+  }
+
+  function sendToActiveFrame(msg) {
+    var frame = getActiveFrame();
+    if (frame) {
+      try { frame.contentWindow.postMessage(msg, '*'); } catch(e) {}
+    }
+  }
+
+  async function startReadLoop() {
+    try {
+      while (reader) {
+        var result = await reader.read();
+        if (result.done) break;
+        if (result.value) {
+          var arr = Array.from(new Uint8Array(result.value));
+          sendToActiveFrame({ type: 'serial-rx', data: arr });
+        }
+      }
+    } catch(e) {
+      // reader cancelled or port disconnected
+    }
+  }
+
+  async function openAndStart(p) {
+    port = p;
+    try {
+      await port.open({ baudRate: 115200 });
+    } catch(e) {
+      setConnectUI('disconnected');
+      return;
+    }
+    reader = port.readable.getReader();
+    writer = port.writable.getWriter();
+    connected = true;
+    setConnectUI('connected');
+    setTilesDisabled(false);
+    hideWelcome();
+    broadcastToAllIframes({ type: 'serial-state', state: 'connected' });
+    startReadLoop();
+  }
+
+  function onSerialDisconnect(event) {
+    if (!connected) return;
+    try { reader.cancel(); } catch(e) {}
+    try { reader.releaseLock(); } catch(e) {}
+    try { writer.releaseLock(); } catch(e) {}
+    try { port.close(); } catch(e) {}
+    reader = null; writer = null;
+    connected = false;
+    setConnectUI('connecting');
+    broadcastToAllIframes({ type: 'serial-state', state: 'disconnected' });
+  }
+
+  function onSerialConnect(event) {
+    if (!connected && port) {
+      port = event.target;
+      openAndStart(port);
+    }
+  }
+
+  async function doConnect() {
+    if (connected || port) {
+      navigator.serial.removeEventListener('disconnect', onSerialDisconnect);
+      navigator.serial.removeEventListener('connect', onSerialConnect);
+      try { if (reader) { await reader.cancel(); reader.releaseLock(); } } catch(e) {}
+      try { if (writer) { writer.releaseLock(); } } catch(e) {}
+      try { if (port) { await port.close(); } } catch(e) {}
+      try { if (port) { await port.forget(); } } catch(e) {}
+      reader = null; writer = null; port = null;
+      connected = false;
+      setConnectUI('disconnected');
+      setTilesDisabled(true);
+      showWelcome();
+      broadcastToAllIframes({ type: 'serial-state', state: 'disconnected' });
+      return;
+    }
+
+    if (!('serial' in navigator)) {
+      alert('Web Serial not supported. Use Chrome or Edge.');
+      return;
+    }
+
+    setConnectUI('connecting');
+    try {
+      var p = await navigator.serial.requestPort();
+      navigator.serial.addEventListener('disconnect', onSerialDisconnect);
+      navigator.serial.addEventListener('connect', onSerialConnect);
+      await openAndStart(p);
+    } catch(e) {
+      reader = null; writer = null; port = null;
+      connected = false;
+      setConnectUI('disconnected');
+    }
+  }
+
+  btnConnect.addEventListener('click', doConnect);
+
+  // Only accept serial-tx from the active iframe
+  window.addEventListener('message', async function(e) {
+    var msg = e.data;
+    if (!msg || !msg.type) return;
+
+    var activeFrame = getActiveFrame();
+    var fromActiveFrame = activeFrame && e.source === activeFrame.contentWindow;
+
+    if (msg.type === 'serial-tx') {
+      if (writer && connected && fromActiveFrame) {
+        try {
+          await writer.write(new Uint8Array(msg.data));
+        } catch(err) {}
+      }
+      if (msg.txId !== undefined && e.source) {
+        e.source.postMessage({ type: 'serial-tx-ack', txId: msg.txId }, '*');
+      }
+    }
+
+    if (msg.type === 'serial-request-port') {
+      if (!connected) {
+        doConnect();
+      } else {
+        e.source.postMessage({ type: 'serial-state', state: 'connected' }, '*');
+      }
+    }
+
+    if (msg.type === 'serial-query-state') {
+      e.source.postMessage({ type: 'serial-state', state: connected ? 'connected' : 'disconnected' }, '*');
+    }
+  });
+})();
+</script>
+</body>
+</html>

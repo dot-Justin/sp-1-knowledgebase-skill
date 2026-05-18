@@ -1,6 +1,6 @@
 # Tools and Utilities
 
-**Synthesized through:** Lines #846 (2026-05-06), Discord through 2026-05-11.
+**Synthesized through:** Lines #846 (2026-05-06), Discord through 2026-05-11, and the **solderless 2026-05-18 re-snapshot** (multi-app launcher rewrite).
 
 The community has produced a handful of tools, libraries, and utilities for SP-1 work. This file is the directory: what exists, what it does, where to find it, and whether it's public.
 
@@ -73,29 +73,44 @@ For the broader custom-firmware ecosystem see `20-custom-firmware-state.md`. For
 #### `solderless.engineering` / `solderless-engineering.pages.dev`
 
 **Maintainer:** TimK + loksi + tunelight + keebstudios
-**Status:** Offline for an update as of 2026-05-09 [Discord #news, tkt1000]. **A 2026-05-12 source snapshot is archived locally** — see "Local archive" below.
-**What it does:** Browser-based firmware flasher + album uploader for the SP-1. Uses Web Serial in Chromium-family browsers to talk the bootloader protocol. The main page also embeds a "TKT stem loader" subpage (TimK's earlier standalone uploader UX) — both implement the same protocol.
+**Status:** **Online as of 2026-05-18** as a multi-app launcher (rewrite ships 4 apps in sandboxed iframes). Was offline 2026-05-09 to ~2026-05-17 for the rewrite [Discord #news, tkt1000]. Both a pre-rewrite snapshot and the current rewrite are bundled locally — see "Bundled in skill" below.
+**What it does:** Multi-app launcher hosting four sandboxed-iframe apps that all share one Web Serial port via a postMessage proxy:
 
-**Use this for:** Easy firmware flashing without any local tooling. Easy album upload. Requires holding Track 1 + Track 4 while plugging in USB-C.
+1. **stem loader** (evolved from the original single-page upload tool): drag-reorder via Sortable.js, per-song state badges (missing/todo/done/new), in-app Markdown help via `marked.umd.js`, BPM extracted from filename, `localStorage` album persistence, accepts 1-N channel WAV.
+2. **firmware utility** (new in 2026-05-18): browser-based custom-firmware flasher. Workflow: T1+T4-boot the device, drag .bin, flash. Two-phase H[lastPage]→H[counter] commit per `references/15-bootloader-protocol.md`. 892 KB max payload (the app slot).
+3. **device info** (new in 2026-05-18): live readout at 10 Hz polling of every queryable runtime field (faders, buttons, ladders, charge state, temperature, mode, device ID, album title, write counter). SVG mirror of the device updates in real time. Excellent reference for what each transfer-mode opcode returns and a useful demo that WebSerial round-trips at ~10 Hz are smooth.
+4. **spoom1** (new in 2026-05-18): Doom in the browser, controlled by the SP-1 as a USB-HID-like controller. Polls SP-1 at ~16 Hz. Input mapping: T1=walk forward/back, T2=weapon select (7 bands), T3=strafe, T4=turn; btn 2 (rewind)=FIRE, btn 6 (T2)=USE, btn 7 (T1)=RUN, btn 8 (play)=ESC/menu, btn 9 (function)=ENTER/confirm. Useful empirical proof that the SP-1 can drive interactive software at usable polling rates over Web Serial.
 
-**When offline:** Run the local archive (see below); or use `theunflappable`'s Python tool; or write your own client against the bootloader protocol.
+**Host-side architecture (2026-05-18):** the parent `index.html` owns a single `navigator.serial` port (Web Serial requires a user gesture per page). Each app loads inside its own `<iframe>` and uses `js/serial-shim.js`, a postMessage-backed `navigator.serial` proxy. The shim makes `navigator.serial.requestPort()`, `port.open()`, `reader.read()`, and `writer.write()` work transparently inside iframes; the parent routes serial RX to the *active* iframe only and rejects TX from inactive iframes. Disconnect events propagate to all iframes. 60-second connection timeout in the shim. This is a **reusable pattern for any future SP-1 host tool** that wants multi-app composition over a single Web Serial port. [Source: `assets/solderless-2026-05-18/index.html` lines 130-349; `assets/solderless-2026-05-18/js/serial-shim.js`.] Note: this is a **host-side** pattern; the SP-1 firmware sees a single CDC ACM stream and has no concept of iframes — see `hallucination-watchlist.md`.
 
-#### **Bundled in skill** — `assets/solderless-2026-05-12/` and `assets/solderless-2026-05-12.zip`
+**First official user FAQ:** Tim Knapen authored `stemloader/help/help.md`, the first canonical user documentation for stem upload. Quotable items in `references/16-usb-upload-protocol.md` and `references/21-original-firmware-stems.md`.
 
-**Location:** Inside this skill's `assets/` directory (bundled with the repo). Both the extracted flat tree and the original zip are present.
-**Provenance:** Obtained as a community backup on 2026-05-13. Contents dated 2026-05-12 (the README) and 2026-05-09 (the deployed JS/HTML — last upstream `pages.dev` edit before the announced "offline for an update" period).
-**Contents:** Complete static dump of `solderless-engineering.pages.dev` — `index.html`, `stemloader.html`, the four JS modules (`protocol.js`, `firmware.js`, `wav-parser.js`, `storage.js`), the TKT stemloader's own copies, plus CSS / fonts / SVGs.
-**How to run:**
+**Use this for:** Easy firmware flashing, easy album upload, live device debugging, and (apparently) playing Doom with your SP-1. Requires holding Track 1 + Track 4 while plugging in USB-C.
+
+**When offline:** Run a local archive (see below); or use `theunflappable`'s Python tool; or write your own client against the bootloader protocol.
+
+#### **Bundled in skill** — two solderless snapshots
+
+Two bundles are kept locally for separate reasons:
+
+**`assets/solderless-2026-05-12/` and `assets/solderless-2026-05-12.zip`** (earlier static snapshot, preserved for citation stability)
+- **Provenance:** Obtained as a community backup on 2026-05-13. Contents dated 2026-05-12 (the README) and 2026-05-09 (the deployed JS/HTML — last upstream `pages.dev` edit before the announced "offline for an update" period).
+- **Contents:** Complete static dump of the single-page-tool deployment — `index.html`, `stemloader.html`, the four JS modules (`protocol.js`, `firmware.js`, `wav-parser.js`, `storage.js`), the TKT stemloader's own copies, plus CSS / fonts / SVGs.
+- **Use:** **For new claims, prefer the 2026-05-18 bundle below.** This snapshot is kept so that earlier references citing specific line numbers in `js/storage.js`, `js/firmware.js`, `js/wav-parser.js`, etc. continue to resolve. The byte-level protocol is unchanged between the two snapshots; only the file layout, the file names, and the encoder's sector-trailer size differ. See `references/15-bootloader-protocol.md`, `references/16-usb-upload-protocol.md`, `references/21-original-firmware-stems.md`, and `references/10-midi-timing-encoding.md` for the cross-references.
+
+**`assets/solderless-2026-05-18/` and `assets/solderless-2026-05-18.zip`** (current canonical mirror)
+- **Provenance:** Fresh `wget --mirror` scrape of the live `solderless.engineering` on 2026-05-18. 44 files including a skill-added README; ~601 KB extracted.
+- **Contents:** Complete static dump of the multi-app launcher: parent `index.html` + `js/serial-shim.js` + per-app subdirectories (`stemloader/`, `utility/`, `deviceinfo/`, `doom/`), plus CSS / fonts / SVGs. The `stemloader/help/help.md` (Tim Knapen's official user FAQ) is included.
+- **Use:** **The canonical reference for new claims** about the SP-1 host protocol, the encoder, the firmware-flash flow, and the live-query protocol. The `utility/js/firmware.js` is the cleanest reference for the firmware-flash flow (the 2026-05-12 version mixed flash + album upload in one file). The `stemloader/js/wav-converter.js::encodeToSP1` is the canonical encoder, including the new 8-byte sector trailer (clock + tempo + envelopes).
+- **Caveats:** The doom app references `./wasm/doom.wasm` which was not present at scrape time — the page likely fetches it on demand from a CDN. The doom app's input-mapping logic is fully captured in `doom/js/doom.js` even without the WASM binary.
+
+**How to run either bundle:**
 
 ```sh
-cd assets/solderless-2026-05-12
+cd assets/solderless-2026-05-18   # or solderless-2026-05-12
 python3 -m http.server 8788
 # Then open http://127.0.0.1:8788/ in Chrome or Edge (Safari does not support Web Serial)
 ```
-
-**Use this for:** Running solderless locally when the public site is down. Reading the JS as the canonical SP-1 protocol reference. The skill cites this archive throughout `references/15-bootloader-protocol.md`, `references/16-usb-upload-protocol.md`, `references/21-original-firmware-stems.md`, and elsewhere.
-
-**Caveats:** Archive is from before the announced "offline for update." When the live site returns, behavior may differ; re-archive if needed.
 
 ### Bundled-in-skill source archives (originally Discord attachments)
 

@@ -1,5 +1,14 @@
 # FAQ — Tools and Utilities
 
+**Q: What does solderless.engineering look like now?**
+A: **As of 2026-05-18, a multi-app launcher with 4 apps** (stem loader, firmware utility, device info, spoom1) in sandboxed iframes. Local mirror at `assets/solderless-2026-05-18/`. The pre-rewrite single-page tool is preserved at `assets/solderless-2026-05-12/` for citation stability. See `27-tools-and-utilities.md`.
+
+**Q: What's spoom1?**
+A: Doom in the browser, controlled by the SP-1's faders and buttons. T1 = walk, T2 = weapon select (7 bands), T3 = strafe, T4 = turn; transport rewind = FIRE, T2 button = USE, T1 button = RUN, play = ESC/menu, function = ENTER. Polls the SP-1 at ~16 Hz over WebSerial. Useful empirical proof that the SP-1 can drive interactive software at usable polling rates. Cite: `assets/solderless-2026-05-18/doom/js/doom.js`.
+
+**Q: Can I read the new solderless code locally?**
+A: **Yes** — full 2026-05-18 mirror is bundled at `assets/solderless-2026-05-18/`. Run `python3 -m http.server 8788` in that directory and open `http://127.0.0.1:8788/` in Chrome or Edge to run the app suite locally. The earlier 2026-05-12 single-page-tool mirror is preserved at `assets/solderless-2026-05-12/`.
+
 **Q: What's the canonical hardware docs repo?**
 A: `github.com/timknapen/SP-1-dev` + its GitHub Wiki. Pin map, bootloader documentation, board overview.
 
@@ -13,7 +22,7 @@ A: Shared by ericlewis in the Discord #firmware channel on 2026-05-09. Not in a 
 A: `sp-1.dotjust.in` (web frontend) or `github.com/dot-Justin/TE-SP-1-lines-thread-archive` (source). Includes agent-friendly summaries for AI use.
 
 **Q: What's `solderless.engineering`?**
-A: Web-based firmware updater. **Offline for an update** as of 2026-05-09 [Discord #news]. Will return. Built by TimK + loksi + tunelight + keebstudios.
+A: Web-based SP-1 app launcher. **Back online as of 2026-05-18** as a multi-app launcher (stem loader, firmware utility, device info, spoom1). Built by TimK + loksi + tunelight + keebstudios. See the "What does solderless.engineering look like now?" question above and `27-tools-and-utilities.md`.
 
 **Q: What's `libpo32`?**
 A: ericlewis's library for the **PO-32 (different TE product)**. Not SP-1 related. Don't confuse the two. See `hallucination-watchlist.md`.

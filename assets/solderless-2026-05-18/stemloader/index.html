@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="SP-1 stem loader">
+  <link href="fonts/fonts.css" type="text/css" rel="stylesheet" />
+  <link href="css/stemloader.css" type="text/css" rel="stylesheet" />
+  <script src="js/Sortable.js"></script>
+  <title>SP-1 stem loader</title>
+  <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+</head>
+
+<body>
+
+  <div id="stemloader">
+    <div>
+      <div class="section panel" id="webserial-warning">
+        <div class="title">No webserial</div>
+        <p>This browser doesn't support <a href="https://developer.chrome.com/docs/capabilities/serial">webserial</a>.
+        </p>
+        <p>Please use Chrome or Edge</p>
+      </div>
+
+      <div class="section panel" id="connect-panel">
+        <input type="button" value="Connect" onclick="connectToDevice()"><br>
+      </div>
+
+      <div class="section panel" id="wait-panel">
+        <div class="title">SP-1 disconnected</div>
+        <p><em>Waiting for device...</em></p>
+        <input type="button" value="Disconnect" onclick="disconnectDevice()">
+      </div>
+
+      <div class="section panel" id="boot-wait-panel">
+        <div class="title">SP-1 disconnected</div>
+        <p>Waiting for boot mode</p>
+        <input type="button" value="Disconnect" onclick="disconnectDevice()">
+      </div>
+
+      <div class="section panel" id="boot-panel">
+        <div class="title">SP-1 boot mode</div>
+        <input type="button" value="Transfer mode" onclick="sendSP1Cmd(CMD.SET_DEV_STATE, new Uint8Array([1]))"><br>
+        <input type="button" value="Exit boot" onclick="sendSP1Cmd(CMD.EXIT_BOOTLOADER)"><br>
+
+        <input type="button" value="Disconnect" onclick="disconnectDevice()">
+      </div>
+
+      <div class="section panel" id="transfer-wait-panel">
+        <div class="title">SP-1 disconnected</div>
+        <p>Waiting for transfer mode</p>
+        <input type="button" value="Disconnect" onclick="disconnectDevice()">
+      </div>
+
+      <div class="section panel" id="transfer-panel">
+        <div class="title">SP-1 ready</div>
+        <div id="dev-info"></div>
+        <div id="dev-album"></div>
+        <p>
+          <input type="button" class="dark-button inactive" id="transfer-button" value="Transfer album"
+            onclick="transferAlbum()"><br>
+        </p>
+        <p>
+          <input type="button" value="Reboot" onclick="sendNoReply(CMD.RESET)"><br>
+          <input type="button" value="Disconnect" onclick="disconnectDevice()"><br>
+        </p>
+      </div>
+    </div>
+
+    <div>
+      <div class="section">
+
+        <div id="album-editor">
+          <div class="album-header">
+            <input type="text" id="album-title" placeholder="Album title" maxlength="57">
+            <span id="album-length"></span>
+            <span id="album-duration">00:00</span>
+            <span id="album-size"></span>
+          </div>
+          <div class="song-header">
+            <div class="song-nr" id="song-header-nr">#</div>
+            <div>title</div>
+            <div>artist</div>
+            <div>time</div>
+            <div>BPM</div>
+          </div>
+          <div id="album-songs"></div>
+        </div>
+
+        <div id="wav-drop-container">
+          <label id="wav-drop-zone">
+            Drop your WAV files or click here to add new songs<br>
+            (24 bit, 48 kHz, 8 channel, PCM WAV files please)
+            <input type="file" id="wav-input" multiple accept=".wav" />
+          </label>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <span class="beta-label">BETA</span>
+
+
+  <div id="wav-drop-overlay">
+    Drop your WAV files<br>
+    (24 bit 48 kHz 8 channel PCM please)
+  </div>
+
+  <div id="stem-log-container">
+    <div id="stem-log-buttons">
+      <input type="button" id="hide-log" class="dark-button" value="Hide log" onclick="hideLog()">
+      <input type="button" id="clear-log" class="dark-button" value="Clear log" onclick="clearLog()">
+    </div>
+    <div id="stem-log"></div>
+  </div>
+
+  <div id="progress-bar-container">
+    <div>
+      <div id="progress-title"></div>
+      <div id="progress-bar-bg">
+        <div id="progress-bar-front"></div>
+      </div>
+      <div id="progress-text"></div>
+      <div>
+        <input type="button" class="dark-button" value="Abort transfer" onclick="abortTransfer()"><br>
+      </div>
+    </div>
+  </div>
+
+  <div id="solderless">
+    <a href="https://solderless.io/">
+      <img src="img/solderless_sparks.svg" width="60px" /><br>
+      SOLDERLESS
+    </a>
+  </div>
+
+  <div id="footer">
+    <input type="button" class="minimal-button" value="Show Log" onclick="showLog()">
+    <a href="help/index.html" class="minimal-button" target="_blank">Help</a>
+  </div>
+
+</body>
+<script src="../js/serial-shim.js" type="text/javascript"></script>
+<script src="js/sp-1_protocol.js" type="text/javascript"></script>
+<script src="js/wav-converter.js" type="text/javascript"></script>
+<script src="js/stemloader.js" type="text/javascript"></script>
+<script>
+  let songList = document.getElementById('album-songs');
+  Sortable.create(songList, {
+    handle: ".song-nr", // handle
+    ghostClass: "sortable-ghost",  // Class name for the drop placeholder
+    chosenClass: "sortable-chosen",  // Class name for the chosen item
+    dragClass: "sortable-drag",  // Class name for the dragging item
+    onUpdate: rebuildAlbumIndex,
+  });
+</script>
+
+</html>

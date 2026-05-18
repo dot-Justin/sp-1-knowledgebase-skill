@@ -98,9 +98,9 @@ There are at least four distinct firmwares relevant to the SP-1:
 
 When discussing a feature, name the firmware.
 
-### Don't claim solderless.engineering is online
+### Don't claim solderless.engineering is offline (status flipped 2026-05-18)
 
-As of synthesis date (2026-05-09) it is **offline** for an update [Discord #news, tkt1000, 2026-05-09]. If Claude is asked about current status, say "offline as of 2026-05-09 per tkt1000's notice; verify current state by asking the user or visiting the URL." Don't claim it's working.
+**As of 2026-05-18 the site is online again** with a multi-app launcher (stem loader, firmware utility, device info, spoom1). Local mirror at `assets/solderless-2026-05-18/`. The site was offline for an update from 2026-05-09 to ~2026-05-17 [Discord #news, tkt1000, 2026-05-09]. If asked about current status, the answer is "online as of 2026-05-18; verify with the user if you need current state past that date."
 
 ### Don't fabricate eMMC clock speeds
 
@@ -118,7 +118,15 @@ After the solderless source archive was ingested on 2026-05-13, the following sp
 
 ### Don't say `0x52` is a "bootloader version check"
 
-`0x52` 'R' is a **state query**. The reply `0x53` 'S' returns a 5-byte ASCII state string — `"10510"` means upload mode, `"00100"` means boot mode. Solderless string-compares this; the bit semantics aren't named in source. There is no "version" anywhere in the response. [Source: solderless archive `js/storage.js` lines 87–125.]
+`0x52` 'R' is a **state query**. The reply `0x53` 'S' returns either a 5-byte state payload or a 4-byte LE32 page counter. The 5-byte payload is **raw integer bytes** (each 0-9), not ASCII characters — bytes `[0, 0, 1, 0, 0]` join into the string `"00100"` (boot mode), bytes `[1, 0, 5, 1, 0]` into `"10510"` (upload mode). Stringify via `Array.from(payload).join('')`, never `String.fromCharCode`. Solderless string-compares this; the bit semantics aren't named in source. There is no "version" anywhere in the response. [Source: solderless archive `js/storage.js` lines 87–125; `gate-fix-testing/src/upload/protocol.mjs::decodeStateReply`.]
+
+### Don't claim state-query bytes are ASCII characters of digits
+
+Earlier wording in this skill called the state-query reply "a 5-byte ASCII string" and the per-character note said "digit ASCII = byte value." That phrasing burned the dumper project on 2026-05-14 — an AI implementation used `String.fromCharCode(b)` (treating each byte as a Unicode code point) and got `    ` instead of `"00100"`, causing the boot-mode check to fail silently against real hardware. **The bytes are not ASCII characters.** They are raw small integers; the digit semantics come from `Number.prototype.toString()` on each byte, joined together. Either match the reference implementations literally (`Array.from(payload).join('')`) or compare the byte array directly (`payload[0]===0 && payload[1]===0 && payload[2]===1 && …`).
+
+### Don't claim firmware-flash requires "flash mode" before `0x46`
+
+The firmware-flash flow does **not** require the device to already be in a particular flash-only mode. Solderless's `firmware.js::flashFirmware` sends `0x52` once, accepts whatever 0x53 reply comes back (4-byte LE32 page counter *or* 5-byte `"00100"` boot mode), and proceeds directly to `0x46` erase. The `0x70`/`0x50` "set upload mode + reboot" dance is only needed for album-upload sessions, NOT for firmware flash. Earlier versions of this skill suggested a more rigid mode-transition flow that didn't match the canonical implementation.
 
 ### Don't claim the `0x39` packet has a "4-byte magic / sub-command header"
 
@@ -142,13 +150,32 @@ The encoder writes tempo as `(48000 * 60) / (24 * bpm)`. For 60 BPM = 2000; 80 B
 
 ### Don't claim per-block 8-byte trailers exist in encoder output
 
-The TKT wiki documents a layout of **2 sync + 2 tempo + 4 LED bytes per TE-block × 4 blocks = 32 bytes per sector**. That describes what stock firmware **can read**. The solderless encoder writes **only 6 bytes per sector** — at the end of block 0, comprising `tempo (u16 LE) + 4× envelope (u8)`. **No sync counter, no LED data, nothing in blocks 1–3's trailer space.** Custom albums encoded this way still play correctly with stock firmware effects. [Source: solderless archive `js/wav-parser.js::encodeToSP1` lines 124–128.]
+The TKT wiki documents a layout of **2 sync + 2 tempo + 4 LED bytes per TE-block × 4 blocks = 32 bytes per sector**. That describes what stock firmware **can read**. The solderless encoder writes only a **per-sector trailer** at the end of block 0 — there are still **no per-block trailers**. The size of that single trailer evolved between encoder versions:
 
-When writing a custom encoder, replicate the solderless 6-byte trailer. Don't fabricate per-block sync counter or LED data; both are optional from the firmware's perspective (or default-zero, indistinguishable behaviorally).
+- **2026-05-12 encoder** (`js/wav-parser.js::encodeToSP1`): 6 bytes — `tempo (u16 LE at 2042) + 4× envelope (u8 at 2044)`. **No sync counter, no LED data**, nothing in blocks 1-3's trailer space.
+- **2026-05-18 encoder** (`stemloader/js/wav-converter.js::encodeToSP1`): 8 bytes — `clock (u16 LE at 2040) + tempo (u16 LE at 2042) + 4× envelope (u8 at 2044)`. Per-sector clock now written; still no per-block trailers and still no LED data.
 
-### Don't claim there's a separate "sync counter" being written by encoders
+When writing a custom encoder, the 2026-05-18 8-byte sector trailer is now the canonical form. Don't fabricate per-block trailers; both layouts above are valid for stock firmware playback. See `references/10-midi-timing-encoding.md` and `corrections.md` 2026-05-18 entry.
 
-`storage.js::uploadAlbum` and `wav-parser.js::encodeToSP1` write zero sync-counter bytes. Earlier versions of this skill described a `sync_counter_for_block()` pseudocode formula (`int(sample_position / (30000 / bpm)) % 24489`); that was speculative and is not produced by the canonical encoder. Stock firmware may compute sync internally from sector position or tempo, but encoders don't lay it down.
+### Don't claim there's a separate "sync counter" being written by encoders (NARROWED 2026-05-18)
+
+**The 2026-05-12 encoder did not write a sync counter.** `storage.js::uploadAlbum` and `wav-parser.js::encodeToSP1` wrote zero sync-counter bytes.
+
+**The 2026-05-18 encoder *does* write a sync counter** — once per sector, as `uint16 LE` at sector offset 2040 (end of block 0). It wraps modulo `CLOCK_MAX = 49152` (= 512 bars × 96 ticks/bar; 96 ticks/bar = 4 quarters × 24 PPQN). Empty sectors get sentinel `clock = 0xFFFF` (paired with `tempo = 0x0000`). First tick of a song is hardcoded to `clock = 1`.
+
+**What's still wrong** even after 2026-05-18: claims of a **per-block** sync counter (4 separate counters per sector, one per TE-block). The encoder writes one counter per sector, not four.
+
+**What's still speculative**: the older skill-described pseudo-formula `int(sample_position / (30000 / bpm)) % 24489` predates the encoder source. The 2026-05-18 encoder uses a different accumulator (`clockAcc += CLOCK_INCR + samplesPerTick - elapsedSamples`, modulo 49152) — these may or may not reconcile. Logged as a known-unknown in `known-unknowns.md`.
+
+[Source: `assets/solderless-2026-05-18/stemloader/js/wav-converter.js::encodeToSP1` MIDI clock block — `OFFSET_CLOCK = 2040`, `CLOCK_MAX = 49152`, `CLOCK_INCR = 512`.]
+
+### Don't conflate solderless's iframe/serial-shim with the SP-1's on-device behavior
+
+As of 2026-05-18 the `solderless.engineering` site is built as a parent `index.html` hosting four sandboxed iframes (stem loader, firmware utility, device info, spoom1). The parent owns one `navigator.serial` port. Each iframe loads `js/serial-shim.js`, which intercepts `navigator.serial` calls inside the iframe and proxies them to the parent via `window.postMessage`. Only the **active** iframe can send TX; the parent rejects messages from inactive frames.
+
+**This is a host-side tooling pattern, not anything the SP-1 firmware does.** The SP-1 sees a single CDC ACM stream from the host browser; it has no concept of iframes or postMessage. Don't describe the SP-1 firmware as "supporting multiple apps simultaneously" or "switching contexts between apps" — context-switching happens entirely in the host's browser.
+
+[Source: `assets/solderless-2026-05-18/index.html` lines 130-349; `assets/solderless-2026-05-18/js/serial-shim.js`.]
 
 ---
 

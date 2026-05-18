@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" width="182" height="182" viewBox="0 0 182 182">
+  <rect x="-.02" y="-.02" width="182.05" height="182.05" rx="36.47" ry="36.47" fill="#ffa02e"/>
+  <g id="USB-cable">
+    <rect x="67.52" y="71.15" width="44.28" height="62.12" fill="#fff"/>
+    <rect x="71.87" y="38.51" width="35.57" height="32.64" fill="#d4d4d4"/>
+    <polyline points="95.43 182 95.43 164.47 83.89 164.47 83.89 182" fill="#fff"/>
+    <polygon points="97.37 132.94 97.37 114.07 81.94 114.07 81.94 132.94 78.28 132.94 78.28 164.47 101.03 164.47 101.03 132.94 97.37 132.94" fill="#d4d4d4"/>
+  </g>
+</svg>

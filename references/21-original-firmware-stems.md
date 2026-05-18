@@ -1,6 +1,38 @@
 # Original-Firmware Custom Stems
 
-**Synthesized through:** Lines #846 (2026-05-06), Discord through 2026-05-11, TKT wiki Album-metadata-format / Audio-format / Data-Structure pages accessed 2026-05-12, and the **solderless source archive** (ingested 2026-05-13). The encoder pseudocode below is a direct port of solderless's `encodeToSP1()` and is now the **canonical reference implementation** for the SP-1 audio format. See `update-log.md` 2026-05-13.
+**Synthesized through:** Lines #846 (2026-05-06), Discord through 2026-05-11, TKT wiki Album-metadata-format / Audio-format / Data-Structure pages accessed 2026-05-12, the **solderless source archive** (ingested 2026-05-13), and the **solderless 2026-05-18 re-snapshot** (multi-app launcher rewrite, new official Tim Knapen user FAQ). The encoder pseudocode below was a direct port of solderless's `encodeToSP1()` from the 2026-05-12 source; the **2026-05-18 encoder additionally writes a sync counter at sector offset 2040**, see `references/10-midi-timing-encoding.md` 2026-05-18 update for the 8-byte sector trailer spec. See `update-log.md` 2026-05-18.
+
+## Canonical user workflow (Tim Knapen, 2026-05-18 help.md)
+
+The 2026-05-18 re-snapshot includes the **first official user-facing FAQ** authored by Tim Knapen, at `assets/solderless-2026-05-18/stemloader/help/help.md`. It is the canonical end-user procedure for putting custom audio on a stock SP-1.
+
+**Required WAV format (per the official help):**
+
+> 24 bit, 48 kHz, 8 channel, PCM WAV
+
+Channel-to-stem mapping (verbatim from help.md):
+
+```
+CHANNEL   STEM
+1         1, left
+2         1, right
+3         2, left
+4         2, right
+5         3, left
+6         3, right
+7         4, left
+8         4, right
+```
+
+**Update 2026-05-18: 8 channels is no longer required.** The new encoder (`assets/solderless-2026-05-18/stemloader/js/wav-converter.js::parseWAV`) accepts **1 to N** channels. Missing channels play silent stems; channels beyond 8 are ignored. (The 2026-05-12 encoder rejected anything but exactly 8 channels.) The help.md text still says 8 channels because that's the canonical full-stem layout, but the encoder no longer enforces it.
+
+**WAVEFORMATEXTENSIBLE subFormat offset bug fix (2026-05-18):** the 2026-05-12 parser read the `subFormat` field at `offset+28` inside the `fmt ` chunk, which is wrong by the WAV spec (correct offset is `+32`). WAV files emitted by tools using `WAVEFORMATEXTENSIBLE` (audioFormat = 0xFFFE) may have been misclassified by the 2026-05-12 encoder; the 2026-05-18 encoder handles them correctly. [Source: diff between `assets/solderless-2026-05-12/stemloader/js/wav-parser.js` and `assets/solderless-2026-05-18/stemloader/js/wav-converter.js`.]
+
+**Tim Knapen's recovery procedure for interrupted transfers** (verbatim):
+
+> SP-1 can seem unresponsive after a transfer was interrupted by unplugging the USB cable or closing the stem loader tab. This can look worrying but is normal: SP-1 is still in transfer mode and can't play audio. This can simply be resolved by long pressing the function button to restart SP-1. Data can become corrupted when a transfer is interrupted, so make sure to re-transfer any unfinished songs afterwards.
+
+**BPM matters for effects:** Tim notes that BPM is used to encode the MIDI clock and timing of each song, and is needed for the gate effect, looping, and other time-based effects on the SP-1. Set this correctly per song; default is 80 if not specified. The stem loader extracts BPM from filenames matching `/(\d+(?:\.\d+)?)\s*bpm/i`.
 
 **The most useful single finding for end users:** you do **not need custom firmware** to play your own audio on the SP-1. Stock TE firmware plays any correctly-formatted album image. TimK confirmed this [Lines #799–805]:
 
@@ -246,6 +278,39 @@ The solderless UI defaults titles to "untitled" and artists to "unknown" when em
 ### 9. Upload
 
 Once the album image is built (one big byte buffer: metadata sector + song audio sectors in order + end-marker sector), push it via the USB protocol. See `references/16-usb-upload-protocol.md` for the full procedure. Path A: use the locally archived solderless utility (when you can run a local web server). Path B: write your own client against the documented protocol. Path C: use moecal1947's slow Python uploader.
+
+## Empirical observations from a real eMMC dump (added 2026-05-16)
+
+First public hands-on inspection of a stock SP-1 eMMC dump, via the dot-Justin / `sp-1-emmc-dumper` project's v0.1 firmware extracting Unit B's contents (Jesus is King album). Partial dump only (~35%) but enough to verify the format and surface two findings.
+
+**Confirmed:** The header + song-table structure documented above (Sections 6 and 8) parses real data exactly as specified. Magic, total_sectors (u32 LE @ offset 13), song_count (u8 @ 17), 64-byte X-padded title (@ 18), and 136-byte song records starting at offset 82 all match. Each duration computed from `song_length_sectors × 7.11 ms/sector` (per audio format Section in `09-audio-format-spec.md`) matches the canonical streaming-service track times within 5 seconds for all 9 valid entries.
+
+**Finding 1 — SP-1 JIK album has 9 valid tracks, not 11 like the streaming release.** The header declares `song_count = 11` but only the first 9 song records contain real values; records 10 and 11 have garbage u32 fields and empty artist/title strings. The 9 tracks present are Every Hour through Hands On (matching the JIK release). Missing: "Use This Gospel" and "Jesus Is Lord". Three unresolved hypotheses for why:
+
+- TE shipped only 9 stems for SP-1 JIK (licensing / stem-availability gap)
+- The encoder always allocates `song_count + 2` slots and leaves the trailing ones uninitialized (would suggest reading until you find an obviously-corrupt entry)
+- The header's `total_sectors` (233188) accounts for ~37k sectors more than the 9 valid songs sum to (~196k), so the missing audio data MAY actually be in the eMMC but unindexed by the header
+
+Needs a second JIK unit dump to disambiguate.
+
+**Finding 2 — sector layout has inter-song gaps that aren't constant.** The encoder spec (Section 6) implies songs are packed contiguously: song N+1 starts at `songs[N].offset + songs[N].length`. Real data has gaps:
+
+| Transition | Gap (sectors) |
+|---|---|
+| 1→2  | 0 (contiguous) |
+| 2→3  | 70 |
+| 3→4  | 0 |
+| 4→5  | 211 |
+| 5→6  | 0 |
+| 6→7  | 310 |
+| 7→8  | 0 |
+| 8→9  | 0 |
+
+Pattern alternates. Hypothesis (unverified): the 0/2/1/3 block interleaving means each "song sector window" extends to the longest of its 4 stems, and shorter stems get tail-padded — so the gap reflects per-stem length variance at song boundaries. Anyone re-implementing the encoder should be aware that real albums don't always have contiguous song offsets even though the encoder spec generates them.
+
+Inspection tool: [`scripts/inspect-partial-dump.mjs`](https://github.com/dot-Justin/sp-1-emmc-dumper) in the `sp-1-emmc-dumper` repo. Run on any dumped sector-0+ data to parse header and song table.
+
+**Implementation note for tooling authors:** Several existing parsers (including the one in `sp-1-emmc-dumper`'s firmware `app/AlbumHeader.cpp` and host `host/src/verify/albumInfo.mjs` as of 2026-05-16) check for `0x78` ('x' lowercase) when stripping title padding. The actual padding byte is `0x58` ('X' uppercase) — match the spec in Section 6 above. Easy to confuse since both display visually as X-ish characters in hex viewers.
 
 ## What works on stock firmware vs custom firmware
 
